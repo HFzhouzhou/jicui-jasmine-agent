@@ -1,6 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
-@import "@lark-apaas/client-toolkit-lite/styles.css";
 @import "tw-animate-css";
 @import "./tailwind-theme.css";
-@import "./typography.css";
+
+html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+body { margin: 0; min-width: 320px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: pointer; }
+::selection { background: #dce6bd; color: #253b2d; }
+:focus-visible { outline: 2px solid #748861; outline-offset: 4px; }
+@layer base {
+  * { border-color: var(--border); }
+  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans); }
+}
+.mobile-navigation { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.drink-artwork svg { transition: transform .6s cubic-bezier(.22,1,.36,1); }
+@media (hover: hover) {
+  a:hover .drink-artwork svg, button:hover .drink-artwork svg { transform: translateY(-3px) rotate(-2deg); }
+}
+@media (max-width: 767px) {
+  .app-shell { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
+  input, textarea, select { font-size: max(16px, 1em); }
+  html { scroll-padding-top: 88px; }
+  body:has(textarea:focus, input:focus, select:focus) .mobile-navigation { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

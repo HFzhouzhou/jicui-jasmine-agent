@@ -1,153 +1,34 @@
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Sparkles, MessageCircle, ArrowRight, Leaf } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Image } from '@/components/ui/image';
-import { QUICK_QUESTIONS, getTimeGreeting, getSeasonTip } from '@/data/experience';
+import { Link } from 'react-router-dom';
+import { ArrowRight, ArrowUpRight, Flower2, Sparkles } from 'lucide-react';
+import type { Drink } from '@shared/contracts';
 
-const HERO_IMG = '/spark/app/app_17dszc02xwh/runtime/api/v1/storage/object/bucket_aadkufch4uwag_static/static%2Faadkuez5xielw_ve_miaoda';
-
-export default function HeroSection() {
-  const navigate = useNavigate();
-  const timeGreeting = getTimeGreeting();
-  const seasonTip = getSeasonTip();
-
-  const handleQuickAsk = (q: string) => {
-    navigate(`/ai-recommend?mode=chat&q=${encodeURIComponent(q)}`);
-  };
-
+export default function HeroSection({ drinks, loading, error }: { drinks: Drink[]; loading: boolean; error: string | null }) {
+  const available = drinks.filter((drink) => drink.catalogStatus !== 'legacy' && drink.available).length;
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* 背景图 */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={HERO_IMG}
-          alt="极萃东方茉莉 Hero"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-32">
-        <div className="max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm mb-4"
-          >
-            <Sparkles className="size-4" />
-            <span>{timeGreeting.greeting}，我是茉莉娘子</span>
-          </motion.div>
-
-          {/* 应季小提示 */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.05 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 text-xs text-foreground mb-4"
-          >
-            <span>{seasonTip.icon}</span>
-            <span className="text-primary font-medium">{seasonTip.season}</span>
-            <span>{seasonTip.tip}</span>
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl md:text-6xl font-bold text-foreground tracking-tight leading-tight"
-          >
-            茉莉香为引
-            <br />
-            <span className="text-primary">花样东方茶</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 text-lg text-muted-foreground leading-relaxed"
-          >
-             来自广西横州的东方茉莉茶饮品牌。
-             <br className="hidden md:block" />
-             84 款真实饮品，帮你选一杯合适的。
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-8 flex flex-col sm:flex-row gap-4"
-          >
-            <Button
-              size="lg"
-              className="gap-2 text-base h-12 px-8 shadow-lg shadow-primary/20"
-              onClick={() => navigate('/ai-recommend?mode=quiz')}
-            >
-              <Sparkles className="size-5" />
-              四问选茶
-              <ArrowRight className="size-4" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="gap-2 text-base h-12 px-8 border-primary/30 text-primary hover:bg-primary/5"
-              onClick={() => navigate('/ai-recommend?mode=chat')}
-            >
-              <MessageCircle className="size-5" />
-               直接说需求
-            </Button>
-          </motion.div>
-
-          {/* 试试这样问 - 快捷气泡 */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.55 }}
-            className="mt-8"
-          >
-            <div className="text-xs text-muted-foreground mb-3 flex items-center gap-2">
-              <Leaf className="size-3.5 text-primary" />
-              试试这样问
-            </div>
+    <section className="mx-auto max-w-7xl px-5 pb-10 pt-8 md:px-8 md:pb-16 md:pt-12 lg:pb-20">
+      <div className="grid items-center gap-10 lg:grid-cols-[1.04fr_1fr] lg:gap-10 xl:gap-20">
+        <div className="py-3 lg:py-10">
+          <p className="flex items-center gap-3 text-[10px] font-medium tracking-[0.2em] text-[#66745f] sm:text-xs"><span className="h-px w-8 bg-[#839176]" />A LITTLE JASMINE, A LITTLE JOY</p>
+          <h1 className="mt-7 font-serif text-[clamp(2.65rem,5.1vw,4.5rem)] font-medium leading-[1.35] tracking-[-0.055em] text-[#253b2d]">让一杯茉莉，<br /><span className="relative inline-block">懂你的心意<span className="ml-1 text-[#80955d]">。</span></span></h1>
+          <p className="mt-6 max-w-sm text-[14px] leading-[1.95] text-[#73796a] sm:text-[15px]">清甜一点，花香浓一点，或是今天想要一点不同。<br className="hidden xl:block" />把心意告诉茉莉娘子，找到属于你的那杯茶。</p>
+          <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4 sm:mt-10">
+            <Link to="/ai-recommend?mode=chat" className="group inline-flex min-h-14 items-center gap-7 rounded-full bg-[#253b2d] py-4 pl-7 pr-5 text-sm text-[#f7f7ef] transition-all hover:bg-[#3d5540] hover:shadow-lg hover:shadow-[#253b2d]/10"><span>找一杯，我的茉莉</span><ArrowUpRight className="size-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></Link>
+            <Link to="/menu" className="inline-flex items-center gap-2 border-b border-[#253b2d]/30 pb-1.5 text-sm text-[#253b2d] transition-colors hover:border-[#253b2d]">先逛逛茶单<ArrowRight className="size-4" /></Link>
+          </div>
+          <div className="mt-10 border-t border-[#253b2d]/10 pt-5 lg:mt-14">
+            <p className="mb-3 text-[10px] tracking-[0.16em] text-[#8a907e]">从一句话开始 · TRY SAYING</p>
             <div className="flex flex-wrap gap-2">
-              {QUICK_QUESTIONS.slice(0, 4).map((q, i) => (
-                <motion.button
-                  key={q}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleQuickAsk(q)}
-                  className="px-3.5 py-2 text-sm rounded-full bg-card/80 backdrop-blur-sm border border-border/60 hover:border-primary/30 hover:bg-primary/5 text-foreground/80 hover:text-primary transition-all shadow-sm"
-                  style={{ animationDelay: `${i * 0.1}s` }}
-                >
-                  「{q}」
-                </motion.button>
-              ))}
+              {['15 元以内，清爽一点', '想要花香，不要浓奶味'].map((question) => <Link key={question} to={`/ai-recommend?mode=chat&q=${encodeURIComponent(question)}`} className="inline-flex items-center gap-2 rounded-full bg-[#ecefdf] px-3.5 py-2.5 text-[11px] text-[#54624b] transition-colors hover:bg-[#dce6bd]"><Sparkles className="size-3 stroke-[1.5]" />{question}</Link>)}
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.7 }}
-            className="mt-10 flex items-center gap-6 text-sm text-muted-foreground"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-foreground">84</span>
-              <span>款真实饮品</span>
-            </div>
-            <div className="w-px h-6 bg-border" />
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-foreground">22</span>
-              <span>家门店</span>
-            </div>
-            <div className="w-px h-6 bg-border" />
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-foreground">6</span>
-              <span>年横州品牌</span>
-            </div>
-          </motion.div>
+          </div>
+        </div>
+        <div className="relative">
+          <div className="relative h-[320px] overflow-hidden rounded-[28px] bg-[#eee9da] sm:h-auto sm:aspect-[4/4.1] lg:aspect-[4/4.65] lg:rounded-[36px]">
+            <img src="/images/jasmine-studio.jpg" alt="奶油色背景中的茉莉冰茶与花枝，茶饮意象图" className="h-full w-full object-cover" loading="eager" fetchPriority="high" />
+            <span className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/50 bg-[#fbfbef]/70 px-3 py-2 text-[9px] tracking-[0.14em] text-[#506146] backdrop-blur-sm"><span className="size-1.5 rounded-full bg-[#687d4a]" />茉莉香为引 · 花样东方茶</span>
+            <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between gap-4 rounded-2xl border border-white/40 bg-[#f8f8e9]/85 p-5 text-[#253b2d] backdrop-blur-md sm:bottom-6 sm:left-6 sm:right-6 sm:p-6"><div><p className="text-[9px] tracking-[0.24em] text-[#69745a]">YOUR PERSONAL TEA COMPANION</p><p className="mt-2 font-serif text-[23px] tracking-wide sm:text-[26px]">一杯茶，也是一种心情。</p></div><Flower2 aria-hidden="true" className="mb-1 size-8 shrink-0 stroke-[1] text-[#6e7f4f]" /></div>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-4 px-1 text-[9px] tracking-[0.09em] text-[#87907c]"><span aria-live="polite">{loading ? '正在展开今日茶单…' : error ? '菜单暂不可用，请进入茶单页重试' : `${available} 款门店茶单候选 · 随心探索`}</span><span className="shrink-0">茶饮意象 · 非商品实拍</span></div>
         </div>
       </div>
     </section>

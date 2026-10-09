@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { scopedStorage, logger } from '@lark-apaas/client-toolkit-lite';
-import { ITeaCardData } from '@/components/TeaCard';
+import { readStoredJson, writeStoredJson, safeStorage, subscribeStorage } from '@/lib/storage';
 
-interface IOrderRecord {
-  id: string;
-  timestamp: number;
+interface SavedTeaCard {
   drinkName: string;
   drinkNameEn: string;
   price: number;
@@ -17,32 +14,31 @@ interface IOrderRecord {
   orderPhrase?: string;
   orderPhraseEn?: string;
 }
+export interface IOrderRecord extends SavedTeaCard { id: string; timestamp: number }
 
 const STORAGE_KEY = 'jicui_order_history';
-const MAX_RECORDS = 5;
+const MAX_RECORDS = 20;
+
+function isOrderList(value: unknown): value is IOrderRecord[] {
+  return Array.isArray(value) && value.every((item) => item && typeof item === 'object'
+    && ['id', 'drinkName', 'drinkNameEn', 'volume', 'sweetness', 'temperature', 'toppings', 'reason', 'message'].every((key) => typeof item[key] === 'string')
+    && Number.isFinite(item.timestamp) && Number.isFinite(item.price) && item.price >= 0
+    && (item.orderPhrase === undefined || typeof item.orderPhrase === 'string')
+    && (item.orderPhraseEn === undefined || typeof item.orderPhraseEn === 'string'));
+}
+const readOrders = () => readStoredJson<IOrderRecord[]>(STORAGE_KEY, [], isOrderList).slice(0, MAX_RECORDS);
 
 export function useOrderHistory() {
-  const [orders, setOrders] = useState<IOrderRecord[]>([]);
-  const [loaded, setLoaded] = useState(false);
-
-  // 加载历史
+  const [orders, setOrders] = useState<IOrderRecord[]>(readOrders);
   useEffect(() => {
-    try {
-      const saved = scopedStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as IOrderRecord[];
-        setOrders(parsed.slice(0, MAX_RECORDS));
-      }
-    } catch (error) {
-      logger.warn('读取点单历史失败:', String(error));
-    }
-    setLoaded(true);
+    const unsubscribe = subscribeStorage(STORAGE_KEY, () => setOrders(readOrders()));
+    setOrders(readOrders());
+    return unsubscribe;
   }, []);
 
-  // 保存一杯到历史
-  const saveOrder = useCallback((card: ITeaCardData) => {
+  const saveOrder = useCallback((card: SavedTeaCard) => {
     const record: IOrderRecord = {
-      id: `order_${Date.now()}`,
+      id: `tea_${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`}`,
       timestamp: Date.now(),
       drinkName: card.drinkName,
       drinkNameEn: card.drinkNameEn,
@@ -56,40 +52,11 @@ export function useOrderHistory() {
       orderPhrase: card.orderPhrase,
       orderPhraseEn: card.orderPhraseEn,
     };
-
-    setOrders((prev) => {
-      // 去重（同名饮品更新）
-      const filtered = prev.filter((o) => o.drinkName !== card.drinkName);
-      const next = [record, ...filtered].slice(0, MAX_RECORDS);
-      try {
-        scopedStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch (e) {
-        logger.warn('保存点单历史失败:', String(e));
-      }
-      return next;
-    });
+    if (!isOrderList([record])) return;
+    writeStoredJson(STORAGE_KEY, [record, ...readOrders()].slice(0, MAX_RECORDS));
   }, []);
 
-  // 清空
-  const clearOrders = useCallback(() => {
-    setOrders([]);
-    try {
-      scopedStorage.removeItem(STORAGE_KEY);
-    } catch (e) {
-      logger.warn('清空点单历史失败:', String(e));
-    }
-  }, []);
-
-  // 把最近一杯转成"再来一杯"的需求文本
-  const getReorderDemand = (record: IOrderRecord): string => {
-    return `再来一杯${record.drinkName}，${record.sweetness}、${record.temperature}，${record.toppings ? record.toppings + '，' : ''}跟上次一样的搭配。`;
-  };
-
-  return {
-    orders,
-    loaded,
-    saveOrder,
-    clearOrders,
-    getReorderDemand,
-  };
+  const clearOrders = useCallback(() => { safeStorage.removeItem(STORAGE_KEY); }, []);
+  const getReorderDemand = (record: IOrderRecord) => `我之前保存过${record.drinkName}，${record.sweetness}、${record.temperature}。请根据当前菜单重新确认价格和可选规格。`;
+  return { orders, loaded: true, saveOrder, clearOrders, getReorderDemand };
 }

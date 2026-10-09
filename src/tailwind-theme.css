@@ -9,20 +9,20 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: hsl(42 35% 96%);
-  --foreground: hsl(210 15% 18%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(210 15% 18%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(210 15% 18%);
-  --primary: hsl(148 38% 38%);
-  --primary-foreground: hsl(42 35% 96%);
-  --secondary: hsl(148 35% 92%);
-  --secondary-foreground: hsl(148 38% 30%);
-  --muted: hsl(42 20% 92%);
-  --muted-foreground: hsl(24 8% 45%);
-  --accent: hsl(148 35% 92%);
-  --accent-foreground: hsl(148 38% 30%);
+  --background: #f7f7ef;
+  --foreground: #253b2d;
+  --card: #fffffa;
+  --card-foreground: #253b2d;
+  --popover: #fffffa;
+  --popover-foreground: #253b2d;
+  --primary: #324f39;
+  --primary-foreground: #fffff5;
+  --secondary: #e5eccf;
+  --secondary-foreground: #35482e;
+  --muted: #efefe4;
+  --muted-foreground: #717566;
+  --accent: #e5eccf;
+  --accent-foreground: #35482e;
   --info: hsl(221 83% 53%);
   --info-foreground: hsl(230 100% 98%);
   --destructive: hsl(0 84% 60%);
@@ -31,9 +31,9 @@
   --success-foreground: hsl(115 77% 97%);
   --warning: hsl(26 90% 49%);
   --warning-foreground: hsl(33 100% 96%);
-  --border: hsl(30 15% 82%);
-  --input: hsl(30 15% 82%);
-  --ring: hsl(148 38% 38%);
+  --border: #dfe1d3;
+  --input: #d7dbca;
+  --ring: #748861;
   --chart-1: hsl(148 38% 55%);
   --chart-2: hsl(178 38% 55%);
   --chart-3: hsl(208 38% 55%);
@@ -55,15 +55,15 @@
   --accent-border: hsl(from hsl(220 14% 96%) h s calc(l + var(--opaque-button-border-intensity)));
   --muted-border: hsl(from hsl(220 14% 96%) h s calc(l + var(--opaque-button-border-intensity)));
   --font-sans:
-    'LarkHackSafariFont', 'LarkEmojiFont', 'LarkChineseQuote', '-apple-system',
+    '-apple-system',
     'BlinkMacSystemFont', 'Helvetica Neue', 'Tahoma', 'PingFang SC',
     'Microsoft Yahei', 'Arial', 'Hiragino Sans GB', 'sans-serif',
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif:
-    'Geist', 'Geist Fallback', ui-serif, Georgia, Cambria, 'Times New Roman',
+    'Songti SC', 'STSong', ui-serif, Georgia, Cambria, 'Times New Roman',
     Times, serif;
   --font-mono: Source Code Pro, monospace;
-  --radius: 0.5rem;
+  --radius: 0.8rem;
   --shadow-x: 0px;
   --shadow-y: 2px;
   --shadow-blur: 12px;
@@ -127,7 +127,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 

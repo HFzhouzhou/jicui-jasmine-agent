@@ -1,109 +1,244 @@
-# 项目技术规范
+# Jicui Jasmine Agent
 
-## 技术栈
+极萃东方茉莉的独立茶饮助手。React + Vite 前端、Node.js 后端与 SQLite 数据库运行在自己的电脑或服务器上，DeepSeek 密钥仅由后端读取。
 
-- 前端: React 19 + TypeScript
-- 样式: Tailwind CSS v4
-- UI 组件: shadcn/ui `import { Button } from "@/components/ui/button";`
-- 图标: lucide-react `import { SearchIcon } from "lucide-react";`
-- 图表: echarts-for-react `import ReactECharts from "echarts-for-react";`
-- 动画: framer-motion `import { motion } from "framer-motion";`
-- 路由: react-router-dom `import { Link, useNavigate } from "react-router-dom";`
+第一次运行请从 [本地部署](#本地部署) 开始；部署到服务器见 [服务器部署](#服务器部署)。
 
----
+## 已实现
 
-## 目录结构
+- 真实 DeepSeek 需求理解，携带最近多轮对话，支持继续调整与换一杯。
+- 服务端核对商品、标价、预算、售罄状态、已核准规格及原料限制。
+- 独立的规则预览入口，明确标注非 AI，不冒充模型输出。
+- 参考茶单复制、本机收藏、清空本机对话、推荐反馈。
+- 顾客端展示门店茶单，原始资料保留在管理后台，商品核对记录保留门店、日期、范围及价格是否为起价。
+- 茶礼与香氛独立品牌目录，支持搜索、分类；不进入茶饮推荐和忌口筛选。
+- 菜单管理：价格、售罄、配料、过敏原、咖啡因资料、糖冰选项、小料、来源及是否纳入当前茶单。
+- 知识管理：保存资料和来源，只向顾客展示已核准知识。
+- 输入校验、请求限流、模型调用超时、取消与错误提示。
+- 桌面与手机分别布局，手机提供底部导航及对话／茶单切换；商品图优先使用已采集的官方小程序截图。
 
-```
-src/
-├── index.tsx            # 入口（勿修改）
-├── app.tsx              # 路由配置（仅在 <Routes> 内增删 <Route>）
-├── index.css            # 全局样式 + 主题变量
-├── components/          # 基础 UI 组件（禁止存放业务组件）
-│   ├── layout.tsx       # 全局布局容器（含 <Outlet />）
-│   └── ui/              # shadcn/ui 内置组件（勿修改）
-├── pages/               # 页面模块（每个页面一个目录）
-│   ├── <PageName>/      # 页面目录示例
-│   │   ├── PageName.tsx        # 页面入口文件与目录同名
-│   │   └── components/         # 页面专属组件
-│   └── NotFoundPage/
-│       └── NotFoundPage.tsx
-├── hooks/               # 自定义 Hooks
-└── lib/                 # 工具函数（cn() 等）
+**数据边界：** 已根据 2026-10-09 极萃东方茉莉微信小程序的**中华茉莉园店**页面核对部分商品资料。这是一份门店快照，不是实时库存，也不能代表所有门店。名称、普通价等字段的核对不等于完整配料、过敏原、咖啡因或可选规格已核准；未知资料不能视为已满足忌口或规格要求。生成的是辅助点单参考。尚未接入品牌官方数据接口、实时库存、门店订单或支付，也尚未配置跳转官方小程序的入口。
 
-shared/
-└── static/              # 静态资源
-    ├── data/            # 数据文件（JSON）
-    └── images/          # 图片资源
-```
+## 当前目录与来源
 
----
+本次导入保留原交付包的 83 条记录，并新增一款小程序中观察到的咖啡；原始资料不会因本店未展示而被认定为停售。
 
-## 模板初始状态
+| 范围 | 数量与用途 |
+| --- | --- |
+| 饮品数据库 | 共 84 条：83 条原始记录＋1 条新增咖啡 |
+| 本店观察茶单 | 24 款，其中采集时 16 款可选、8 款显示售罄 |
+| 原始资料 | 其余 60 条保留在后台供查阅，不进入顾客茶单或推荐 |
+| 茶礼与香氛 | 36 款独立展示：东方茶礼 26 款、茉莉护肤及香氛 10 款，不计入饮品数据库 |
 
-- `app.tsx` 首页路由指向平台内置的 `<Welcome />` 组件
-- 开发时需将 `index` 路由替换为业务首页，并在 `pages/` 下创建对应页面目录
-- `layout.tsx` 为空壳容器（仅 `<Outlet />`），需根据需求实现导航和布局
+- 门店茶单采用该店小程序的普通价，不以宣传海报价格或会员优惠替代。页面标注“起”的商品会在推荐卡和复制茶单中保留起价提示，具体价格仍随规格而变。
+- `catalogStatus` 区分小程序观察记录（`observed`）、管理员维护记录（`managed`）与原始资料（`legacy`）；`catalogEvidence` 记录门店、采集日期及已核对的字段。`verified` 仍表示商品配方资料整体核准，两者不能混用。
+- 未核对的容量显示“规格待确认”。配料、过敏原、咖啡因、糖冰和加料信息仍需依据真实资料补全，不能从名称或宣传图推断。
+- 目录同步按字段保留管理员修改，同一批次重复导入不会反复覆盖资料；旧记录需在后台明确勾选“纳入门店茶单及推荐”才参与推荐，单独改价或切换售罄不会自动启用。
+- 60 款商品已全部关联真实图片：24 款茶饮、26 款茶礼、10 款护肤香氛。原有 45 张采集于 2026-10-09，新增 15 张采集于 2026-10-10；商品图来自 828×1560 小程序详情截图，以 SVG 视窗展示商品区域，原始像素未改动，未用 AI 重绘。菜单观察日期仍独立保留。
+- 已保存 3 张品牌宣传图：首页展示“茉莉龙井·东方花茗”“黄皮茉莉·清心养夏”，加盟横幅留在离线素材档案，不放入顾客选茶流程。宣传图价格不覆盖门店普通价。
 
----
+目录资料见 `server/data/official-catalog.ts`、`src/data/brandCollection.ts`；图片映射见 `src/data/officialImages.ts`。当前验收进度见 [本地验收记录](docs/LOCAL_TEST_REPORT.md)。
 
-## 禁止修改的文件
+## 顾客页面的展示策略
 
-| 文件 | 原因 |
-|------|------|
-| `src/index.tsx` | Provider 层级 + 样式引入，由模板管理 |
-| `src/components/ui/*` | shadcn/ui 内置组件，版本锁定 |
+2026-10-10 确认：顾客页面围绕商品与选茶体验呈现，商品图片角标使用“图片仅供参考”等自然提示，不展示“小程序截图”“是截的图”等素材制作过程文案。原图来源、截图方式和核对证据留在 README、素材索引及维护资料中，不放在商品图片角标。
 
----
+60 款商品图片与展示资料已补齐，顾客页面已移除显著的“已核对”、采集日期及“非实时库存”等过程标签，保留“图片仅供参考”“价格与售卖情况以门店为准”等自然提示。后台与维护资料继续保留可追溯来源。素材齐全不表示完整配料、过敏原、糖冰或规格已经核准。
 
-## 文件放置规则
+展示文案的简化不改变接入状态：目前仍未接入品牌官方数据接口或实时库存，官方入口跳转、订单与支付也未完成。以后补齐素材、隐藏过程标签时，不自动宣称已接官方接口、库存实时同步或已向门店下单；配料与饮用限制的核验仍按真实资料执行。
 
-| 内容类型 | 放置位置 |
-|---------|---------|
-| 新页面 | `src/pages/<PageName>/PageName.tsx` |
-| 页面专属组件 | `src/pages/<PageName>/components/` |
-| 自定义 Hooks | `src/hooks/` |
-| 工具函数 | `src/lib/` |
-| 静态数据文件 | `shared/static/data/` |
-| 静态图片 | `shared/static/images/` |
+## 本地部署
 
----
+### 1. 准备运行环境
 
-## 导入路径
+| 依赖 | 要求 | 用途 |
+| --- | --- | --- |
+| Node.js | **24.x**，与 `.nvmrc`、`package.json` 一致 | 运行前后端构建、服务端和内置 SQLite |
+| npm | 使用 Node.js 附带的版本 | 按 `package-lock.json` 安装依赖 |
+| Git | 能运行 `git` 命令 | 克隆与更新仓库；下载 ZIP 则不需要 Git |
+| DeepSeek API 密钥 | 使用真实 AI 时需要，账号须可调用接口 | 仅填写在本机 `.env` |
 
-```typescript
-// @/ 别名 → src/
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+**不需要安装原平台、Python、独立 SQLite、MySQL、Redis 或全局 Vite。** React、Express、Vite、TypeScript 等依赖由 `npm ci` 一次安装。Docker 仅在采用容器部署时需要。
 
-// @shared/ 别名 → shared/
-import heroImage from "@shared/static/images/hero.png";
-import configData from "@shared/static/config.json";
+先安装 Node.js **24.x**（可从 [Node.js 官网](https://nodejs.org/en/download) 选择该版本）和 Git，重新打开终端后检查：
+
+```sh
+node --version
+npm --version
+git --version
 ```
 
----
+第一条应输出 `v24.x.x`。macOS / Linux 如果已经安装 nvm，也可以切换到项目要求的版本：
 
-## 路由配置
+```sh
+nvm install 24
+nvm use 24
+```
 
-- 新增页面需在 `src/app.tsx` 的 `<Routes>` 内注册 `<Route>`
-- `BrowserRouter` 已在 `index.tsx` 中配置，`app.tsx` 中**禁止**再包裹 Router
+### 2. 下载代码并安装项目依赖
 
----
+使用已配置 GitHub SSH 的终端：
 
-## 主题变量
+```sh
+git clone git@github.com:HFzhouzhou/jicui-jasmine-agent.git
+cd jicui-jasmine-agent
+npm ci
+```
 
-主题色定义在 `src/index.css`，通过 `:root` CSS 变量 + `@theme inline` 注册到 Tailwind。
+未配置 SSH 时，可把克隆命令换成 `git clone https://github.com/HFzhouzhou/jicui-jasmine-agent.git`；私有仓库仍需要对应账号权限。已下载代码则直接进入包含 `package.json` 的目录，再运行 `npm ci`。不要在外层交付包目录执行。
 
-| 用途 | Tailwind 类 | CSS 变量 |
-|------|------------|----------|
-| 页面背景 | `bg-background` | `--background` |
-| 主文本 | `text-foreground` | `--foreground` |
-| 卡片背景 | `bg-card` | `--card` |
-| 次要文本 | `text-muted-foreground` | `--muted-foreground` |
-| 主色 | `bg-primary` / `text-primary` | `--primary` |
-| 强调色 | `bg-accent` | `--accent` |
-| 边框 | `border-border` | `--border` |
-| 危险色 | `text-destructive` | `--destructive` |
-| 图表色 | `bg-chart-1` ~ `bg-chart-5` | `--chart-1` ~ `--chart-5` |
+安装时需要联网访问 npm registry。首次安装及构建需要开发依赖，**不要使用 `npm ci --omit=dev`**。仓库内已包含页面所需图片，不需要重新运行素材采集或导入脚本。
 
-HSL 格式使用**空格分隔**：`--primary: hsl(150 60% 40%);`
+### 3. 创建本机配置
+
+首次使用时，将 `.env.example` 复制为 `.env`。如果已经有 `.env`，保留现有文件，不要覆盖。
+
+macOS / Linux / Git Bash：
+
+```sh
+cp .env.example .env
+```
+
+Windows PowerShell：
+
+```powershell
+Copy-Item .env.example .env
+```
+
+用编辑器打开 `.env`。主要配置如下；不要把示例文字当作真实密钥或口令：
+
+| 配置项 | 默认值 | 如何填写 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | 空 | 填入自己的 DeepSeek API 密钥；留空可浏览茶单和使用明确标注的规则预览 |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | 默认保留 |
+| `DEEPSEEK_MODEL` | `deepseek-flash` | 当前项目配置，可改为自己账号支持且兼容本适配器的模型 |
+| `ADMIN_TOKEN` | 空 | 使用管理后台时填写至少 24 个字符的随机口令；为空则关闭管理接口 |
+| `HOST` | `127.0.0.1` | 默认只允许本机访问 |
+| `PORT` | `3001` | 后端端口；正式模式也是网站端口 |
+| `APP_PORT` | `3001` | 仅控制 Docker 的宿主机端口，不影响 `npm run dev` / `npm start` |
+| `DATA_DIR` | `./data` | 自动创建的 SQLite 数据目录，运行账号需要有写入权限 |
+| `AI_TIMEOUT_MS` | `30000` | 模型请求超时，单位毫秒 |
+
+需要管理后台时，可用下面的命令生成口令，将输出复制到 `.env` 的 `ADMIN_TOKEN=` 后面：
+
+```sh
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+不要把密钥或管理口令发到 GitHub；也不要放进 `VITE_` 开头的变量。`.env`、运行数据库和原平台会话记录均已被 Git 忽略。修改 `.env` 后需停止并重新启动服务。前后端配置统一写在根目录 `.env`，不要只在 `.env.local` 或 `.env.development` 修改 `PORT`，否则前端代理与后端端口可能不一致。
+
+### 4. 构建并运行本地正式版
+
+在项目根目录依次执行：
+
+```sh
+npm run build
+npm start
+```
+
+出现 `Jasmine Agent ready at http://127.0.0.1:3001` 后访问：
+
+- 首页：<http://127.0.0.1:3001>
+- 茶谱：<http://127.0.0.1:3001/menu>
+- 管理后台：<http://127.0.0.1:3001/admin>，输入 `.env` 中设置的管理口令。
+- 健康检查：<http://127.0.0.1:3001/api/health>，应返回 `status: "ok"`；`aiConfigured` 只表示已填密钥，不代表模型调用一定成功。
+
+构建产物在 `dist/client` 和 `dist/server`，一个 Node 服务同时提供页面和 API。首次启动自动创建 `data/jasmine.sqlite` 并导入初始目录，无须手动建库或执行 SQL。没有密钥时，真实 AI 入口会明确提示未配置；填好有效密钥后可在“随心配”中验证实际回复。
+
+终端需保持运行；按 **Ctrl+C** 停止。再次运行只需 `npm start`；代码变更后需重新 `npm run build`。本机此前演示使用的是 **3002**：若要保持原地址，将 `.env` 的 `PORT` 改为 `3002`，再启动并访问 <http://127.0.0.1:3002>。新克隆的默认端口仍为 3001。
+
+### 5. 开发模式（修改代码时使用）
+
+完成依赖安装与 `.env` 配置后，停止正在使用同一后端端口的正式服务，再运行：
+
+```sh
+npm run dev
+```
+
+它会同时启动前端和后端，修改代码自动更新，无须分别开两个终端：
+
+- 顾客界面：<http://127.0.0.1:5173>
+- 管理界面：<http://127.0.0.1:5173/admin>
+- API 健康检查：`http://127.0.0.1:<PORT>/api/health`，默认端口为 3001。
+
+前端 `/api` 会转发到 `.env` 的 `PORT`，修改后需重启整个开发命令。5173 为固定开发端口，已被占用时不会自动换号。开发模式的顾客页面请访问 5173，不要用后端端口查看旧构建页面。
+
+### 6. 手机预览与常见问题
+
+手机和电脑连接同一局域网时，可使用上面的**正式模式**：将 `.env` 的 `HOST` 改为 `0.0.0.0`，重启后，在手机访问 `http://电脑的局域网IP:3001`（或实际 `PORT`）。系统防火墙需允许该端口的局域网访问。手机上的 `127.0.0.1` 指向手机自己，不能用于访问电脑。仅本机使用时保持 `HOST=127.0.0.1`；该项目会按屏幕宽度自动切换手机布局。
+
+| 问题 | 处理方式 |
+| --- | --- |
+| 找不到 `node` / `npm`，或提示 `node:sqlite` 不可用 | 安装或切换到 Node.js 24，重新打开终端，确认 `node --version` |
+| Windows PowerShell 提示禁止执行 `npm.ps1` | 将命令中的 `npm` 换成 `npm.cmd`，例如 `npm.cmd ci`；无需放宽系统执行策略 |
+| `npm ci` 下载失败 | 检查能否访问 `https://registry.npmjs.org/`，以及终端代理配置；网络恢复后重新执行 |
+| 启动提示 `EADDRINUSE` | 停止占用对应端口的旧服务，或修改 `.env` 的 `PORT` 后重启；开发前端的 5173 需要单独释放 |
+| 正式模式页面不存在或显示旧版本 | 在项目根目录先执行 `npm run build`，再重新 `npm start` |
+| 提示 AI 未配置或模型服务失败 | 检查 `.env`、账号额度、模型权限和网络，保存后重启后端；不要把真实密钥贴到报错截图中 |
+| 管理功能关闭或无法登录 | 设置至少 24 位 `ADMIN_TOKEN` 并重启；登录时使用同一口令 |
+| 数据库无法创建 | 检查 `DATA_DIR` 的写入权限；相对路径以启动时的项目根目录为准 |
+
+管理口令只保存在当前管理页面内存中。模型适配 `/chat/completions` JSON 输出并关闭思考模式，其他厂商的接口不保证兼容；模型选择以 [DeepSeek 文档](https://api-docs.deepseek.com/quick_start/pricing/) 及账号可用情况为准。
+
+## 验证与更新
+
+```sh
+npm run check
+```
+
+`check` 运行前后端类型检查、代码检查及服务端回归测试。测试使用临时数据库和测试模型响应，不消耗真实模型额度，也不修改工作数据库。真实模型验收需要配置有效密钥后在浏览器执行。
+
+后续更新时，先停止应用；有本地源码改动时先自行提交或妥善保存，再依次执行：
+
+```sh
+git pull --ff-only
+npm ci
+npm run check
+npm run build
+npm start
+```
+
+更新不会覆盖被忽略的 `.env` 和 `data/`。更新前建议在停止服务后备份整个数据目录；不要只复制运行中的 SQLite 主文件而漏掉 WAL 文件。
+
+## 服务器部署
+
+准备 Docker / Docker Compose，复制 `.env.example` 为 `.env` 并配置密钥与管理口令：
+
+```sh
+docker compose up -d --build
+docker compose logs -f
+```
+
+Compose 默认把容器端口映射到宿主机 `127.0.0.1:3001`，供 HTTPS 反向代理访问。修改 `APP_PORT` 可调整宿主机端口。不要将开发服务器作为生产服务。
+
+- 数据保存在名为 `jasmine-data` 的持久卷，重建应用不重建菜单。
+- 管理口令应使用随机长串。生产环境通过 HTTPS 使用管理页面。
+- `TRUST_PROXY=false` 默认不信任转发地址。本机直接运行 Node、前方是本机代理时可设为 `loopback`；仅存在一个受控代理跳数且后端禁止被绕过访问时可设为 `1`。也可填明确的可信 IP/CIDR。容器代理地址以实际网络为准，不要无条件信任所有来源。限流使用核验后的客户端地址，健康检查不消耗普通请求额度。
+- 同时编辑菜单或知识时，旧版本保存会被拒绝，避免后保存的页面覆盖他人更新；重新载入后再合并修改。
+- 数据库适合单实例的比赛演示与小规模试用。多实例部署需调整为共享数据库与集中限流。
+- 备份时先停止服务，再备份整个数据卷；不要只复制运行中的主 SQLite 文件而漏掉 WAL 文件。
+- 不执行 `docker compose down -v`，除非确实要清除全部菜单与反馈数据。
+
+无 Docker 时，也可在 Node.js 24 服务器运行 `npm ci`、`npm run build`、`npm start`，由自己的进程管理器维护进程，并持久化 `DATA_DIR` 指向的目录。
+
+## 数据与隐私
+
+聊天历史和收藏保存在当前浏览器，可在页面清空；发送 AI 请求时最近对话与本次偏好会通过自己的后端传给 DeepSeek。后端不持久保存完整聊天正文，也不把用户反馈自动写成知识。数据库保存菜单、知识、请求标识和用户主动提交的反馈，需管理员审核后再调整资料。
+
+品牌原始菜单作为迁移种子保留，门店观察记录以明确的采集批次同步，后台人工修改会被保留。门店截图只证明当时可见的展示信息；商品详情不会把原交付包或宣传图中的功效文案直接当作已核准事实。已核准知识必须填写来源。茶礼与香氛目录只展示已观察到的名称、普通价与来源，不推断功效或饮用适用性。
+
+## 目录
+
+```text
+src/                 顾客端与管理界面
+server/              API、DeepSeek 调用、推荐校验、SQLite
+shared/contracts.ts  前后端公开数据结构
+tests/               隔离数据库的回归测试
+public/images/       随项目保存的视觉素材
+.env.example         可公开的配置模板
+compose.yaml         单服务器部署配置
+```
+
+## 后续可扩展
+
+完整配方与规格核验、门店快照持续更新、真实试用指标、调香业务定义、门店接单与支付、多用户账号与权限均需进一步建设。当前版本不宣称已完成品牌试点或实际商业接单。

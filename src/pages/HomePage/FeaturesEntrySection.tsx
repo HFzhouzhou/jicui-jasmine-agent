@@ -1,177 +1,19 @@
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import {
-  Sparkles,
-  MessageCircle,
-  Users,
-  Grid3X3,
-  Trophy,
-  ArrowRight,
-  Flower2,
-  Wand2,
-  Heart,
-  Bookmark,
-} from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, MessagesSquare, SlidersHorizontal, BookOpen } from 'lucide-react';
 
 const FEATURES = [
-  {
-    icon: Sparkles,
-    title: '四问选茶',
-    desc: '4个问题，帮你快速选到合适的茶',
-    path: '/ai-recommend?mode=quiz',
-    color: 'from-primary/10 to-primary/5',
-    textColor: 'text-primary',
-    highlight: true,
-  },
-  {
-    icon: MessageCircle,
-    title: '自由对话',
-    desc: '说需求就推荐，口味/价格/场景都行',
-    path: '/ai-recommend?mode=chat',
-    color: 'from-emerald-400/10 to-teal-400/10',
-    textColor: 'text-emerald-600',
-  },
-  {
-    icon: Flower2,
-    title: '三题选一杯',
-    desc: '3道题帮你选一款，简单直接',
-    path: '/personality',
-    color: 'from-fuchsia-400/10 to-purple-400/10',
-    textColor: 'text-fuchsia-600',
-    isNew: true,
-  },
-  {
-    icon: Users,
-    title: '多人一起点',
-    desc: '2-3人一次配齐，口味各有所好',
-    path: '/ai-recommend?mode=group',
-    color: 'from-rose-400/10 to-pink-400/10',
-    textColor: 'text-rose-600',
-  },
-  {
-    icon: Grid3X3,
-    title: '场景速配',
-    desc: '通勤/加班/追剧/放松，一键配好',
-    path: '/ai-recommend?mode=packages',
-    color: 'from-amber-400/10 to-orange-400/10',
-    textColor: 'text-amber-600',
-  },
-  {
-    icon: Trophy,
-    title: '点单榜单',
-    desc: '提神/低卡/性价比/颜值/暖饮五大榜',
-    path: '/ai-recommend?mode=ranking',
-    color: 'from-violet-400/10 to-indigo-400/10',
-    textColor: 'text-violet-600',
-  },
-  {
-    icon: Bookmark,
-    title: '每日推荐',
-    desc: '今天喝什么？给你一杯实在的推荐',
-    anchor: 'daily-sign',
-    color: 'from-teal-400/10 to-cyan-400/10',
-    textColor: 'text-teal-600',
-    isNew: true,
-  },
-  {
-    icon: Wand2,
-    title: '给茶起个名',
-    desc: '给你喜欢的茶起个别名，方便记',
-    path: '/ai-recommend?mode=chat',
-    color: 'from-orange-400/10 to-red-400/10',
-    textColor: 'text-orange-600',
-    isNew: true,
-  },
-  {
-    icon: Heart,
-    title: '为你推荐',
-    desc: '按你点过的和口味偏好，推荐下次喝的',
-    anchor: 'guess-you-like',
-    color: 'from-pink-400/10 to-rose-400/10',
-    textColor: 'text-pink-600',
-    isNew: true,
-  },
+  { icon: MessagesSquare, title: '说说，你的心意', english: 'TELL YOUR TASTE', desc: '把口味、预算和今天的小心情告诉我，选茶从一次轻松的对话开始。', path: '/ai-recommend?mode=chat', action: '开始一段对话' },
+  { icon: SlidersHorizontal, title: '慢慢，调到喜欢', english: 'MAKE IT YOURS', desc: '清淡一点，或者换个口味。沿着你的偏好继续聊，直到更接近心中的那杯。', path: '/ai-recommend?mode=chat', action: '聊聊我的偏好' },
+  { icon: BookOpen, title: '每一杯，都有来处', english: 'KNOW YOUR CUP', desc: '参考价格、菜单资料与核实状态，清楚呈现。让每一次选择都有依据。', path: '/menu', action: '了解茶单资料' },
 ];
 
 export default function FeaturesEntrySection() {
-  const navigate = useNavigate();
-
   return (
-    <section className="w-full py-16 md:py-20 bg-background">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12"
-        >
-             <span className="inline-block text-xs font-medium text-primary mb-3">
-              ✦ 九种饮茶打开方式 ✦
-            </span>
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              提神解渴 · 轻负担好喝 · 价格实在
-            </h2>
-            <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-              四问选茶 / 自由对话 / 多人拼单 / 场景速配
-              <br className="hidden md:block" />
-              从 84 款真实横州茉莉茶饮中，帮你选一杯合适的
-            </p>
-        </motion.div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {FEATURES.map((f, i) => {
-             const Icon = f.icon;
-             const handleClick = () => {
-               if (f.anchor) {
-                 // 页内锚点滚动
-                 const el = document.getElementById(f.anchor!);
-                 if (el) {
-                   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                 }
-               } else if (f.path) {
-                 navigate(f.path);
-               }
-             };
-             return (
-              <motion.button
-                key={f.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                whileHover={{ y: -4 }}
-                 onClick={handleClick}
-                className="group text-left"
-              >
-                <Card className="border-border/60 h-full overflow-hidden hover:border-primary/30 transition-all duration-300 relative">
-                   {f.isNew && (
-                     <span className="absolute top-2 right-2 text-[9px] px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground font-medium z-10">
-                       NEW
-                     </span>
-                   )}
-                   <CardContent className="p-5">
-                    <div
-                      className={`size-12 rounded-xl bg-gradient-to-br ${f.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}
-                    >
-                      <Icon className={`size-6 ${f.textColor}`} />
-                    </div>
-                    <h3 className="font-semibold text-foreground mb-1">
-                      {f.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                      {f.desc}
-                    </p>
-                    <div className="flex items-center gap-1 text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                      立即体验
-                      <ArrowRight className="size-3" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.button>
-            );
-          })}
+    <section className="mx-3 overflow-hidden rounded-[28px] bg-[#253b2d] text-[#f7f7ef] sm:mx-5 lg:mx-8 lg:rounded-[36px]">
+      <div className="mx-auto max-w-7xl px-6 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
+        <div className="mb-10 flex flex-col justify-between gap-4 md:mb-14 md:flex-row md:items-end"><div><p className="text-[10px] tracking-[0.22em] text-[#b5c6a0]">A THOUGHTFUL WAY TO CHOOSE</p><h2 className="mt-4 font-serif text-[30px] tracking-wide md:text-[38px]">选一杯，也可以很从容。</h2></div><p className="max-w-[220px] text-xs leading-7 text-[#b3bba9]">茉莉娘子陪你，从纷繁的茶单里，<br />找到简单的喜欢。</p></div>
+        <div className="grid gap-8 md:grid-cols-3 md:gap-0">
+          {FEATURES.map(({ icon: Icon, title, english, desc, path, action }, index) => <Link key={title} to={path} className="group border-t border-[#f7f7ef]/20 pt-7 md:border-l md:border-t-0 md:px-8 md:pt-0 md:first:border-l-0 md:first:pl-0 md:last:pr-0"><div className="flex items-center justify-between"><Icon className="size-7 stroke-[1.15] text-[#dce6bd]" /><span className="font-serif text-[42px] font-light leading-none text-[#f7f7ef]/25">0{index + 1}</span></div><p className="mt-7 text-[9px] tracking-[0.18em] text-[#a5b597]">{english}</p><h3 className="mt-2 font-serif text-[23px] tracking-wide">{title}</h3><p className="mt-4 max-w-[300px] text-[13px] leading-[1.9] text-[#bcc5b3]">{desc}</p><span className="mt-7 inline-flex items-center gap-4 border-b border-[#b6c49f]/40 pb-1.5 text-xs text-[#dce6bd] transition-colors group-hover:border-[#dce6bd]">{action}<ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></span></Link>)}
         </div>
       </div>
     </section>

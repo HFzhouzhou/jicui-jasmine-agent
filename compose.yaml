@@ -1,0 +1,17 @@
+services:
+  jasmine:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATA_DIR: /app/data
+    ports:
+      - "127.0.0.1:${APP_PORT:-3001}:3001"
+    volumes:
+      - jasmine-data:/app/data
+volumes:
+  jasmine-data:

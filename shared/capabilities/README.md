@@ -1,5 +1,4 @@
-# shared/capabilities/
+# Migration note
 
-Capabilities 声明目录。此处文件描述应用对外暴露的能力，由平台运行时消费。
-
-具体 schema 与编写规范见 steering（`.agent/steering/`）。占位目录，按需添加。
+The original platform capability has been replaced by the independent server in `server/`.
+Configure DeepSeek using the root `.env.example`. No platform plugin installation is required.

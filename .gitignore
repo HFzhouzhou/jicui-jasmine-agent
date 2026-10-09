@@ -62,3 +62,17 @@ pnpm-lock.yaml
 
 # Agent files
 .agent/
+
+# Independent server credentials, data, and local platform metadata
+.env
+.env.*
+!.env.example
+!.env.sample
+/data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.spark/
+.spark_project
+playwright-report/
+test-results/

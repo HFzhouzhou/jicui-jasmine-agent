@@ -8,6 +8,7 @@ export interface IUserProfile {
 }
 
 export const SUGAR_OPTIONS = [
+  '不限',
   '无糖',
   '三分糖',
   '五分糖',
@@ -16,6 +17,9 @@ export const SUGAR_OPTIONS = [
 ];
 
 export const TEMPERATURE_OPTIONS = [
+  '不限',
+  '常温',
+  '温饮',
   '热饮',
   '去冰',
   '少冰',
@@ -24,11 +28,11 @@ export const TEMPERATURE_OPTIONS = [
 ];
 
 export const DIETARY_RESTRICTIONS = [
-  { value: 'caffeine_free', label: '咖啡因敏感', desc: '避开咖啡/美式/拿铁类' },
-  { value: 'lactose_intolerant', label: '乳糖不耐', desc: '避开鲜奶/奶昔/生椰/奶酪类' },
-  { value: 'no_cold', label: '经期/孕期避冰', desc: '只推热饮或常温' },
+  { value: 'caffeine_free', label: '避开咖啡因', desc: '茶和咖啡都可能含咖啡因，需核实原料' },
+  { value: 'lactose_intolerant', label: '避开乳制品', desc: '根据核实后的配料与过敏原信息筛选' },
+  { value: 'no_cold', label: '不喝冰饮', desc: '需确认饮品支持热饮或常温' },
   { value: 'no_ginger', label: '姜味避雷', desc: '避开含姜饮品' },
-  { value: 'none', label: '无忌口', desc: '什么都能喝' },
+  { value: 'none', label: '暂无限制', desc: '未设置饮用限制' },
 ];
 
 export const BUDGET_OPTIONS = [
@@ -40,16 +44,16 @@ export const BUDGET_OPTIONS = [
 
 export const HEALTH_GOALS = [
   { value: 'none', label: '无特殊诉求', icon: '🌸' },
-  { value: 'warm', label: '暖身驱寒', icon: '🔥' },
-  { value: 'light', label: '低卡轻体', icon: '🍃' },
-  { value: 'awake', label: '熬夜提神', icon: '⚡' },
-  { value: 'gentle', label: '肠胃温和', icon: '🌿' },
-  { value: 'cool', label: '解暑生津', icon: '❄️' },
+  { value: 'warm', label: '想喝热的', icon: '🔥' },
+  { value: 'light', label: '口味清淡', icon: '🍃' },
+  { value: 'awake', label: '偏爱茶味', icon: '⚡' },
+  { value: 'gentle', label: '口感柔和', icon: '🌿' },
+  { value: 'cool', label: '口感清爽', icon: '❄️' },
 ];
 
 export const DEFAULT_USER_PROFILE: IUserProfile = {
-  sweetness: '五分糖',
-  temperature: '少冰',
+  sweetness: '不限',
+  temperature: '不限',
   dietary: [],
-  budget: '10to15',
+  budget: 'unlimited',
 };

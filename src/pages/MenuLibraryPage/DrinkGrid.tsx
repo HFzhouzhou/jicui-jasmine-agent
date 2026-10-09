@@ -1,90 +1,21 @@
-import { memo } from 'react';
-import { motion } from 'framer-motion';
-import { IDrinkItem } from '@/data/menu';
-import { Badge } from '@/components/ui/badge';
-import { Leaf } from 'lucide-react';
+import { formatVolumeLabel } from '@shared/catalog-display';
+import type { Drink } from '@shared/contracts';
+import { Leaf, ArrowUpRight } from 'lucide-react';
+import DrinkArtwork from '@/components/DrinkArtwork';
 
-interface DrinkGridProps {
-  drinks: IDrinkItem[];
-  onDrinkClick: (drink: IDrinkItem) => void;
-}
-
-function DrinkGrid({ drinks, onDrinkClick }: DrinkGridProps) {
-  if (drinks.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <div className="size-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
-          <Leaf className="size-8 text-muted-foreground/50" />
-        </div>
-        <p className="text-muted-foreground">没有找到符合条件的饮品</p>
-        <p className="text-sm text-muted-foreground/70 mt-1">试试其他关键词或分类吧</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {drinks.map((drink, i) => (
-        <motion.div
-          key={drink.id}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: 0.4, delay: i * 0.03 }}
-          whileHover={{ y: -4, transition: { duration: 0.2 } }}
-          onClick={() => onDrinkClick(drink)}
-          className="group cursor-pointer bg-card border border-border/60 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-300"
-        >
-          {/* 饮品图占位 - 用渐变色块 + 装饰 */}
-          <div className="aspect-[4/3] bg-gradient-to-br from-primary/10 via-primary/5 to-secondary/10 flex items-center justify-center relative">
-            <div className="text-5xl opacity-30">🍵</div>
-            <Badge
-              variant="outline"
-              className="absolute top-3 left-3 bg-background/80 backdrop-blur-sm text-[10px] border-primary/20 text-primary"
-            >
-              {drink.category}
-            </Badge>
-          </div>
-
-          {/* 内容 */}
-            <div className="p-4">
-             <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                {drink.name}
-              </h4>
-              <p className="text-xs text-muted-foreground font-serif italic truncate mt-0.5">
-                {drink.nameEn}
-              </p>
-
-              {/* 风味小标签 */}
-              <div className="mt-2 px-2 py-1 bg-primary/5 rounded-md border border-primary/10">
-                <p className="text-[11px] text-primary/90 leading-snug line-clamp-1">
-                  🍃 {drink.description}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between mt-3">
-              <div className="text-lg font-bold text-primary">
-                ¥{drink.price}
-              </div>
-              <span className="text-xs text-muted-foreground">{drink.volume}</span>
-            </div>
-
-            {/* 标签 */}
-            <div className="flex flex-wrap gap-1 mt-3">
-              {drink.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      ))}
+export default function DrinkGrid({ drinks, onDrinkClick }: { drinks: Drink[]; onDrinkClick: (drink: Drink) => void }) {
+  if (!drinks.length) return <div className="rounded-[28px] bg-white/60 px-6 py-20 text-center"><div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-[#dce6bd]/60"><Leaf className="size-7 text-primary/60" /></div><p className="font-serif text-xl text-primary">还没有找到心意之选</p><p className="mt-3 text-sm leading-7 text-muted-foreground">试试其他名称或分类，或者清除筛选条件。</p></div>;
+  return <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 lg:grid-cols-4">{drinks.map((drink) => <button key={drink.id} onClick={() => onDrinkClick(drink)} className={`group overflow-hidden rounded-[22px] bg-white text-left transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_-18px_rgba(37,59,45,0.25)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary md:rounded-[26px] ${drink.catalogStatus !== 'legacy' && !drink.available ? 'opacity-65' : ''}`}>
+    <div className="relative overflow-hidden bg-[#eef0e4]">
+      <DrinkArtwork category={drink.category} name={drink.name} className="h-[112px] w-full transition-transform duration-500 group-hover:scale-[1.04] md:h-[140px]" />
+      {drink.catalogStatus !== 'legacy' && !drink.available && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] text-primary">暂不可选</span>}
+      <span className="absolute right-3 top-3 flex size-6 items-center justify-center rounded-full bg-white/60 text-primary/65 transition-colors group-hover:bg-white"><ArrowUpRight className="size-3.5" /></span>
     </div>
-  );
+    <div className="px-3.5 pb-4 pt-4 md:px-5 md:pb-5">
+      <p className="mb-2 text-[10px] tracking-[0.08em] text-primary/55">{drink.category}</p>
+      <h2 className="min-h-[2.8em] font-serif text-[17px] leading-[1.4] tracking-tight text-primary md:min-h-0 md:text-xl">{drink.name}</h2>
+      <p className="mt-1 truncate text-[10px] leading-5 text-muted-foreground/75">{drink.nameEn}</p>
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1"><span className="text-[22px] font-medium tabular-nums text-primary"><span className="mr-0.5 text-[13px]">¥</span>{drink.price}{drink.catalogEvidence?.startingPrice && drink.catalogEvidence.verifiedFields.includes('price') && <span className="ml-1 text-[10px] font-normal">起</span>}</span><span className="text-[10px] text-muted-foreground">{drink.verified || drink.catalogStatus === 'legacy' || drink.catalogEvidence?.verifiedFields.includes('volume') ? formatVolumeLabel(drink.volume) : '规格待确认'}</span></div>
+    </div>
+  </button>)}</div>;
 }
-
-export default memo(DrinkGrid);

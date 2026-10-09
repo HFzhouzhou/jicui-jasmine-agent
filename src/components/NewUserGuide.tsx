@@ -2,7 +2,7 @@ import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, User, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { scopedStorage } from '@lark-apaas/client-toolkit-lite';
+import { safeStorage } from '@/lib/storage';
 
 const GUIDE_KEY = 'jicui_newuser_guide_shown';
 
@@ -10,17 +10,17 @@ const GUIDE_STEPS = [
   {
     icon: Sparkles,
     title: '这是什么？',
-    desc: '我是茉莉娘子，从 84 款真实横州茉莉茶饮中帮你选一杯合适的。有什么想喝的直接说。',
+    desc: '我是茉莉娘子。告诉我口味、预算和饮用限制，我会根据当前菜单帮你选茶。',
   },
   {
     icon: ChevronRight,
     title: '怎么用？',
-    desc: '四问选茶快速匹配，或直接跟我说你的口味和场景。支持对比、调整、多人一起点。',
+    desc: '先说你的需求，再用“换一杯”“便宜一点”继续调整。推荐卡会显示价格、规格与需要店员确认的信息。',
   },
   {
     icon: User,
     title: '茶韵档案在哪？',
-    desc: '点右上角「茶韵档案」，设置甜度、忌口、预算，以后推荐会自动考虑你的偏好。',
+    desc: '在选茶页设置甜度、温度、饮用限制与预算，或直接在对话中说明。需求有变化时，随时告诉我。',
   },
 ];
 
@@ -37,7 +37,7 @@ function NewUserGuide({ forceShow = false }: NewUserGuideProps) {
       setShow(true);
       return;
     }
-    const shown = scopedStorage.getItem(GUIDE_KEY);
+    const shown = safeStorage.getItem(GUIDE_KEY);
     if (!shown) {
       // 延迟一点再出现，不打断首屏体验
       const timer = setTimeout(() => setShow(true), 1500);
@@ -46,7 +46,7 @@ function NewUserGuide({ forceShow = false }: NewUserGuideProps) {
   }, [forceShow]);
 
   const handleSkip = () => {
-    scopedStorage.setItem(GUIDE_KEY, '1');
+    safeStorage.setItem(GUIDE_KEY, '1');
     setShow(false);
   };
 
@@ -54,7 +54,7 @@ function NewUserGuide({ forceShow = false }: NewUserGuideProps) {
     if (step < GUIDE_STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      scopedStorage.setItem(GUIDE_KEY, '1');
+      safeStorage.setItem(GUIDE_KEY, '1');
       setShow(false);
     }
   };

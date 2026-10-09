@@ -1,195 +1,21 @@
-import { useMemo, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Heart, Sparkles, Leaf, ArrowRight } from 'lucide-react';
-import { MOCK_MENU, IDrinkItem } from '@/data/menu';
-import { getDailyTeaSign, getSeasonTip } from '@/data/funFeatures';
-import { useUserProfile } from '@/hooks/useUserProfile';
-import { useOrderHistory } from '@/hooks/useOrderHistory';
+import { formatVolumeLabel } from '@shared/catalog-display';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, ArrowUpRight, RefreshCw } from 'lucide-react';
+import DrinkArtwork from '@/components/DrinkArtwork';
+import type { Drink } from '@shared/contracts';
 
-interface RecommendedDrink {
-  drink: IDrinkItem;
-  reason: string;
-  tag: string;
-}
-
-function GuessYouLike({ count = 3 }: { count?: number }) {
+interface Props { drinks: Drink[]; loading: boolean; error: string | null; onRetry: () => void; count?: number }
+export default function GuessYouLike({ drinks, loading, error, onRetry, count = 3 }: Props) {
   const navigate = useNavigate();
-  const { profile } = useUserProfile();
-  const { orders } = useOrderHistory();
-  const seasonTip = getSeasonTip();
-  const dailySign = getDailyTeaSign();
-
-  const recommendations = useMemo((): RecommendedDrink[] => {
-    const results: RecommendedDrink[] = [];
-
-    // 1. 如果有点单历史，推荐相似口味（基于同类目或同关键词）
-    if (orders.length > 0) {
-      const lastOrder = orders[0];
-      const lastDrink = MOCK_MENU.find((d) => d.name === lastOrder.drinkName);
-      if (lastDrink) {
-        // 找同分类的相似饮品
-        const similar = MOCK_MENU.filter(
-          (d) =>
-            d.category === lastDrink.category &&
-            d.id !== lastDrink.id &&
-            !orders.some((o) => o.drinkName === d.name)
-        );
-        if (similar.length > 0) {
-          const pick = similar[Math.floor(Math.random() * similar.length)];
-          results.push({
-            drink: pick,
-            reason: `你喜欢${lastDrink.name}，这杯${pick.tags[0]}的应该也合口味`,
-             tag: '为你推荐',
-          });
-        }
-      }
-    }
-
-    // 2. 根据茶韵档案推荐（匹配关键词）
-    const profileMatched = MOCK_MENU.filter((d) => {
-      // 预算匹配
-      const budgetMap: Record<string, number> = {
-        under10: 10,
-        '10to15': 15,
-        '15to20': 20,
-        unlimited: 999,
-      };
-      const maxPrice = budgetMap[profile.budget] || 999;
-      if (d.price > maxPrice) return false;
-
-      // 忌口过滤
-      if (profile.dietary.includes('caffeine_free') && d.category === '咖啡·拿铁') return false;
-      if (profile.dietary.includes('lactose_intolerant') && d.category.includes('奶') && d.category.includes('茶')) return false;
-      if (profile.dietary.includes('no_ginger') && d.tags.some((t) => t.includes('姜'))) return false;
-      if (profile.dietary.includes('no_cold') && d.tags.some((t) => t.includes('冰') || t.includes('冷')))
-        return false;
-
-      return true;
-    });
-
-    // 从匹配的里面选2款不同分类的
-    const selectedCategories = new Set<string>();
-    const shuffled = [...profileMatched].sort(() => Math.random() - 0.5);
-    for (const d of shuffled) {
-      if (results.length >= count) break;
-      if (results.some((r) => r.drink.id === d.id)) continue;
-      if (selectedCategories.has(d.category) && selectedCategories.size > 1) continue;
-      selectedCategories.add(d.category);
-      results.push({
-        drink: d,
-        reason: profile.dietary.length > 0
-          ? '契合你的口味偏好与忌口'
-          : `根据你的${profile.sweetness}口味优选`,
-        tag: '为你推荐',
-      });
-    }
-
-    // 3. 如果还不够，按季节/今日茶签补充
-    if (results.length < count) {
-      const seasonDrinks = MOCK_MENU.filter(
-        (d) =>
-          d.category === seasonTip.recommendCategory &&
-          !results.some((r) => r.drink.id === d.id)
-      );
-      if (seasonDrinks.length > 0) {
-        const pick = seasonDrinks[Math.floor(Math.random() * seasonDrinks.length)];
-        results.push({
-          drink: pick,
-          reason: `${seasonTip.season} · ${seasonTip.tip}`,
-          tag: '当季推荐',
-        });
-      }
-    }
-
-    // 4. 兜底今日茶签
-    if (results.length < count) {
-      if (!results.some((r) => r.drink.id === dailySign.drink.id)) {
-        results.push({
-          drink: dailySign.drink,
-          reason: dailySign.teaPhrase,
-           tag: '每日推荐',
-        });
-      }
-    }
-
-    return results.slice(0, count);
-  }, [profile, orders, seasonTip, dailySign, count]);
-
-  const handleClick = (drink: IDrinkItem) => {
-    const q = `我想喝${drink.name}，请帮我推荐最合适的甜度、温度和小料搭配`;
-    navigate(`/ai-recommend?mode=chat&q=${encodeURIComponent(q)}`);
-  };
-
-  if (recommendations.length === 0) return null;
-
-  return (
-    <section id="guess-you-like" className="w-full py-12 md:py-16 bg-background">
-      <div className="max-w-5xl mx-auto px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center justify-between mb-6"
-        >
-          <div>
-             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary mb-2">
-               <Heart className="size-3.5" />
-               为你推荐
-             </span>
-             <h2 className="text-xl md:text-2xl font-bold text-foreground">
-               按你点过的，推荐 {recommendations.length} 杯试试
-             </h2>
-          </div>
-        </motion.div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recommendations.map((rec, i) => (
-            <motion.button
-              key={rec.drink.id}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.08 }}
-              whileHover={{ y: -3 }}
-              onClick={() => handleClick(rec.drink)}
-              className="text-left group"
-            >
-              <div className="bg-card border border-border/60 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-md transition-all duration-300 h-full">
-                {/* 顶部装饰 */}
-                <div className="h-20 bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5 flex items-center justify-center relative">
-                  <Leaf className="size-10 text-primary/40" />
-                  <span className="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
-                    {rec.tag}
-                  </span>
-                </div>
-
-                <div className="p-4">
-                  <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                    {rec.drink.name}
-                  </h4>
-                  <p className="text-[11px] text-muted-foreground font-serif italic truncate">
-                    {rec.drink.nameEn}
-                  </p>
-                  <p className="text-xs text-foreground/70 mt-2 leading-relaxed line-clamp-2 min-h-[2.5rem]">
-                    {rec.reason}
-                  </p>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-lg font-black text-primary">¥{rec.drink.price}</span>
-                    <span className="text-xs text-primary flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      看看
-                      <ArrowRight className="size-3" />
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  const storeDrinks = drinks.filter((drink) => drink.catalogStatus !== 'legacy');
+  const categories = new Set<string>();
+  const featured = storeDrinks.filter((drink) => {
+    if (!drink.available || categories.has(drink.category)) return false;
+    categories.add(drink.category);
+    return true;
+  }).slice(0, count);
+  return <section className="mx-auto max-w-7xl px-5 pb-14 pt-3 text-[#253b2d] md:px-8 md:pb-20 md:pt-5"><div className="mb-7 flex items-end justify-between gap-5 md:mb-9"><div><p className="text-[10px] tracking-[0.22em] text-[#879079]">THE JASMINE COLLECTION</p><h2 className="mt-3 font-serif text-[27px] leading-[1.4] tracking-wide md:text-[36px]">好茶，自有不同风味。</h2></div><Link to="/menu" className="mb-1 inline-flex shrink-0 items-center gap-2 border-b border-[#253b2d]/30 pb-1.5 text-xs transition-colors hover:border-[#253b2d]">全部茶单<ArrowUpRight className="size-4" /></Link></div>
+    {loading ? <div className="grid grid-cols-3 gap-4" aria-label="正在读取当前菜单" role="status">{[0, 1, 2].map((item) => <div key={item} className="aspect-[3/4] animate-pulse rounded-[24px] bg-[#e9ecdf]" />)}</div> : error ? <div className="rounded-[24px] bg-[#eeeee2] p-7" role="alert"><p className="mb-4 text-sm text-[#78806d]">{error}</p><button type="button" onClick={onRetry} className="inline-flex items-center gap-2 rounded-full border border-[#253b2d]/20 px-4 py-2.5 text-xs"><RefreshCw className="size-3.5" />重新读取菜单</button></div> : featured.length === 0 ? <p className="rounded-[24px] bg-[#eeeee2] py-10 text-center text-sm text-[#78806d]">当前没有标记为可选的饮品，请稍后再来看看。</p> : <div className="-mx-5 flex snap-x snap-mandatory gap-3.5 overflow-x-auto px-5 pb-3 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0">{featured.map((drink, index) => <button type="button" key={drink.id} onClick={() => navigate(`/ai-recommend?mode=chat&q=${encodeURIComponent(`我对${drink.name}感兴趣，请介绍菜单中已核实的信息，并帮我确认适合的选项。`)}`)} className="group w-[76vw] max-w-[310px] shrink-0 snap-center text-left focus-visible:rounded-[24px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#253b2d] sm:w-auto sm:max-w-none"><div className={`relative aspect-[4/3.8] overflow-hidden rounded-[24px] transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-lg group-hover:shadow-[#253b2d]/5 ${index % 3 === 0 ? 'bg-[#e6ead8]' : index % 3 === 1 ? 'bg-[#eee5d3]' : 'bg-[#dde5dc]'}`}><div className="absolute left-5 right-5 top-5 z-10 flex items-center justify-between gap-3"><span className="text-[10px] tracking-[0.09em] text-[#64715b]">{drink.category}</span><span className="font-serif text-xs text-[#748269]">0{index + 1}</span></div><DrinkArtwork category={drink.category} name={drink.name} className="h-full w-full px-6 pb-2 pt-5 transition-transform duration-700 group-hover:scale-[1.035]" /><span className="absolute bottom-4 right-4 text-[8px] tracking-[0.08em] text-[#64715b]/65">图片仅供参考</span></div><div className="px-1 pt-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-serif text-[21px] leading-snug md:text-2xl">{drink.name}</h3><p className="mt-1.5 max-w-[220px] truncate text-[9px] tracking-[0.1em] text-[#8d9580]">{drink.nameEn}</p></div><span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-full border border-[#253b2d]/15 transition-colors group-hover:bg-[#253b2d] group-hover:text-[#f7f7ef]"><ArrowUpRight className="size-4" /></span></div><div className="mt-5 flex items-baseline justify-between gap-3 border-t border-[#253b2d]/10 pt-3"><p className="text-[20px] tabular-nums"><span className="mr-0.5 text-xs">¥</span>{drink.price}{drink.catalogEvidence?.startingPrice && drink.catalogEvidence.verifiedFields.includes('price') && <span className="ml-0.5 text-[10px]">起</span>}<span className="ml-2 text-[10px] text-[#879079]">{drink.verified || drink.catalogStatus === 'legacy' || drink.catalogEvidence?.verifiedFields.includes('volume') ? formatVolumeLabel(drink.volume) : '规格待确认'}</span></p><span className="text-[9px] text-[#879079]">门店参考价</span></div></div></button>)}</div>}
+    <div className="mt-5 flex items-center justify-between gap-5 text-[10px] leading-5 text-[#89917e]"><p aria-live="polite">{!loading && !error && `中华茉莉园店 · 价格与售卖情况以门店为准，起价随规格变动。`}</p>{featured.length > 1 && <span className="inline-flex shrink-0 items-center gap-1 sm:hidden">滑动探索<ArrowRight className="size-3" /></span>}</div>
+  </section>;
 }
-
-export default memo(GuessYouLike);

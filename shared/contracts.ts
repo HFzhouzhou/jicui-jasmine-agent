@@ -77,6 +77,24 @@ export interface RecommendResponse {
   mode: 'live' | 'preview';
   requestId: string;
 }
+/** Desired configuration only; names/options are not official SKU identifiers or a quote. */
+export interface OfficialOrderDraft {
+  drinkId: string;
+  drinkName: string;
+  quantity: number;
+  storeName?: string;
+  options: {
+    volume: string;
+    sweetness: string;
+    temperature: string;
+    toppings: string;
+  };
+  note?: string;
+}
+/** A ready handoff opens the official confirmation page; it never means an order was paid. */
+export type OfficialOrderHandoffResponse =
+  | {status: 'unavailable'; message: string}
+  | {status: 'ready'; url: string};
 export interface HealthResponse {
   status: 'ok';
   aiConfigured: boolean;

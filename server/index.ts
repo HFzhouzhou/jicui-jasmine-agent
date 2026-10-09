@@ -9,7 +9,7 @@ import { Store, StoreConflict } from './database.js';
 import { loadConfig, type ServerConfig } from './config.js';
 import { ApiFailure } from './errors.js';
 import { recommend, requestSchema } from './recommend.js';
-import type { KnowledgeEntry } from '../shared/contracts.js';
+import type { KnowledgeEntry, OfficialOrderDraft, OfficialOrderHandoffResponse } from '../shared/contracts.js';
 
 const textItem = z.string().trim().min(1).max(160);
 const drinkPatch = z.object({
@@ -28,6 +28,18 @@ const knowledgeSchema = z.object({expectedVersion: z.string().max(100).optional(
   updatedAt: z.string().max(50).optional(),
 }).strict().refine(entry => !entry.verified || Boolean(entry.source), '核准知识必须填写来源')).max(100)}).strict().refine(value => new Set(value.entries.map(entry => entry.id)).size === value.entries.length, '知识ID不能重复');
 const feedbackSchema = z.object({requestId: z.string().uuid(), rating: z.enum(['up', 'down']), comment: z.string().trim().max(1000).optional()}).strict();
+const orderOption = z.string().trim().min(1).max(80);
+const orderDraftSchema: z.ZodType<OfficialOrderDraft> = z.object({
+  drinkId: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/),
+  drinkName: textItem,
+  quantity: z.number().int().min(1).max(20),
+  storeName: textItem.optional(),
+  options: z.object({
+    volume: orderOption, sweetness: orderOption, temperature: orderOption,
+    toppings: z.string().trim().min(1).max(300),
+  }).strict(),
+  note: z.string().trim().max(500).optional(),
+}).strict();
 
 export interface AppOptions {
   config?: Partial<ServerConfig>;
@@ -77,6 +89,21 @@ export function createApp(options: AppOptions = {}) {
   };
   app.post('/api/recommend', limiter(config.rateLimit, 'recommend'), recommendations('live'));
   app.post('/api/recommend/preview', limiter(config.rateLimit, 'recommend'), recommendations('preview'));
+  app.post('/api/order-handoff', limiter(30, 'order-handoff'), (req, res) => {
+    const input = orderDraftSchema.parse(req.body);
+    const drink = store.drink(input.drinkId);
+    if (!drink) throw new ApiFailure(404, 'DRINK_NOT_FOUND', '找不到这个商品，请重新选择。');
+    if (!drink.available || !['observed', 'managed'].includes(drink.catalogStatus || '')) {
+      throw new ApiFailure(409, 'DRINK_UNAVAILABLE', '这个商品当前无法选购，请重新选择。');
+    }
+    // This boundary is intentionally read-only until an official SKU/store adapter exists.
+    // Client names and options express preferences, never validated availability or prices.
+    const result: OfficialOrderHandoffResponse = {
+      status: 'unavailable',
+      message: '官方小程序下单暂未开通，这份配置尚未提交。你可以先保存或复制配置。',
+    };
+    res.json(result);
+  });
   app.post('/api/feedback', limiter(30, 'feedback'), (req, res) => {
     const input = feedbackSchema.parse(req.body);
     if (!store.feedback(input.requestId, input.rating, input.comment || '')) throw new ApiFailure(404, 'REQUEST_NOT_FOUND', '找不到这次推荐记录。');

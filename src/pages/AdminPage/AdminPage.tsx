@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { BookOpen, Check, Leaf, Loader2, LogOut, Plus, RefreshCw, Search, Settings2, Trash2 } from 'lucide-react';
+import { BookOpen, Check, Leaf, Loader2, LogOut, RefreshCw, Search, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { apiRequest, RequestError } from '@/lib/api';
 import { toast } from 'sonner';
-import type { Drink, KnowledgeEntry } from '@shared/contracts';
+import type { Drink } from '@shared/contracts';
+import { KnowledgeWorkspace } from '@/components/admin/KnowledgeWorkspace';
 
-type KnowledgeResponse = { entries: KnowledgeEntry[]; version: string };
-type Conflict = { kind: 'menu'; drinkId: string } | { kind: 'knowledge' };
+type Conflict = { kind: 'menu'; drinkId: string };
 type MenuDraft = {
   catalogStatus: NonNullable<Drink['catalogStatus']>; price: string; available: boolean; verified: boolean; ingredients: string; allergens: string;
   allergensKnown: boolean; caffeine: Drink['caffeine']; sweetnessOptions: string; temperatureOptions: string; toppings: string; source: string;
@@ -33,16 +33,11 @@ function menuBackupText(name: string, draft: MenuDraft): string {
     `小料：\n${draft.toppings || '无'}`, `来源：${draft.source}`,
   ].join('\n');
 }
-function knowledgeBackupText(entries: KnowledgeEntry[]): string {
-  return entries.length ? entries.map((entry) => `标题：${entry.title}\n${entry.content}\n来源：${entry.source || '待补充'}\n已核准：${entry.verified ? '是' : '否'}`).join('\n\n——\n\n') : '本次草稿为空知识库。';
-}
 
 export default function AdminPage() {
   const [tokenInput, setTokenInput] = useState('');
   const [token, setToken] = useState('');
   const [drinks, setDrinks] = useState<Drink[]>([]);
-  const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
-  const [knowledgeVersion, setKnowledgeVersion] = useState<string | null>(null);
   const [conflict, setConflict] = useState<Conflict | null>(null);
   const [backupText, setBackupText] = useState('');
   const [tab, setTab] = useState<'menu' | 'knowledge'>('menu');
@@ -63,18 +58,15 @@ export default function AdminPage() {
     setPending(true); setError('');
     const controller = new AbortController(); requestController.current = controller;
     try {
-      const [menu, knowledge] = await Promise.all([
-        apiRequest<{ drinks: Drink[] }>('/api/admin/menu', { headers: headers(tokenInput.trim()), signal: controller.signal }, 15000),
-        apiRequest<KnowledgeResponse>('/api/admin/knowledge', { headers: headers(tokenInput.trim()), signal: controller.signal }, 15000),
-      ]);
+      const menu = await apiRequest<{ drinks: Drink[] }>('/api/admin/menu', { headers: headers(tokenInput.trim()), signal: controller.signal }, 15000);
       if (controller.signal.aborted) return;
-      setDrinks(menu.drinks); setEntries(knowledge.entries); setKnowledgeVersion(knowledge.version); setToken(tokenInput.trim()); setTokenInput('');
+      setDrinks(menu.drinks); setToken(tokenInput.trim()); setTokenInput('');
     } catch (cause) { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : '管理服务连接失败'); }
     finally { if (!controller.signal.aborted) setPending(false); }
   }
   function logout() {
     requestController.current?.abort(); requestController.current = null;
-    setToken(''); setTokenInput(''); setKnowledgeVersion(null); setConflict(null); setBackupText(''); setDrinks([]); setEntries([]); setSelected(null); setDraft(null); setPending(false); setError('');
+    setToken(''); setTokenInput(''); setConflict(null); setBackupText(''); setDrinks([]); setSelected(null); setDraft(null); setPending(false); setError('');
   }
   async function patchDrink(id: string, update: Partial<Drink>, expectedUpdatedAt: string) {
     if (pending) return;
@@ -121,35 +113,6 @@ export default function AdminPage() {
       sweetnessOptions: splitList(draft.sweetnessOptions), temperatureOptions: splitList(draft.temperatureOptions), toppings, source: draft.source.trim(),
     }, selected.updatedAt);
   }
-  function editEntry(index: number, update: Partial<KnowledgeEntry>) {
-    setEntries((previous) => previous.map((entry, i) => i === index ? { ...entry, ...update } : entry));
-  }
-  async function saveKnowledge() {
-    if (pending) return;
-    if (knowledgeVersion === null) { setError('尚未取得知识库版本，请重新进入管理页面后保存。'); return; }
-    if (entries.some((entry) => !entry.title.trim() || !entry.content.trim() || (entry.verified && !entry.source.trim()))) {
-      setError('每条知识需要标题和内容；核准发布的知识还需要填写来源。'); return;
-    }
-    setPending(true); setError('');
-    const controller = new AbortController(); requestController.current = controller;
-    try {
-      const result = await apiRequest<KnowledgeResponse>('/api/admin/knowledge', {
-        method: 'PUT', headers: headers(), body: JSON.stringify({ entries, expectedVersion: knowledgeVersion }), signal: controller.signal,
-      }, 15000);
-      if (controller.signal.aborted) return;
-      setEntries(result.entries); setKnowledgeVersion(result.version);
-      if (conflict?.kind === 'knowledge') setConflict(null);
-      toast.success('知识库已保存，已核准内容可用于问答');
-    } catch (cause) {
-      if (!controller.signal.aborted) {
-        if (cause instanceof RequestError && cause.code === 'STALE_WRITE') {
-          setConflict({ kind: 'knowledge' });
-          setError('知识库已被其他操作更新，本次保存未生效，你的草稿仍在。请载入最新版本并重新核对后保存。');
-        } else setError(cause instanceof Error ? cause.message : '知识库保存失败');
-      }
-    }
-    finally { if (!controller.signal.aborted) setPending(false); }
-  }
   async function reloadConflict() {
     if (!conflict || pending) return;
     setPending(true); setError('');
@@ -165,11 +128,6 @@ export default function AdminPage() {
           setSelected(latest); setDraft(draftFor(latest));
         }
         setDrinks(result.drinks);
-      } else {
-        const result = await apiRequest<KnowledgeResponse>('/api/admin/knowledge', { headers: headers(), signal: controller.signal }, 15000);
-        if (controller.signal.aborted) return;
-        setBackupText((previous) => [previous, knowledgeBackupText(entries)].filter(Boolean).join('\n\n—— 新一轮冲突草稿 ——\n\n'));
-        setEntries(result.entries); setKnowledgeVersion(result.version);
       }
       setConflict(null);
       toast.success('已载入最新资料。原编辑内容保留在草稿备份中，请对照后重新应用需要的修改。');
@@ -199,7 +157,7 @@ export default function AdminPage() {
 
   return <div className="mx-auto max-w-7xl px-5 py-9 md:px-10 md:py-14 [&_input:not([type=checkbox])]:min-h-11 [&_input:not([type=checkbox])]:rounded-xl [&_input:not([type=checkbox])]:border-primary/10 [&_textarea]:rounded-xl [&_textarea]:border-primary/10 [&_button[data-slot=button]]:min-h-11 [&_button[data-slot=button]]:rounded-full">
     <header className="mb-9 flex flex-wrap items-center justify-between gap-5"><div><p className="mb-4 text-[10px] tracking-[0.26em] text-primary/55">JICUI · BRAND STUDIO</p><h1 className="font-serif text-[32px] text-primary md:text-[40px]">品牌资料管理</h1></div><Button variant="outline" size="sm" onClick={logout} className="gap-2"><LogOut className="size-4" />退出管理</Button></header>
-    <div className="mb-7 flex w-fit flex-wrap gap-2 rounded-[24px] bg-[#eceee2] p-1.5"><Button variant={tab === 'menu' ? 'default' : 'outline'} onClick={() => { setTab('menu'); setError(''); }} className="gap-2"><Leaf className="size-4" />菜单（{drinks.length}）</Button><Button variant={tab === 'knowledge' ? 'default' : 'outline'} onClick={() => { setTab('knowledge'); setError(''); }} className="gap-2"><BookOpen className="size-4" />知识库（{entries.length}）</Button></div>
+    <div className="mb-7 flex w-fit flex-wrap gap-2 rounded-[24px] bg-[#eceee2] p-1.5"><Button variant={tab === 'menu' ? 'default' : 'outline'} onClick={() => { setTab('menu'); setError(''); }} className="gap-2"><Leaf className="size-4" />菜单（{drinks.length}）</Button><Button variant={tab === 'knowledge' ? 'default' : 'outline'} onClick={() => { setTab('knowledge'); setError(''); }} className="gap-2"><BookOpen className="size-4" />知识库</Button></div>
     {(error || conflict) && <div role="alert" className="mb-6 space-y-3 rounded-[22px] bg-destructive/5 p-5 text-sm text-destructive">
       <p>{error || '资料存在版本冲突，请载入最新版本后重新核对。当前草稿尚未保存到服务器。'}</p>
       {conflict && <><p className="text-xs leading-6">载入后会显示最新资料，并在下方保留这次编辑的草稿备份，方便对照；不会自动覆盖别人的修改。</p><Button size="sm" variant="outline" disabled={pending} onClick={() => void reloadConflict()} className="gap-2"><RefreshCw className={`size-4 ${pending ? 'animate-spin' : ''}`} />载入最新版本，保留草稿备份</Button></>}
@@ -209,7 +167,7 @@ export default function AdminPage() {
       <p className="text-xs text-muted-foreground leading-6 my-3">下方编辑区已载入最新资料。请参照备份，重新填写仍需保留的修改后保存。可选中文字复制留存；退出或刷新页面会清除备份。</p>
       <Textarea aria-label="冲突前的草稿备份" value={backupText} readOnly rows={8} className="bg-background text-xs" />
     </details>}
-    {tab === 'menu' ? <>
+    <div className={tab === 'menu' ? '' : 'hidden'}>
       <p className="mb-6 max-w-3xl text-xs leading-7 text-muted-foreground">菜单核对 {drinks.filter((drink) => drink.catalogStatus === 'observed').length} 款 · 商品资料核准 {drinks.filter((drink) => drink.verified).length} 款 · 原始资料 {drinks.filter((drink) => drink.catalogStatus === 'legacy').length} 款。菜单核对仅确认名称、普通价等列明字段；原料、过敏原和规格未知时请留空，仅在查证后标记商品资料核准。</p>
       <div className="grid items-start gap-6 md:grid-cols-5">
         <section className="overflow-hidden rounded-[26px] bg-white md:col-span-2">
@@ -236,17 +194,7 @@ export default function AdminPage() {
           </fieldset></form>}
         </section>
       </div>
-    </> : <section className="max-w-4xl"><fieldset disabled={pending} className="space-y-4">
-      <p className="text-sm text-muted-foreground leading-7">仅已核准且填写来源的知识可用于顾客问答。未核准内容作为草稿保留。</p>
-      {entries.map((entry, index) => <article key={entry.id} className="space-y-5 rounded-[26px] bg-white p-5 md:p-7">
-        <div className="flex items-center justify-between"><h2 className="font-serif text-lg text-primary">资料 {index + 1}</h2><Button size="sm" variant="ghost" className="text-destructive gap-1" disabled={pending} onClick={() => setEntries((previous) => previous.filter((item) => item.id !== entry.id))}><Trash2 className="size-3.5" />移除条目</Button></div>
-        <label className="block text-sm space-y-2">标题<Input value={entry.title} onChange={(event) => editEntry(index, { title: event.target.value })} maxLength={100} /></label>
-        <label className="block text-sm space-y-2">知识正文<Textarea rows={5} value={entry.content} onChange={(event) => editEntry(index, { content: event.target.value })} maxLength={8000} /></label>
-        <label className="block text-sm space-y-2">来源<Input maxLength={1000} value={entry.source} onChange={(event) => editEntry(index, { source: event.target.value })} placeholder="资料文件、核准记录或可追溯链接" /></label>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-primary size-4" checked={entry.verified} onChange={(event) => editEntry(index, { verified: event.target.checked })} />已核准，发布给选茶助手</label>
-      </article>)}
-      <div className="flex flex-wrap gap-3"><Button variant="outline" disabled={pending} onClick={() => setEntries((previous) => [...previous, { id: `knowledge_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`, title: '', content: '', source: '', verified: false, updatedAt: new Date().toISOString() }])} className="gap-2"><Plus className="size-4" />添加知识</Button><Button disabled={pending} onClick={() => void saveKnowledge()} className="gap-2">{pending && <Loader2 className="size-4 animate-spin" />}保存整个知识库</Button></div>
-      <p className="text-xs text-muted-foreground">新增、移除和编辑需点击保存才会生效。</p>
-    </fieldset></section>}
+    </div>
+    <div className={tab === 'knowledge' ? '' : 'hidden'}><KnowledgeWorkspace token={token} /></div>
   </div>;
 }

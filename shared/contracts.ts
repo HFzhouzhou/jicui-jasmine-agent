@@ -1,3 +1,4 @@
+import type { KnowledgeCitation } from './rag';
 /** Public API contract. Secrets and model prompts never belong in this module. */
 export interface CatalogEvidence {
   source: string;
@@ -76,6 +77,7 @@ export interface RecommendResponse {
   notices: string[];
   mode: 'live' | 'preview';
   requestId: string;
+  citations?: KnowledgeCitation[];
 }
 /** Desired configuration only; names/options are not official SKU identifiers or a quote. */
 export interface OfficialOrderDraft {

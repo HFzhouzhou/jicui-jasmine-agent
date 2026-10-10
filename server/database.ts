@@ -4,6 +4,7 @@ import { dirname } from 'node:path';
 import { MOCK_MENU } from '../src/data/menu.js';
 import type { Drink, KnowledgeEntry } from '../shared/contracts.js';
 import { OFFICIAL_CATALOG, type OfficialCatalogBatch } from './data/official-catalog.js';
+import { RagStore } from './rag/store.js';
 
 export class StoreConflict extends Error {}
 const nextTimestamp = (previous = '') => new Date(Math.max(Date.now(), (Date.parse(previous) || 0) + 1)).toISOString();
@@ -22,6 +23,7 @@ function hasAdminChanges(drink: Drink): boolean {
 
 export class Store {
   readonly db: DatabaseSync;
+  readonly rag: RagStore;
   constructor(path: string) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
@@ -43,6 +45,8 @@ export class Store {
       } catch (error) { this.db.exec('ROLLBACK'); throw error; }
     }
     this.syncOfficialCatalog();
+    this.rag = new RagStore(this.db);
+    this.rag.syncEntries(this.knowledge());
   }
   /** Versioned, field-by-field import. Never delete legacy records or overwrite manager edits. */
   syncOfficialCatalog(batch: OfficialCatalogBatch = OFFICIAL_CATALOG): CatalogSyncReport {
@@ -124,6 +128,7 @@ export class Store {
       this.db.exec('DELETE FROM knowledge');
       const insert = this.db.prepare('INSERT INTO knowledge (id, value) VALUES (?, ?)');
       for (const entry of updated) insert.run(entry.id, JSON.stringify(entry));
+      this.rag.syncEntries(updated);
       this.db.prepare("INSERT INTO metadata (key, value) VALUES ('knowledge_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(version);
       this.db.exec('COMMIT');
       return updated;

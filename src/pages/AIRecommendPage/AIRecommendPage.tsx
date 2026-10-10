@@ -1,20 +1,25 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowUpRight, Bookmark, ChevronRight, FlaskConical, Leaf, Loader2, Send, Settings2, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
+import { ArrowUpRight, Bookmark, ChevronRight, FlaskConical, Info, Leaf, Loader2, Send, Settings2, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import TeaCard from '@/components/TeaCard';
 import DrinkArtwork from '@/components/DrinkArtwork';
+import KnowledgeSources, { isKnowledgeCitation } from '@/components/KnowledgeSources';
+import type { KnowledgeCitation } from '@shared/rag';
 import { toast } from 'sonner';
 import { apiRequest, getHealth, isTeaCard, recommend, RequestError } from '@/lib/api';
-import type { ChatMessage, HealthResponse, KnowledgeEntry, OfficialOrderDraft, Preferences, RecommendRequest, RecommendResponse, TeaCard as CardData } from '@shared/contracts';
+import type { ChatMessage, HealthResponse, OfficialOrderDraft, Preferences, RecommendRequest, RecommendResponse, TeaCard as CardData } from '@shared/contracts';
 
 type Mode = 'live' | 'preview';
-interface ConversationMessage extends ChatMessage { cardContext?: string; productCard?: CardData; orderDraft?: OfficialOrderDraft }
+interface ConversationMessage extends ChatMessage { cardContext?: string; productCard?: CardData; orderDraft?: OfficialOrderDraft; citations?: KnowledgeCitation[]; notices?: string[] }
 interface SavedConversation { messages: ConversationMessage[]; mode: Mode }
 const HISTORY_KEY = 'jicui_conversation_v2';
 const FAVORITES_KEY = 'jicui_favorites_v2';
+function isConversationNotice(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= 2000;
+}
 function lastAssistantIndex(messages: ConversationMessage[]) {
   for (let index = messages.length - 1; index >= 0; index--) if (messages[index].role === 'assistant') return index;
   return -1;
@@ -35,7 +40,7 @@ function readConversation(): SavedConversation {
     const value = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null');
     if (value && Array.isArray(value.messages)) return {
       mode: value.mode === 'preview' ? 'preview' : 'live',
-      messages: value.messages.filter((item: ConversationMessage) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string').slice(-20).map((item: ConversationMessage) => ({ role: item.role, content: item.content.slice(0, 6000), ...(typeof item.cardContext === 'string' ? { cardContext: item.cardContext.slice(0, 2000) } : {}), ...(item.role === 'assistant' && isTeaCard(item.productCard) ? { productCard: item.productCard, ...(isSavedOrderDraft(item.orderDraft, item.productCard.drinkId) ? { orderDraft: item.orderDraft } : {}) } : {}) })),
+      messages: value.messages.filter((item: ConversationMessage) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string').slice(-20).map((item: ConversationMessage) => ({ role: item.role, content: item.content.slice(0, 6000), ...(item.role === 'assistant' && Array.isArray(item.citations) ? {citations: item.citations.filter(isKnowledgeCitation).slice(0, 6), ...(Array.isArray(item.notices) ? { notices: item.notices.filter(isConversationNotice).slice(0, 6) } : {})} : {}), ...(typeof item.cardContext === 'string' ? { cardContext: item.cardContext.slice(0, 2000) } : {}), ...(item.role === 'assistant' && isTeaCard(item.productCard) ? { productCard: item.productCard, ...(isSavedOrderDraft(item.orderDraft, item.productCard.drinkId) ? { orderDraft: item.orderDraft } : {}) } : {}) })),
     };
   } catch { /* A blocked or full browser store must not prevent using the app. */ }
   return { messages: [], mode: 'live' };
@@ -76,7 +81,6 @@ export default function AIRecommendPage() {
     const draft = saved.messages[lastAssistantIndex(saved.messages)]?.orderDraft;
     return draft ? { [draft.drinkId]: draft } : {};
   });
-  const [knowledge, setKnowledge] = useState<KnowledgeEntry[]>([]);
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [feedbackPending, setFeedbackPending] = useState(false);
   const [feedbackComment, setFeedbackComment] = useState('');
@@ -94,9 +98,6 @@ export default function AIRecommendPage() {
   useEffect(() => {
     const controller = new AbortController();
     void refreshHealth(controller.signal);
-    apiRequest<{ entries: KnowledgeEntry[] }>('/api/knowledge', { signal: controller.signal }, 10000)
-      .then((value) => setKnowledge(value.entries.filter((entry) => entry.verified && entry.source)))
-      .catch(() => {});
     return () => { controller.abort(); activeRequest.current?.abort(); };
   }, []);
   useEffect(() => {
@@ -144,7 +145,7 @@ export default function AIRecommendPage() {
       setResult(value); setConfiguredOrders({}); activeResultId.current = value.requestId;
       const content = `${value.mode === 'preview' ? '【规则预览，非 AI】\n' : ''}${value.reply}`;
       const catalogContext = value.cards.length ? `目录记录：${JSON.stringify(value.cards.map(({ drinkId, drinkName, price }) => ({ drinkId, drinkName, price })))}` : undefined;
-      setMessages([...displayHistory, { role: 'user', content: body.message }, { role: 'assistant', content, cardContext: catalogContext, productCard: value.cards[0] }].slice(-20) as ConversationMessage[]);
+      setMessages([...displayHistory, { role: 'user', content: body.message }, { role: 'assistant', content, cardContext: catalogContext, productCard: value.cards[0], ...(Array.isArray(value.citations) ? { citations: value.citations.filter(isKnowledgeCitation).slice(0, 6), notices: value.notices.filter(isConversationNotice).slice(0, 6) } : {}) }].slice(-20) as ConversationMessage[]);
     } catch (cause) {
       if (activeRequest.current !== controller) return;
       setError(cause instanceof Error ? cause.message : '本次推荐失败，请重试。');
@@ -246,6 +247,8 @@ export default function AIRecommendPage() {
             </div>}
             {messages.map((message, index) => <div key={index} className={`flex min-w-0 flex-col gap-4 ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`min-w-0 max-w-[94%] whitespace-pre-wrap [overflow-wrap:anywhere] px-4 py-3 text-sm leading-7 ${message.role === 'user' ? 'rounded-[20px] rounded-br-md bg-[#253b2d] text-[#f7f7ef]' : 'rounded-[20px] rounded-bl-md bg-[#f4f5ed] text-[#53624b]'}`}>{message.role === 'assistant' && <span className="mb-1 block text-[10px] tracking-wider text-[#8c977a]">茉莉娘子</span>}{message.content}</div>
+              {message.role === 'assistant' && message.citations && <KnowledgeSources citations={message.citations} />}
+              {message.role === 'assistant' && message.citations && !!message.notices?.length && <div role="note" className="flex w-full min-w-0 items-start gap-2 rounded-xl bg-[#f4eddd] px-3 py-2.5 text-[11px] leading-6 text-[#8c7447]"><Info className="mt-1 size-3.5 shrink-0" /><div className="min-w-0 space-y-1 [overflow-wrap:anywhere]">{message.notices.map((notice, noticeIndex) => <p key={noticeIndex}>{notice}</p>)}</div></div>}
               {index === latestAssistantIndex && message.productCard && <div className="w-full min-w-0 rounded-[24px] border border-[#dfe7cd]">
                 <TeaCard key={message.productCard.drinkId} data={{ ...message.productCard, isMain: true }} configuredOrder={configuredOrders[message.productCard.drinkId]} onConfigure={configureOrder} onConfirm={() => saveFavorite(message.productCard!)} onAskMore={() => { setInput(''); inputRef.current?.focus(); }} />
               </div>}
@@ -287,7 +290,6 @@ export default function AIRecommendPage() {
             <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-4 bg-gradient-to-t from-[#dce6bd] via-[#dce6bd]/90 to-transparent px-7 pb-7 pt-16 sm:px-9"><div><span className="block font-serif text-2xl tracking-widest text-[#647a49]">慢一点，香一点。</span><p className="mt-3 text-[10px] text-[#7a8a62]">先说说你的喜好，茶单将在这里呈现。</p><button type="button" onClick={() => setMobilePane('chat')} className="mt-3 min-h-11 rounded-full bg-[#253b2d] px-5 text-xs text-[#f7f7ef] lg:hidden">开始聊聊<ArrowUpRight className="ml-2 inline size-3" /></button></div><span className="mb-1 text-[8px] tracking-widest text-[#8a9c71] [writing-mode:vertical-rl]">JICUI · JASMINE</span></div>
             <span className="absolute right-5 top-5 text-[8px] text-[#889b6c]">图片仅供参考</span>
           </div>}
-          {knowledge.length > 0 && <div className="rounded-[22px] bg-white p-5"><h3 className="mb-3 font-serif text-lg">茉莉小笺 <span className="ml-2 font-sans text-[10px] text-[#8b967b]">品牌资料 · 已核准</span></h3>{knowledge.map((entry) => <details key={entry.id} className="border-t border-[#253b2d]/[0.07] py-3 text-xs"><summary className="cursor-pointer text-[#68795a]">{entry.title}</summary><p className="mt-3 whitespace-pre-wrap leading-7">{entry.content}</p><p className="mt-2 break-words text-[10px] text-[#96a086]">来源：{entry.source}</p></details>)}</div>}
         </section>
       </div>
     </div>

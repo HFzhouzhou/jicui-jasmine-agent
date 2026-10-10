@@ -9,6 +9,10 @@ import { Store, StoreConflict } from './database.js';
 import { loadConfig, type ServerConfig } from './config.js';
 import { ApiFailure } from './errors.js';
 import { recommend, requestSchema } from './recommend.js';
+import { createRagRouter } from './rag/routes.js';
+import { DocumentParseError } from './rag/parser.js';
+import { RagConflict, RagValidationError } from './rag/store.js';
+import { MulterError } from 'multer';
 import type { KnowledgeEntry, OfficialOrderDraft, OfficialOrderHandoffResponse } from '../shared/contracts.js';
 
 const textItem = z.string().trim().min(1).max(160);
@@ -54,10 +58,13 @@ export function createApp(options: AppOptions = {}) {
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
   app.locals.store = store;
-  app.locals.close = () => store.close();
+  const activeParsers = new Set<AbortController>();
+  app.locals.abortActiveParsers = () => {for (const controller of activeParsers) controller.abort();};
+  app.locals.close = () => {for (const controller of activeParsers) controller.abort(); store.close();};
   app.use((_req, res, next) => { res.set({'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'X-Frame-Options': 'DENY'}); next(); });
   app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
-  app.use(express.json({limit: '256kb', strict: true}));
+  const parseJson = express.json({limit: '256kb', strict: true});
+  app.use((req, res, next) => /^\/api\/admin\/rag(?:\/|$)/.test(req.path) ? next() : parseJson(req, res, next));
   const requests = new Map<string, {expiresAt: number; count: number}>();
   const limiter = (limit: number, scope: string) => (req: Request, res: Response, next: NextFunction) => {
     const now = Date.now();
@@ -75,7 +82,15 @@ export function createApp(options: AppOptions = {}) {
   app.get('/api/health', (_req, res) => res.json({status: 'ok', aiConfigured: Boolean(config.apiKey), provider: 'DeepSeek', menuCount: store.drinks().length}));
   app.use('/api', limiter(180, 'api'));
   app.get('/api/menu', (_req, res) => res.json({drinks: store.drinks()}));
-  app.get('/api/knowledge', (_req, res) => res.json({entries: store.knowledge(true)}));
+  app.get('/api/knowledge', (_req, res) => {
+    // Compatibility endpoint: only the current published legacy revisions, never withdrawn copies.
+    const rows = store.db.prepare("SELECT id,legacy_id FROM rag_documents WHERE legacy_id IS NOT NULL AND status='published' LIMIT 100").all();
+    const entries = rows.flatMap(row => {
+      const detail = store.rag.getDocument(row.id as string);
+      return detail ? [{id: row.legacy_id as string, title: detail.document.title, content: detail.content.slice(0, 8000), source: detail.document.source, verified: true, updatedAt: detail.document.updatedAt}] : [];
+    });
+    res.json({entries});
+  });
   let inFlight = 0;
   const recommendations = (mode: 'live' | 'preview') => async (req: Request, res: Response) => {
     const input = requestSchema.parse(req.body);
@@ -109,7 +124,7 @@ export function createApp(options: AppOptions = {}) {
     if (!store.feedback(input.requestId, input.rating, input.comment || '')) throw new ApiFailure(404, 'REQUEST_NOT_FOUND', '找不到这次推荐记录。');
     res.status(201).json({ok: true});
   });
-  app.use('/api/admin', limiter(30, 'admin'), (req, _res, next) => {
+  app.use('/api/admin', limiter(120, 'admin'), (req, _res, next) => {
     if (!config.adminToken) return next(new ApiFailure(503, 'ADMIN_DISABLED', '管理功能尚未配置，请设置服务端 ADMIN_TOKEN。'));
     const header = req.get('Authorization') || '';
     const actual = Buffer.from(header.startsWith('Bearer ') ? header.slice(7) : '');
@@ -117,6 +132,7 @@ export function createApp(options: AppOptions = {}) {
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) return next(new ApiFailure(401, 'UNAUTHORIZED', '管理凭证不正确。'));
     next();
   });
+  app.use('/api/admin/rag', createRagRouter(store, config, options.fetcher || fetch, activeParsers));
   app.get('/api/admin/menu', (_req, res) => res.json({drinks: store.drinks()}));
   app.patch('/api/admin/menu/:id', (req, res) => {
     const {expectedUpdatedAt, ...input} = drinkPatch.parse(req.body);
@@ -146,6 +162,9 @@ export function createApp(options: AppOptions = {}) {
   app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
     if (res.headersSent) return _next(error);
     if (error instanceof StoreConflict) return res.status(409).json({error: {code: 'STALE_WRITE', message: '资料已被其他操作更新，请重新载入最新版本后再保存。'}});
+    if (error instanceof RagConflict) return res.status(409).json({error: {code: 'STALE_WRITE', message: '资料已有新版本，你的编辑尚未保存。请载入最新资料后重新核对。'}});
+    if (error instanceof DocumentParseError || error instanceof RagValidationError) return res.status(error.status).json({error: {code: error.code, message: error.message}});
+    if (error instanceof MulterError) return res.status(error.code === 'LIMIT_FILE_SIZE' ? 413 : 400).json({error: {code: error.code, message: error.code === 'LIMIT_FILE_SIZE' ? '单个文件不能超过 20 MB。' : '每次上传一个文件，请检查文件和填写内容后重试。'}});
     if (error instanceof ApiFailure) return res.status(error.status).json({error: {code: error.code, message: error.message}});
     if (error instanceof z.ZodError) return res.status(400).json({error: {code: 'INVALID_INPUT', message: '请求格式或字段不正确，请检查输入。'}});
     const bodyError = error as {status?: number; type?: string};
@@ -161,7 +180,10 @@ export function createApp(options: AppOptions = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const config = loadConfig();
   const app = createApp({config});
-  const server = app.listen(config.port, config.host, () => console.log(`Jasmine Agent ready at http://${config.host}:${config.port} · DeepSeek ${config.apiKey ? 'configured' : 'not configured'}`));
-  const shutdown = () => { server.close(() => { app.locals.close(); process.exit(0); }); setTimeout(() => process.exit(1), 5000).unref(); };
+  const server = app.listen(config.port, config.host, (error?: Error) => {
+    if (error) {console.error('Server failed to listen; check host and port.'); app.locals.close(); process.exitCode = 1; return;}
+    console.log(`Jasmine Agent ready at http://${config.host}:${config.port} · DeepSeek ${config.apiKey ? 'configured' : 'not configured'}`);
+  });
+  const shutdown = () => { app.locals.abortActiveParsers(); server.close(() => { app.locals.close(); process.exit(0); }); setTimeout(() => process.exit(1), 5000).unref(); };
   process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
 }

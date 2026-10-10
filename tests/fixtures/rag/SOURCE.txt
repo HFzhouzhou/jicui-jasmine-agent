@@ -1,0 +1,3 @@
+The legacy DOC test fixture and accompanying MIT license are from
+https://github.com/morungos/node-word-extractor/tree/18ddff5173046131a8ff6ee5321a91a5ea0e3010/__tests__/data/test01.doc
+Used only to exercise actual Word 97 OLE parsing.

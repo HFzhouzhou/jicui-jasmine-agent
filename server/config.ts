@@ -13,6 +13,7 @@ export interface ServerConfig {
   staticDir: string;
   rateLimit: number;
   trustProxy: false | number | string;
+  embedding?: {baseUrl: string; apiKey: string; model: string; timeoutMs: number};
 }
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const number = (key: string, fallback: number, min: number, max: number) => {
@@ -41,5 +42,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   }
   const adminToken = env.ADMIN_TOKEN?.trim() || '';
   if (adminToken && adminToken.length < 24) throw new Error('ADMIN_TOKEN 至少需要 24 个字符');
-  return { apiKey, baseUrl, model: env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash', timeoutMs: number('AI_TIMEOUT_MS', 30000, 100, 120000), adminToken, dataDir: resolve(env.DATA_DIR || 'data'), port: number('PORT', 3001, 0, 65535), host: env.HOST || '127.0.0.1', staticDir: resolve('dist/client'), rateLimit: 20, trustProxy };
+  let embedding: ServerConfig['embedding'];
+  const embeddingBase = env.RAG_EMBEDDING_BASE_URL?.trim();
+  const embeddingModel = env.RAG_EMBEDDING_MODEL?.trim();
+  if (embeddingBase || embeddingModel || env.RAG_EMBEDDING_API_KEY?.trim()) {
+    if (!embeddingBase || !embeddingModel) throw new Error('向量检索需要同时设置 RAG_EMBEDDING_BASE_URL 和 RAG_EMBEDDING_MODEL');
+    const endpoint = new URL(embeddingBase);
+    if (!['https:', 'http:'].includes(endpoint.protocol) || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || (endpoint.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname))) throw new Error('RAG_EMBEDDING_BASE_URL 必须为 HTTPS 或本地模型地址');
+    embedding = {baseUrl: embeddingBase.replace(/\/+$/, ''), model: embeddingModel, apiKey: env.RAG_EMBEDDING_API_KEY?.trim() || '', timeoutMs: number('RAG_EMBEDDING_TIMEOUT_MS', 8000, 100, 15000)};
+  }
+  return { apiKey, baseUrl, model: env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash', timeoutMs: number('AI_TIMEOUT_MS', 30000, 100, 120000), adminToken, dataDir: resolve(env.DATA_DIR || 'data'), port: number('PORT', 3001, 0, 65535), host: env.HOST || '127.0.0.1', staticDir: resolve('dist/client'), rateLimit: 20, trustProxy, ...(embedding ? {embedding} : {}) };
 }

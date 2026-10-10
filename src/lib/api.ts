@@ -18,7 +18,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, timeou
   try {
     const response = await fetch(path, {
       ...init,
-      headers: { ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
+      headers: (() => {
+        const headers = new Headers(init.headers);
+        if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+        return headers;
+      })(),
       signal: controller.signal,
     });
     const payload: unknown = await response.json().catch(() => null);
@@ -52,7 +56,7 @@ export const getHealth = (signal?: AbortSignal) => apiRequest<HealthResponse>('/
 export async function recommend(body: RecommendRequest, mode: 'live' | 'preview', signal?: AbortSignal) {
   const result = await apiRequest<RecommendResponse>(mode === 'preview' ? '/api/recommend/preview' : '/api/recommend', {
     method: 'POST', body: JSON.stringify(body), signal,
-  });
+  }, 110000);
   if (typeof result.reply !== 'string' || !Array.isArray(result.cards) || !result.cards.every(isTeaCard) || !Array.isArray(result.notices) || !result.notices.every((notice) => typeof notice === 'string') || !['live', 'preview'].includes(result.mode) || typeof result.requestId !== 'string') {
     throw new RequestError('推荐结果格式异常，请重试。', 'INVALID_RESPONSE');
   }

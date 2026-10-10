@@ -9,6 +9,7 @@ RUN npm run build
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001 DATA_DIR=/app/data
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 RUN npm ci --omit=dev && npm cache clean --force && mkdir -p /app/data && chown node:node /app/data

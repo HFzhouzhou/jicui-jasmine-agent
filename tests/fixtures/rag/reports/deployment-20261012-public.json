@@ -1,0 +1,63 @@
+{
+  "kind": "public-production-smoke",
+  "revision": "77dddad",
+  "checks": [
+    {
+      "name": "health",
+      "passed": true
+    },
+    {
+      "name": "public_pages_and_deployed_bundle",
+      "passed": true,
+      "pages": 4
+    },
+    {
+      "name": "admin_document_inventory",
+      "passed": true,
+      "total": 4,
+      "published": 0,
+      "archived": 4
+    },
+    {
+      "name": "public_weather_refusal",
+      "passed": true,
+      "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。"
+    },
+    {
+      "name": "public_real_menu_order",
+      "passed": true,
+      "products": [
+        {
+          "id": "p05",
+          "name": "极萃·茉莉毛峰",
+          "price": 10
+        },
+        {
+          "id": "p07",
+          "name": "极萃·茉莉六堡",
+          "price": 10
+        },
+        {
+          "id": "p09",
+          "name": "极萃·茉莉龙井",
+          "price": 10
+        }
+      ]
+    },
+    {
+      "name": "public_knowledge_boundary_in_ordering_chat",
+      "passed": true,
+      "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。"
+    },
+    {
+      "name": "public_resume_order_after_knowledge",
+      "passed": true,
+      "productCount": 1
+    },
+    {
+      "name": "production_documents_unchanged",
+      "passed": true
+    }
+  ],
+  "passed": true
+}

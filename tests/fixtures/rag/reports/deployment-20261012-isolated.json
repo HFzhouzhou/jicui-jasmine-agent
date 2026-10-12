@@ -1,0 +1,75 @@
+{
+  "kind": "isolated-release-acceptance",
+  "expectedRevision": "43cd50a",
+  "mode": "real-provider",
+  "checks": [
+    {
+      "name": "release_identity",
+      "passed": true,
+      "filesVerified": 6
+    },
+    {
+      "name": "isolated_server",
+      "passed": true,
+      "loopbackOnly": true,
+      "database": "temporary-isolated-sqlite",
+      "productionDatabaseAccessed": false
+    },
+    {
+      "name": "pdf_upload_publish",
+      "passed": true,
+      "format": "pdf",
+      "pages": 1,
+      "chunks": 1
+    },
+    {
+      "name": "docx_upload_publish",
+      "passed": true,
+      "format": "docx",
+      "chunks": 1
+    },
+    {
+      "name": "pdf_grounded_answer",
+      "passed": true,
+      "citations": 1
+    },
+    {
+      "name": "docx_grounded_answer",
+      "passed": true,
+      "citations": 2
+    },
+    {
+      "name": "conversation_order",
+      "passed": true,
+      "productCount": 1,
+      "selectedPrice": 9
+    },
+    {
+      "name": "conversation_knowledge_preserves_configuration",
+      "passed": true
+    },
+    {
+      "name": "conversation_adjust_and_resume",
+      "passed": true,
+      "preservedSweetness": "无糖",
+      "preservedTemperature": "热饮",
+      "configuredQuantity": 3
+    },
+    {
+      "name": "conversation_weather_refusal",
+      "passed": true
+    },
+    {
+      "name": "official_handoff_is_unavailable",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "serverImplementation": "dist/server/index.js",
+  "providerCalls": 12,
+  "providerTransport": "remote",
+  "sameConversationTurns": 4,
+  "limits": "Synthetic files/menu in isolated HTTP app; validates live provider and shared conversation state, not browser appearance or production knowledge accuracy.",
+  "temporaryDatabaseRemoved": true,
+  "elapsedMs": 11766
+}

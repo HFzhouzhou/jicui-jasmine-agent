@@ -72,6 +72,8 @@ export interface TeaCard {
   catalogEvidence?: CatalogEvidence;
 }
 export interface RecommendResponse {
+  /** Optional for compatibility with earlier saved conversations and API responses. */
+  intent?: 'knowledge' | 'recommend' | 'mixed' | 'catalog' | 'clarify';
   reply: string;
   cards: TeaCard[];
   notices: string[];

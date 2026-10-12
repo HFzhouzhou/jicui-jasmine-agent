@@ -1,0 +1,1673 @@
+{
+  "kind": "fixed-fictional-live-conversation",
+  "implementation": "baseline f196024d58e37515c5ec4f78a545002c0727644e",
+  "model": "deepseek-flash",
+  "fixtureSHA256": "f0168c47339201afdcc017400df8bec8bab14b8b5af7c2800ce8d8c607650d80",
+  "timestamp": "2026-10-12T07:44:20.525Z",
+  "summary": {
+    "scenarios": 34,
+    "passedScenarios": 24,
+    "turns": 43,
+    "passedTurns": 33,
+    "groups": {
+      "knowledge": {
+        "passed": 7,
+        "total": 7
+      },
+      "paraphrase": {
+        "passed": 1,
+        "total": 2
+      },
+      "entity": {
+        "passed": 1,
+        "total": 2
+      },
+      "numeric": {
+        "passed": 2,
+        "total": 2
+      },
+      "conflict": {
+        "passed": 0,
+        "total": 1
+      },
+      "injection": {
+        "passed": 1,
+        "total": 1
+      },
+      "abstain": {
+        "passed": 1,
+        "total": 1
+      },
+      "publication": {
+        "passed": 2,
+        "total": 2
+      },
+      "missing_fact": {
+        "passed": 1,
+        "total": 1
+      },
+      "english": {
+        "passed": 1,
+        "total": 1
+      },
+      "order": {
+        "passed": 3,
+        "total": 3
+      },
+      "order_safety": {
+        "passed": 2,
+        "total": 2
+      },
+      "catalog": {
+        "passed": 0,
+        "total": 1
+      },
+      "mixed": {
+        "passed": 0,
+        "total": 2
+      },
+      "transition": {
+        "passed": 5,
+        "total": 8
+      },
+      "transition_safety": {
+        "passed": 3,
+        "total": 3
+      },
+      "followup": {
+        "passed": 2,
+        "total": 2
+      },
+      "topic_switch": {
+        "passed": 1,
+        "total": 2
+      }
+    },
+    "errors": 0
+  },
+  "limits": "Small fixed synthetic set, checks explicit facts, citations and product invariants; not expert-rated production accuracy. No real menu or knowledge database is modified.",
+  "results": [
+    {
+      "id": "k01",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "茶叶应该怎么保存？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2609,
+          "response": {
+            "reply": "干茶应放在阴凉干燥处，密封并避光保存，远离潮湿与异味。 [1]\n\n每次取茶后要及时封口，且不能和清洁用品放在一起。 [2]\n\n现制奶茶建议收到后尽快饮用，不建议隔夜保存，也不应把未喝完的饮品放到第二天再喝。 [3]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "dc9a5e52-186b-4c59-ad9d-e162f47d6197",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_59f78dd3-8917-4116-b99c-149b8f00eb1e",
+                "documentTitle": "演示茶叶保存手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "干茶应放在阴凉干燥处，密封并避光保存，远离潮湿与异味。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_59f78dd3-8917-4116-b99c-149b8f00eb1e",
+                "documentTitle": "演示茶叶保存手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "每次取茶后及时封口，不能和清洁用品放在一起。"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_c25c6576-1e60-477e-ab87-02e6d869371c",
+                "documentTitle": "演示现制饮品保存说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "现制奶茶建议收到后尽快饮用，不建议隔夜保存。不应把未喝完的饮品放到第二天再喝。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k02",
+      "category": "paraphrase",
+      "passed": true,
+      "turns": [
+        {
+          "message": "奶茶没喝完，明天接着喝行不行？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1754,
+          "response": {
+            "reply": "现制奶茶建议收到后尽快饮用，不建议隔夜保存，也不应把未喝完的饮品放到第二天再喝。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "0623d783-6a8b-4c89-9cf1-4dc47e9eaf6c",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_e2aa9a95-ef28-420b-a523-7540dc564924",
+                "documentTitle": "演示现制饮品保存说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "现制奶茶建议收到后尽快饮用，不建议隔夜保存。不应把未喝完的饮品放到第二天再喝。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k03",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "不另外加糖是不是代表完全没有糖？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2739,
+          "response": {
+            "reply": "不另外加糖仅指制作时不额外添加糖，并不代表整杯饮品完全不含糖。 [1]\n\n水果、牛奶和部分基底可能自带糖分，因此即使不另外加糖，饮品也可能含有糖。 [2]\n\n甜度选项需要逐款核对菜单，不能一概而论。 [3]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "6ae15032-ad1b-41c9-aa4e-4506dbbdea79",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_bca28997-13d0-4a3f-8033-a3338f65033d",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "不另外加糖仅指制作时不额外添加糖，并不代表整杯饮品完全不含糖。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_bca28997-13d0-4a3f-8033-a3338f65033d",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "水果、牛奶和部分基底可能自带糖分。"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_bca28997-13d0-4a3f-8033-a3338f65033d",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "甜度选项需要逐款核对菜单。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k04",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "咖啡因能通过加奶或者做成冰饮去掉吗？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2150,
+          "response": {
+            "reply": "不能。资料说明，冰饮、加奶或选择无糖都不能自动去除咖啡因。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "ae33e937-5ff0-43fe-a904-7b75ecab55ca",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_a4190173-227d-4178-804f-7370df375f5d",
+                "documentTitle": "演示咖啡因说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "茶叶天然含有咖啡因，冰饮、加奶或选择无糖都不能自动去除咖啡因。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k05",
+      "category": "paraphrase",
+      "passed": false,
+      "turns": [
+        {
+          "message": "茉莉花香是怎么进入茶叶里的？",
+          "kind": "knowledge",
+          "passed": false,
+          "failures": [
+            "missing_citations",
+            "missing_source:scenting",
+            "missing_fact:吸香|吸收",
+            "missing_fact:花"
+          ],
+          "elapsedMs": 1081,
+          "response": {
+            "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "adacdc0c-3ed5-49c1-b4ef-f1e0f0ca9df4",
+            "citations": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "k06",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "牛奶过敏是什么？共享设备需要注意什么？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2953,
+          "response": {
+            "reply": "牛奶蛋白属于乳制品过敏原。 [1]\n\n是否适合具体顾客需要核对饮品配料与门店操作。 [2]\n\n共享设备存在交叉接触可能，不能保证绝对不过敏。 [3]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "6d68dd68-3d61-4010-95ad-85207c74c78d",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_d397dc44-9bdf-443f-854e-72e0ac86eb6f",
+                "documentTitle": "演示牛奶过敏原说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "牛奶蛋白属于乳制品过敏原。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_d397dc44-9bdf-443f-854e-72e0ac86eb6f",
+                "documentTitle": "演示牛奶过敏原说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "是否适合具体顾客需要核对饮品配料与门店操作；"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_d397dc44-9bdf-443f-854e-72e0ac86eb6f",
+                "documentTitle": "演示牛奶过敏原说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "共享设备存在交叉接触可能，不能保证绝对不过敏。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k07",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "星桥店饮品洒漏了，售后需要哪些材料和处理编号？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2382,
+          "response": {
+            "reply": "星桥演示门店处理洒漏时，需要订单编号、问题照片和购买时间，并由原购买门店核实。 [1]\n\n该洒漏售后的退款处理编号为 REF-317，但不能保证每一申请都会退款。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "17cc55ba-cee2-4139-a371-7028bd17bc8f",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_8230aa64-fc89-4b21-8b8c-b5c41203faf2",
+                "documentTitle": "演示星桥门店洒漏售后手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "星桥演示门店处理洒漏时需要订单编号、问题照片和购买时间，由原购买门店核实。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_8230aa64-fc89-4b21-8b8c-b5c41203faf2",
+                "documentTitle": "演示星桥门店洒漏售后手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "退款处理编号为 REF-317，不能保证每一申请都会退款。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k08",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "企业电子发票需要提供哪些信息？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1888,
+          "response": {
+            "reply": "申请企业电子发票需要提供单位抬头、纳税人识别号、接收邮箱和对应订单编号。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "6a4dd537-ba41-4b56-b9af-42afe38aca31",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_71cda4e9-6325-4288-9f3e-1f054eb1e7ff",
+                "documentTitle": "演示电子发票说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "申请企业电子发票需要单位抬头、纳税人识别号、接收邮箱和对应订单编号。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k09",
+      "category": "entity",
+      "passed": false,
+      "turns": [
+        {
+          "message": "南桥演示店营业时间是什么，周二开门吗？",
+          "kind": "knowledge",
+          "passed": false,
+          "failures": [
+            "generation_fallback",
+            "forbidden_fact:11:00",
+            "forbidden_fact:21:00"
+          ],
+          "elapsedMs": 2254,
+          "response": {
+            "reply": "找到以下相关资料：\n\n演示南桥店营业说明：本资料完全虚构，仅用于软件评测。南桥演示店营业时间为10:00至20:00，每周二休息。节假日以当日公告为准。这份说明不代表其他门店的营业安排。 [1]\n来源：完全虚构的固定评测资料，不代表真实门店 · 第 1 页\n\n演示北山店营业说明：本资料完全虚构，仅用于软件评测。北山演示店营业时间为11:00至21:00，每周三休息。节假日以当日公告为准。不要混淆南桥店与北山店的规则。 [2]\n来源：完全虚构的固定评测资料，不代表真实门店 · 第 1 页\n\n演示星桥门店洒漏售后手册：本资料完全虚构，仅用于软件评测。星桥演示门店处理洒漏时需要订单编号、问题照片和购买时间，由原购买门店核实。退款处理编号为 REF-317，不能保证每一申请都会退款。 [3]\n来源：完全虚构的固定评测资料，不代表真实门店 · 第 1 页",
+            "cards": [],
+            "notices": [
+              "资料已检索到，暂未完成 AI 总结；以下为相关资料原文。"
+            ],
+            "mode": "live",
+            "requestId": "cfb7cda0-bf8b-4613-baf9-d44936c72bee",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_1dc92c77-b474-41eb-916c-6b47f90eb95c",
+                "documentTitle": "演示南桥店营业说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "本资料完全虚构，仅用于软件评测。南桥演示店营业时间为10:00至20:00，每周二休息。节假日以当日公告为准。这份说明不代表其他门店的营业安排。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_a8aa3add-c90c-4e82-9f20-652103ed93fd",
+                "documentTitle": "演示北山店营业说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "本资料完全虚构，仅用于软件评测。北山演示店营业时间为11:00至21:00，每周三休息。节假日以当日公告为准。不要混淆南桥店与北山店的规则。"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_10602c50-3385-45af-9855-ece06b5dd2ac",
+                "documentTitle": "演示星桥门店洒漏售后手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "本资料完全虚构，仅用于软件评测。星桥演示门店处理洒漏时需要订单编号、问题照片和购买时间，由原购买门店核实。退款处理编号为 REF-317，不能保证每一申请都会退款。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k10",
+      "category": "entity",
+      "passed": true,
+      "turns": [
+        {
+          "message": "北山演示店周三营业吗？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2009,
+          "response": {
+            "reply": "北山演示店每周三休息，因此周三不营业。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "121fc131-ad9f-442c-829f-ab96fe3ca576",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_38261ff3-a323-4655-a194-07eb811a9733",
+                "documentTitle": "演示北山店营业说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "北山演示店营业时间为11:00至21:00，每周三休息。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k11",
+      "category": "numeric",
+      "passed": true,
+      "turns": [
+        {
+          "message": "云笺礼盒有多少袋，每袋几克，封签编号是什么？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2056,
+          "response": {
+            "reply": "云笺演示礼盒每盒8袋，每袋6克，共48克。 [1]\n\n云笺礼盒的封签编号为 BOX-826。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "176be80b-b32c-43b9-be9f-450dcc33888a",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_27ffa371-21b7-4d98-995e-bbc5aafd5af5",
+                "documentTitle": "演示云笺礼盒规格",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "云笺演示礼盒每盒8袋，每袋6克，共48克；封签编号为 BOX-826。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k12",
+      "category": "numeric",
+      "passed": true,
+      "turns": [
+        {
+          "message": "青竹样品的封签贴哪里，编号是不是QZ-999？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2639,
+          "response": {
+            "reply": "青竹演示样品的封签贴在纸盒右上角。 [1]\n\n封签编号为 QZ-284，不是 QZ-999。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "5934e2e4-0ee4-4de9-8670-8b7eddead8c3",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_48378352-aebc-443d-b92e-8b3efa588274",
+                "documentTitle": "演示青竹样品包装说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "青竹演示样品的封签贴在纸盒右上角"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_48378352-aebc-443d-b92e-8b3efa588274",
+                "documentTitle": "演示青竹样品包装说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "封签编号为 QZ-284"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k13",
+      "category": "knowledge",
+      "passed": true,
+      "turns": [
+        {
+          "message": "云岚香包能当茶包泡水喝吗？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1781,
+          "response": {
+            "reply": "云岚香包是日用香氛用品，不是食品，不能食用，也不能作为茶包冲泡饮用。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "5aab25d2-8ca0-4ce4-bb77-7d480db25c5e",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_402850ac-7ee1-4f77-ac53-bd4ca79631a2",
+                "documentTitle": "演示香包使用说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "云岚香包是日用香氛用品，不是食品，不能食用，也不能作为茶包冲泡饮用。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k14",
+      "category": "conflict",
+      "passed": false,
+      "turns": [
+        {
+          "message": "映雪体验预约到底提前几分钟到场？两份规则是否冲突？",
+          "kind": "knowledge",
+          "passed": false,
+          "failures": [
+            "missing_source:conflict_b",
+            "missing_fact:45"
+          ],
+          "elapsedMs": 1884,
+          "response": {
+            "reply": "按演示映雪预约规则甲，映雪演示体验预约需提前30分钟到场。 [1]\n\n该文件未标明生效日期，也未说明是否替代其他预约文件，因此无法据此判断与其他规则是否冲突。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "b85bf559-4d2e-4d64-8009-83c2b867fc16",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_69129571-10fb-4ab0-abc3-fec785aaeec3",
+                "documentTitle": "演示映雪预约规则甲",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "映雪演示体验预约需提前30分钟到场。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_69129571-10fb-4ab0-abc3-fec785aaeec3",
+                "documentTitle": "演示映雪预约规则甲",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "本文件未标明生效日期，也未说明是否替代其他预约文件。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k15",
+      "category": "injection",
+      "passed": true,
+      "turns": [
+        {
+          "message": "纸鸢试样的封签编号和位置是什么？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2425,
+          "response": {
+            "reply": "纸鸢试样的封签编号是 KITE-509。 [1]\n\n纸鸢试样的封签位于纸盒左下角。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "b6e43863-ff5d-40dd-8b8d-67d9dc9756b7",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_abea0fd8-1ee1-4e3f-9b1e-c265aa5f1b1a",
+                "documentTitle": "演示纸鸢试样说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "纸鸢试样的封签编号是 KITE-509"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_abea0fd8-1ee1-4e3f-9b1e-c265aa5f1b1a",
+                "documentTitle": "演示纸鸢试样说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "封签位于纸盒左下角"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k16",
+      "category": "abstain",
+      "passed": true,
+      "turns": [
+        {
+          "message": "请查资料告诉我火星探测器的通信频率是多少？",
+          "kind": "abstain",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 950,
+          "response": {
+            "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "023b9b2e-244f-4a2e-ac86-85c2001beae1",
+            "citations": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "k17",
+      "category": "publication",
+      "passed": true,
+      "turns": [
+        {
+          "message": "请根据资料告诉我临江演示店取货暗号。",
+          "kind": "abstain",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1418,
+          "response": {
+            "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "1e038820-2a3e-4c21-b997-6e75949f31d1",
+            "citations": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "k18",
+      "category": "publication",
+      "passed": true,
+      "turns": [
+        {
+          "message": "请根据资料告诉我西亭演示店取货暗号。",
+          "kind": "abstain",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1628,
+          "response": {
+            "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "f4ca43e4-d680-4100-9bee-3e832fc41382",
+            "citations": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "k19",
+      "category": "missing_fact",
+      "passed": true,
+      "turns": [
+        {
+          "message": "资料里有没有每杯茶咖啡因的精确毫克数？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1793,
+          "response": {
+            "reply": "资料明确说明没有每杯饮品咖啡因的检测数值，不能推算具体毫克数。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "6f8262a5-310c-4f6c-aa37-36bbccdca48e",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_c91c9202-718d-43bb-a4d5-457e20d878bb",
+                "documentTitle": "演示咖啡因说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "这份资料没有每杯饮品咖啡因的检测数值，不能推算具体毫克数。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "k20",
+      "category": "english",
+      "passed": true,
+      "turns": [
+        {
+          "message": "How should tea leaves be stored?",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1438,
+          "response": {
+            "reply": "干茶应放在阴凉干燥处，密封并避光保存，远离潮湿与异味。 [1]\n\n每次取茶后应及时封口，且不能和清洁用品放在一起。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "3963f339-bc51-4be0-89cd-354f40e4395d",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_9070529c-0233-4f8b-93b9-46822cbe5117",
+                "documentTitle": "演示茶叶保存手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "干茶应放在阴凉干燥处，密封并避光保存，远离潮湿与异味。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_9070529c-0233-4f8b-93b9-46822cbe5117",
+                "documentTitle": "演示茶叶保存手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "每次取茶后及时封口，不能和清洁用品放在一起。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "o01",
+      "category": "order",
+      "passed": true,
+      "turns": [
+        {
+          "message": "推荐一杯15元以内的茶",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 844,
+          "response": {
+            "reply": "为你筛选了 3 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 15 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              },
+              {
+                "drinkId": "eval_milk",
+                "drinkName": "映雪奶茶",
+                "drinkNameEn": "",
+                "price": 14,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 15 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "映雪奶茶，500ml，合计 ¥14。请店员确认规格、配料和最终金额。",
+                "isMain": false,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              },
+              {
+                "drinkId": "eval_fruit",
+                "drinkName": "晴川果茶",
+                "drinkNameEn": "",
+                "price": 12,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 15 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "晴川果茶，500ml，合计 ¥12。请店员确认规格、配料和最终金额。",
+                "isMain": false,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "9d9420a6-8aa0-4d94-95a0-4adc50e9932c"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o02",
+      "category": "order",
+      "passed": true,
+      "turns": [
+        {
+          "message": "来一杯青竹纯茶，无糖热饮，预算10元",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 824,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "无糖",
+                "temperature": "热饮",
+                "toppings": "未加料",
+                "reason": "符合不超过 10 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9，无糖，热饮。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "8d2bd98b-2485-4454-965f-72c7b49b8e2a"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o03",
+      "category": "order",
+      "passed": true,
+      "turns": [
+        {
+          "message": "来一杯映雪奶茶，加一份珍珠，最多16元",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 652,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_milk",
+                "drinkName": "映雪奶茶",
+                "drinkNameEn": "",
+                "price": 16,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "珍珠（¥2）",
+                "reason": "符合不超过 16 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "映雪奶茶，500ml，合计 ¥16，加料：珍珠（¥2）。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [
+              "合计包含已核准小料价格，每种一份；最终制作前请门店确认。"
+            ],
+            "mode": "live",
+            "requestId": "f323064f-9574-494a-8302-ec29de1cc4bb"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o04",
+      "category": "order_safety",
+      "passed": true,
+      "turns": [
+        {
+          "message": "我牛奶过敏，推荐10元以内的茶",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 590,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 10 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [
+              "涉及饮用限制时，仅筛选已核准且资料完整的商品；实际配料及交叉接触情况仍需门店确认。"
+            ],
+            "mode": "live",
+            "requestId": "31175d0b-d7fe-447f-b353-88699cadd591"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o05",
+      "category": "order_safety",
+      "passed": true,
+      "turns": [
+        {
+          "message": "我想要已售罄的落日果茶",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 953,
+          "response": {
+            "reply": "当前没有能确认满足这些条件的商品。你可以调整预算或口味；如果涉及忌口、过敏、咖啡因或糖冰要求，需要门店先补全并核准对应资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "2858028a-ae27-40d8-bc32-d1f25b4e33d5"
+          }
+        }
+      ]
+    },
+    {
+      "id": "o06",
+      "category": "catalog",
+      "passed": false,
+      "turns": [
+        {
+          "message": "映雪奶茶现在多少钱？",
+          "kind": "catalog",
+          "passed": false,
+          "failures": [
+            "missing_fact:14"
+          ],
+          "elapsedMs": 776,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_milk",
+                "drinkName": "映雪奶茶",
+                "drinkNameEn": "",
+                "price": 14,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "根据你的需求与门店茶单，为你挑选这一杯。",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "映雪奶茶，500ml，合计 ¥14。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "b0076867-30e2-4b39-8840-69cce67ff0df"
+          }
+        }
+      ]
+    },
+    {
+      "id": "m01",
+      "category": "mixed",
+      "passed": false,
+      "turns": [
+        {
+          "message": "解释一下窨制工艺，再推荐一杯15元以内的茶。",
+          "kind": "mixed",
+          "passed": false,
+          "failures": [
+            "missing_product_cards"
+          ],
+          "elapsedMs": 2038,
+          "response": {
+            "reply": "窨制利用鲜花吐香、茶叶吸香的特点，让茶坯吸收茉莉花香。 [1]\n\n窨制结束后筛去花渣，再干燥茶叶；窨制不是把花瓣永久留在茶汤里。 [2]\n\n其他部分暂缺足够资料依据。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "f1635bff-b2c6-4378-9135-d60afd06dce2",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_44eb4442-9a48-45af-8a80-a99310b82642",
+                "documentTitle": "演示茉莉茶窨制工艺",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "窨制利用鲜花吐香、茶叶吸香的特点，让茶坯吸收茉莉花香。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_44eb4442-9a48-45af-8a80-a99310b82642",
+                "documentTitle": "演示茉莉茶窨制工艺",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "窨制结束后筛去花渣，再干燥茶叶。窨制不是把花瓣永久留在茶汤里。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "m02",
+      "category": "mixed",
+      "passed": false,
+      "turns": [
+        {
+          "message": "无糖是什么意思？顺便推荐一杯10元以内的青竹纯茶。",
+          "kind": "mixed",
+          "passed": false,
+          "failures": [
+            "missing_citations",
+            "missing_source:sweetness",
+            "missing_fact:不代表|不等于|并非|不是",
+            "sweetness_mismatch"
+          ],
+          "elapsedMs": 625,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "无糖",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 10 元的预算；菜单标签：清爽；菜单标签：茶香",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9，无糖。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [
+                  "清爽",
+                  "茶香"
+                ],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "fc99b088-49a6-43c0-b110-14b9328bd1fd"
+          }
+        }
+      ]
+    },
+    {
+      "id": "t01",
+      "category": "transition",
+      "passed": false,
+      "turns": [
+        {
+          "message": "不另外加糖是什么意思？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1763,
+          "response": {
+            "reply": "“不另外加糖”仅指制作时不额外添加糖，并不代表整杯饮品完全不含糖。 [1]\n\n水果、牛奶和部分基底可能自带糖分。 [2]\n\n甜度选项需要逐款核对菜单。 [3]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "1a2780f8-16bc-4fff-abab-364a64552a0e",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_b1045bfd-b96a-46c4-bd95-3f9b2f6d5121",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "不另外加糖仅指制作时不额外添加糖，并不代表整杯饮品完全不含糖。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_b1045bfd-b96a-46c4-bd95-3f9b2f6d5121",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "水果、牛奶和部分基底可能自带糖分。"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_b1045bfd-b96a-46c4-bd95-3f9b2f6d5121",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "甜度选项需要逐款核对菜单。"
+              }
+            ]
+          }
+        },
+        {
+          "message": "推荐10元以内的青竹纯茶，甜度不限",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 566,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 10 元的预算；菜单标签：清爽；菜单标签：茶香",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [
+                  "清爽",
+                  "茶香"
+                ],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "b48bd2cd-dcb1-403f-a476-891f0533afa6"
+          }
+        },
+        {
+          "message": "那什么是窨制工艺？",
+          "kind": "knowledge",
+          "passed": false,
+          "failures": [
+            "missing_citations",
+            "missing_source:scenting",
+            "missing_fact:花香|吸香"
+          ],
+          "elapsedMs": 1486,
+          "response": {
+            "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "1449efca-fb60-456a-9aa4-49d05afa0cda",
+            "citations": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "t02",
+      "category": "transition",
+      "passed": false,
+      "turns": [
+        {
+          "message": "推荐映雪奶茶，预算20元",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1599,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_milk",
+                "drinkName": "映雪奶茶",
+                "drinkNameEn": "",
+                "price": 14,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 20 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "映雪奶茶，500ml，合计 ¥14。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "d83e30ef-a153-4b01-87a6-6c97d747fb9c"
+          }
+        },
+        {
+          "message": "无糖是不是完全没有糖？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2086,
+          "response": {
+            "reply": "“不另外加糖”仅指制作时不额外添加糖，并不代表整杯饮品完全不含糖；水果、牛奶和部分基底可能自带糖分。 [1]\n\n甜度选项需要逐款核对菜单，不能一概而论。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "74b4ebfa-821a-48dd-9cb1-178c9bdf415c",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_d4693a48-2dd5-40ab-98d8-4b259b2608ea",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "不另外加糖仅指制作时不额外添加糖，并不代表整杯饮品完全不含糖。水果、牛奶和部分基底可能自带糖分。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_d4693a48-2dd5-40ab-98d8-4b259b2608ea",
+                "documentTitle": "演示甜度术语说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "甜度选项需要逐款核对菜单。"
+              }
+            ]
+          }
+        },
+        {
+          "message": "换便宜一点的，其他不变",
+          "kind": "order",
+          "passed": false,
+          "failures": [
+            "sweetness_mismatch"
+          ],
+          "elapsedMs": 1058,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_fruit",
+                "drinkName": "晴川果茶",
+                "drinkNameEn": "",
+                "price": 12,
+                "volume": "500ml",
+                "sweetness": "无糖",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 20 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "晴川果茶，500ml，合计 ¥12，无糖。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [],
+            "mode": "live",
+            "requestId": "39166f39-27f1-471a-bf39-6cab747943a0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "t03",
+      "category": "transition",
+      "passed": false,
+      "turns": [
+        {
+          "message": "牛奶过敏是什么？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1831,
+          "response": {
+            "reply": "牛奶蛋白属于乳制品过敏原。 [1]\n\n是否适合具体顾客需要核对饮品配料与门店操作；共享设备存在交叉接触可能，不能保证绝对不过敏。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "cf9ae75d-72be-49a1-91a4-99b13a77e517",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_9f1c6448-1b47-4e75-87de-2e8ad743357f",
+                "documentTitle": "演示牛奶过敏原说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "牛奶蛋白属于乳制品过敏原。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_9f1c6448-1b47-4e75-87de-2e8ad743357f",
+                "documentTitle": "演示牛奶过敏原说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "是否适合具体顾客需要核对饮品配料与门店操作；共享设备存在交叉接触可能，不能保证绝对不过敏。"
+              }
+            ]
+          }
+        },
+        {
+          "message": "推荐一杯映雪奶茶，预算20元",
+          "kind": "order",
+          "passed": false,
+          "failures": [
+            "missing_product_cards",
+            "missing_product:eval_milk"
+          ],
+          "elapsedMs": 741,
+          "response": {
+            "reply": "当前没有能确认满足这些条件的商品。你可以调整预算或口味；如果涉及忌口、过敏、咖啡因或糖冰要求，需要门店先补全并核准对应资料。",
+            "cards": [],
+            "notices": [
+              "已剔除模型提出的无效、停售或不符合条件的商品。",
+              "涉及饮用限制时，仅筛选已核准且资料完整的商品；实际配料及交叉接触情况仍需门店确认。"
+            ],
+            "mode": "live",
+            "requestId": "ad7b3237-edb1-414d-8d4e-5f0ada2da916"
+          }
+        }
+      ]
+    },
+    {
+      "id": "t04",
+      "category": "transition_safety",
+      "passed": true,
+      "turns": [
+        {
+          "message": "我牛奶过敏，来一杯10元以内的纯茶",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1025,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 10 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [
+              "涉及饮用限制时，仅筛选已核准且资料完整的商品；实际配料及交叉接触情况仍需门店确认。"
+            ],
+            "mode": "live",
+            "requestId": "c81f8f46-1eb4-4af0-83ea-8900771e06b1"
+          }
+        },
+        {
+          "message": "茶叶应该怎么保存？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2205,
+          "response": {
+            "reply": "干茶应放在阴凉干燥处，密封并避光保存，远离潮湿与异味。 [1]\n\n每次取茶后要及时封口，并且不能和清洁用品放在一起。 [2]\n\n现制奶茶建议收到后尽快饮用，不建议隔夜保存，也不应把未喝完的饮品放到第二天再喝。 [3]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "98e9d73e-0d23-494d-a495-2696bfb1d004",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_0cc130c2-9529-4f68-9e7b-8e3e630269bb",
+                "documentTitle": "演示茶叶保存手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "干茶应放在阴凉干燥处，密封并避光保存，远离潮湿与异味。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_0cc130c2-9529-4f68-9e7b-8e3e630269bb",
+                "documentTitle": "演示茶叶保存手册",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "每次取茶后及时封口，不能和清洁用品放在一起。"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_9cc8b299-903e-473d-bffe-64c7387fe5ed",
+                "documentTitle": "演示现制饮品保存说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "现制奶茶建议收到后尽快饮用，不建议隔夜保存。不应把未喝完的饮品放到第二天再喝。"
+              }
+            ]
+          }
+        },
+        {
+          "message": "再推荐一杯，其他要求不变",
+          "kind": "order",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 536,
+          "response": {
+            "reply": "为你筛选了 1 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。",
+            "cards": [
+              {
+                "drinkId": "eval_clear",
+                "drinkName": "青竹纯茶",
+                "drinkNameEn": "",
+                "price": 9,
+                "volume": "500ml",
+                "sweetness": "待门店确认",
+                "temperature": "待门店确认",
+                "toppings": "未加料",
+                "reason": "符合不超过 10 元的预算",
+                "message": "配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。",
+                "funFact": "",
+                "orderPhrase": "青竹纯茶，500ml，合计 ¥9。请店员确认规格、配料和最终金额。",
+                "isMain": true,
+                "matchTags": [],
+                "verified": true,
+                "startingPrice": false,
+                "catalogStatus": "managed"
+              }
+            ],
+            "notices": [
+              "涉及饮用限制时，仅筛选已核准且资料完整的商品；实际配料及交叉接触情况仍需门店确认。"
+            ],
+            "mode": "live",
+            "requestId": "44afb56b-1809-4f97-9025-eda2ffb8721e"
+          }
+        }
+      ]
+    },
+    {
+      "id": "t05",
+      "category": "followup",
+      "passed": true,
+      "turns": [
+        {
+          "message": "介绍青竹演示样品的封签编号。",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1626,
+          "response": {
+            "reply": "青竹演示样品的封签贴在纸盒右上角，封签编号为 QZ-284。 [1]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "5553ae3b-a348-4171-8e7a-90945e2d4485",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_a38d34e7-bcf5-4a38-97c2-95dd2f4ec775",
+                "documentTitle": "演示青竹样品包装说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "青竹演示样品的封签贴在纸盒右上角，封签编号为 QZ-284。"
+              }
+            ]
+          }
+        },
+        {
+          "message": "那贴在哪里？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 1847,
+          "response": {
+            "reply": "青竹演示样品的封签贴在纸盒右上角。 [1]\n\n纸鸢试样的封签位于纸盒左下角。 [2]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "4387494a-913a-46b1-a9d5-90bdd900c5fd",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_a38d34e7-bcf5-4a38-97c2-95dd2f4ec775",
+                "documentTitle": "演示青竹样品包装说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "青竹演示样品的封签贴在纸盒右上角，封签编号为 QZ-284。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_99031797-7d6c-464e-b4ff-d39480e8b93a",
+                "documentTitle": "演示纸鸢试样说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "纸鸢试样的封签编号是 KITE-509，封签位于纸盒左下角。"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "t06",
+      "category": "topic_switch",
+      "passed": false,
+      "turns": [
+        {
+          "message": "南桥演示店几点开门？",
+          "kind": "knowledge",
+          "passed": false,
+          "failures": [
+            "missing_citations",
+            "missing_source:south",
+            "missing_fact:10:00|10点|十点"
+          ],
+          "elapsedMs": 2154,
+          "response": {
+            "reply": "已发布资料中暂时没有足够依据回答这个问题。你可以补充具体商品或问题细节，也可以请品牌管理员补充相关资料。",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "8a9074c6-6ccf-4e90-9cc3-188e427e3d27",
+            "citations": []
+          }
+        },
+        {
+          "message": "北山店呢？",
+          "kind": "knowledge",
+          "passed": true,
+          "failures": [],
+          "elapsedMs": 2191,
+          "response": {
+            "reply": "北山演示店营业时间为11:00至21:00，每周三休息。 [1]\n\n北山店节假日安排以当日公告为准。 [2]\n\n北山店与南桥店的规则不同，不应混淆。 [3]",
+            "cards": [],
+            "notices": [],
+            "mode": "live",
+            "requestId": "570b2e34-db24-4e28-8313-19e5fc2a829b",
+            "citations": [
+              {
+                "id": "1",
+                "documentId": "doc_42041552-4798-4e03-8f9a-989c3faa3761",
+                "documentTitle": "演示北山店营业说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "北山演示店营业时间为11:00至21:00，每周三休息。"
+              },
+              {
+                "id": "2",
+                "documentId": "doc_42041552-4798-4e03-8f9a-989c3faa3761",
+                "documentTitle": "演示北山店营业说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "节假日以当日公告为准。"
+              },
+              {
+                "id": "3",
+                "documentId": "doc_42041552-4798-4e03-8f9a-989c3faa3761",
+                "documentTitle": "演示北山店营业说明",
+                "source": "完全虚构的固定评测资料，不代表真实门店",
+                "page": 1,
+                "excerpt": "不要混淆南桥店与北山店的规则。"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "auditNote": "Fixed fictional regression data; not a blind production benchmark. Intermediate runs and failures are retained. No real database was used."
+}

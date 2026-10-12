@@ -7,43 +7,28 @@ import { Textarea } from '@/components/ui/textarea';
 import TeaCard from '@/components/TeaCard';
 import DrinkArtwork from '@/components/DrinkArtwork';
 import KnowledgeSources, { isKnowledgeCitation } from '@/components/KnowledgeSources';
-import type { KnowledgeCitation } from '@shared/rag';
 import { toast } from 'sonner';
 import { apiRequest, getHealth, isTeaCard, recommend, RequestError } from '@/lib/api';
-import type { ChatMessage, HealthResponse, OfficialOrderDraft, Preferences, RecommendRequest, RecommendResponse, TeaCard as CardData } from '@shared/contracts';
+import { buildConversationHistory, configureConversationMessage, preservesTeaSelection, isSavedOrderDraft, lastProductMessageIndex, restoreSelection, selectionAfterConfiguration, selectionAfterResponse, selectionCard, selectionMessageIndex, type ConversationMessage, type TeaSelection } from '@/lib/conversation-selection';
+import type { HealthResponse, OfficialOrderDraft, Preferences, RecommendRequest, RecommendResponse, TeaCard as CardData } from '@shared/contracts';
 
 type Mode = 'live' | 'preview';
-interface ConversationMessage extends ChatMessage { cardContext?: string; productCard?: CardData; orderDraft?: OfficialOrderDraft; citations?: KnowledgeCitation[]; notices?: string[] }
-interface SavedConversation { messages: ConversationMessage[]; mode: Mode }
+interface SavedConversation { messages: ConversationMessage[]; mode: Mode; selection: TeaSelection | null }
 const HISTORY_KEY = 'jicui_conversation_v2';
 const FAVORITES_KEY = 'jicui_favorites_v2';
 function isConversationNotice(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0 && value.length <= 2000;
 }
-function lastAssistantIndex(messages: ConversationMessage[]) {
-  for (let index = messages.length - 1; index >= 0; index--) if (messages[index].role === 'assistant') return index;
-  return -1;
-}
-function isSavedOrderDraft(value: unknown, drinkId: string): value is OfficialOrderDraft {
-  if (!value || typeof value !== 'object') return false;
-  const draft = value as OfficialOrderDraft;
-  return draft.drinkId === drinkId && typeof draft.drinkName === 'string' && draft.drinkName.length <= 160
-    && Number.isInteger(draft.quantity) && draft.quantity >= 1 && draft.quantity <= 20
-    && !!draft.options && ['volume', 'sweetness', 'temperature', 'toppings'].every(key => {
-      const option = draft.options[key as keyof OfficialOrderDraft['options']];
-      return typeof option === 'string' && option.trim().length > 0 && option.length <= (key === 'toppings' ? 300 : 80);
-    }) && (draft.note === undefined || (typeof draft.note === 'string' && draft.note.length <= 500))
-    && (draft.storeName === undefined || (typeof draft.storeName === 'string' && draft.storeName.length <= 160));
-}
 function readConversation(): SavedConversation {
   try {
     const value = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null');
-    if (value && Array.isArray(value.messages)) return {
-      mode: value.mode === 'preview' ? 'preview' : 'live',
-      messages: value.messages.filter((item: ConversationMessage) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string').slice(-20).map((item: ConversationMessage) => ({ role: item.role, content: item.content.slice(0, 6000), ...(item.role === 'assistant' && Array.isArray(item.citations) ? {citations: item.citations.filter(isKnowledgeCitation).slice(0, 6), ...(Array.isArray(item.notices) ? { notices: item.notices.filter(isConversationNotice).slice(0, 6) } : {})} : {}), ...(typeof item.cardContext === 'string' ? { cardContext: item.cardContext.slice(0, 2000) } : {}), ...(item.role === 'assistant' && isTeaCard(item.productCard) ? { productCard: item.productCard, ...(isSavedOrderDraft(item.orderDraft, item.productCard.drinkId) ? { orderDraft: item.orderDraft } : {}) } : {}) })),
-    };
+    if (value && Array.isArray(value.messages)) {
+      const mode: Mode = value.mode === 'preview' ? 'preview' : 'live';
+      const messages: ConversationMessage[] = value.messages.filter((item: ConversationMessage) => item && ['user', 'assistant'].includes(item.role) && typeof item.content === 'string').slice(-20).map((item: ConversationMessage) => ({ role: item.role, content: item.content.slice(0, 6000), ...(item.role === 'assistant' && Array.isArray(item.citations) ? { citations: item.citations.filter(isKnowledgeCitation).slice(0, 6) } : {}), ...(item.role === 'assistant' && Array.isArray(item.notices) ? { notices: item.notices.filter(isConversationNotice).slice(0, 6) } : {}), ...(typeof item.cardContext === 'string' ? { cardContext: item.cardContext.slice(0, 2000) } : {}), ...(item.role === 'assistant' && typeof item.selectionId === 'string' ? { selectionId: item.selectionId.slice(0, 200) } : {}), ...(item.role === 'assistant' && isTeaCard(item.productCard) ? { productCard: item.productCard, ...(isSavedOrderDraft(item.orderDraft, item.productCard.drinkId) ? { orderDraft: item.orderDraft } : {}) } : {}) }));
+      return { mode, messages, selection: restoreSelection(value.selection, messages, mode, isTeaCard) };
+    }
   } catch { /* A blocked or full browser store must not prevent using the app. */ }
-  return { messages: [], mode: 'live' };
+  return { messages: [], mode: 'live', selection: null };
 }
 function readFavorites(): CardData[] {
   try {
@@ -71,16 +56,13 @@ export default function AIRecommendPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState('');
   const [result, setResult] = useState<RecommendResponse | null>(null);
+  const [selection, setSelection] = useState<TeaSelection | null>(saved.selection);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [lastAttempt, setLastAttempt] = useState<{ body: RecommendRequest; mode: Mode; displayHistory: ConversationMessage[] } | null>(null);
   const [favorites, setFavorites] = useState(readFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
   const [mobilePane, setMobilePane] = useState<'chat' | 'selection'>('chat');
-  const [configuredOrders, setConfiguredOrders] = useState<Record<string, OfficialOrderDraft>>(() => {
-    const draft = saved.messages[lastAssistantIndex(saved.messages)]?.orderDraft;
-    return draft ? { [draft.drinkId]: draft } : {};
-  });
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [feedbackPending, setFeedbackPending] = useState(false);
   const [feedbackComment, setFeedbackComment] = useState('');
@@ -101,9 +83,9 @@ export default function AIRecommendPage() {
     return () => { controller.abort(); activeRequest.current?.abort(); };
   }, []);
   useEffect(() => {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify({ messages: messages.slice(-20), mode })); }
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify({ messages: messages.slice(-20), mode, selection })); }
     catch { /* The conversation remains available in memory. */ }
-  }, [messages, mode]);
+  }, [messages, mode, selection]);
   const latestMessage = messages.at(-1);
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' }); }, [messages.length, latestMessage?.content, loading]);
   useLayoutEffect(() => { if (inputRef.current) resizeMessageInput(inputRef.current); }, [input, mobilePane]);
@@ -142,10 +124,10 @@ export default function AIRecommendPage() {
     try {
       const value = await recommend(body, selectedMode, controller.signal);
       if (controller.signal.aborted || activeRequest.current !== controller) return;
-      setResult(value); setConfiguredOrders({}); activeResultId.current = value.requestId;
+      setResult(value); setSelection(current => selectionAfterResponse(current, value)); activeResultId.current = value.requestId;
       const content = `${value.mode === 'preview' ? '【规则预览，非 AI】\n' : ''}${value.reply}`;
       const catalogContext = value.cards.length ? `目录记录：${JSON.stringify(value.cards.map(({ drinkId, drinkName, price }) => ({ drinkId, drinkName, price })))}` : undefined;
-      setMessages([...displayHistory, { role: 'user', content: body.message }, { role: 'assistant', content, cardContext: catalogContext, productCard: value.cards[0], ...(Array.isArray(value.citations) ? { citations: value.citations.filter(isKnowledgeCitation).slice(0, 6), notices: value.notices.filter(isConversationNotice).slice(0, 6) } : {}) }].slice(-20) as ConversationMessage[]);
+      setMessages(current => [...current, { role: 'assistant', content, cardContext: catalogContext, productCard: value.cards[0], ...(!preservesTeaSelection(value) ? { selectionId: value.requestId } : {}), ...(Array.isArray(value.citations) ? { citations: value.citations.filter(isKnowledgeCitation).slice(0, 6) } : {}), ...(preservesTeaSelection(value) || Array.isArray(value.citations) ? { notices: value.notices.filter(isConversationNotice).slice(0, 6) } : {}) }].slice(-20) as ConversationMessage[]);
     } catch (cause) {
       if (activeRequest.current !== controller) return;
       setError(cause instanceof Error ? cause.message : '本次推荐失败，请重试。');
@@ -161,9 +143,7 @@ export default function AIRecommendPage() {
     if (mode === 'live' && !health?.aiConfigured) { setError('AI 尚未接通，请配置服务后重试，或主动切换到「规则预览（非AI）」。'); return; }
     setInput('');
     setMobilePane('chat');
-    const history: ChatMessage[] = messages.slice(-18).map(({ role, content, cardContext }) => ({ role, content: cardContext ? `${content.slice(0, 2000)}\n${cardContext.slice(0, 900)}` : content.slice(0, 3000) }));
-    const draft = messages[lastAssistantIndex(messages)]?.orderDraft;
-    if (draft) history.push({ role: 'user', content: `我在商品卡中保存了这份期望配置：${draft.drinkName}，${draft.quantity}杯，${draft.options.volume}，甜度${draft.options.sweetness}，温度${draft.options.temperature}，小料${draft.options.toppings}${draft.note ? `，备注：${draft.note}` : ''}。这些是我的偏好，具体可选做法仍需门店确认。` });
+    const history = buildConversationHistory(messages, selection);
     void run({ message: value, history, profile, excludeIds }, mode);
   }
   function switchMode(next: Mode) {
@@ -172,7 +152,7 @@ export default function AIRecommendPage() {
   }
   function clearConversation() {
     activeRequest.current?.abort(); activeRequest.current = null;
-    setMessages([]); setResult(null); setConfiguredOrders({}); activeResultId.current = null; setLoading(false); setError(''); setLastAttempt(null); setFeedback(null);
+    setMessages([]); setResult(null); setSelection(null); activeResultId.current = null; setLoading(false); setError(''); setLastAttempt(null); setFeedback(null);
     try { localStorage.removeItem(HISTORY_KEY); } catch { /* Nothing to remove if browser storage is unavailable. */ }
   }
   function saveFavorite(card: CardData) {
@@ -192,16 +172,15 @@ export default function AIRecommendPage() {
     finally { setFeedbackPending(false); }
   }
   const canSend = !loading && !!health && (mode === 'preview' || health.aiConfigured);
-  const latestAssistantIndex = lastAssistantIndex(messages);
-  const lastRecommendedCard = messages[latestAssistantIndex]?.productCard;
-  const selectionCount = result?.cards.length ?? (lastRecommendedCard ? 1 : 0);
-  const configureOrder = (draft: OfficialOrderDraft) => {
-    setConfiguredOrders(current => ({ ...current, [draft.drinkId]: draft }));
-    setMessages(current => current.map((message, index) => {
-      if (index !== lastAssistantIndex(current)) return message;
-      const card = result?.cards.find(item => item.drinkId === draft.drinkId) || message.productCard;
-      return card?.drinkId === draft.drinkId ? { ...message, productCard: card, orderDraft: draft } : message;
-    }));
+  const latestProductIndex = lastProductMessageIndex(messages);
+  const currentSelectionIndex = selectionMessageIndex(selection, messages);
+  const currentCard = selectionCard(selection);
+  const selectionResult = selection?.response;
+  const configuredOrders = selection?.orders || {};
+  const selectionCount = selectionResult?.cards.length || 0;
+  const configureOrder = (draft: OfficialOrderDraft, card: CardData, messageIndex = currentSelectionIndex) => {
+    if (messageIndex === currentSelectionIndex) setSelection(current => selectionAfterConfiguration(current, card, draft));
+    setMessages(current => configureConversationMessage(current, messageIndex, card, draft));
   };
 
   return <div className="min-h-screen bg-[#f7f7ef] text-[#253b2d]">
@@ -248,11 +227,13 @@ export default function AIRecommendPage() {
             {messages.map((message, index) => <div key={index} className={`flex min-w-0 flex-col gap-4 ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className={`min-w-0 max-w-[94%] whitespace-pre-wrap [overflow-wrap:anywhere] px-4 py-3 text-sm leading-7 ${message.role === 'user' ? 'rounded-[20px] rounded-br-md bg-[#253b2d] text-[#f7f7ef]' : 'rounded-[20px] rounded-bl-md bg-[#f4f5ed] text-[#53624b]'}`}>{message.role === 'assistant' && <span className="mb-1 block text-[10px] tracking-wider text-[#8c977a]">茉莉娘子</span>}{message.content}</div>
               {message.role === 'assistant' && message.citations && <KnowledgeSources citations={message.citations} />}
-              {message.role === 'assistant' && message.citations && !!message.notices?.length && <div role="note" className="flex w-full min-w-0 items-start gap-2 rounded-xl bg-[#f4eddd] px-3 py-2.5 text-[11px] leading-6 text-[#8c7447]"><Info className="mt-1 size-3.5 shrink-0" /><div className="min-w-0 space-y-1 [overflow-wrap:anywhere]">{message.notices.map((notice, noticeIndex) => <p key={noticeIndex}>{notice}</p>)}</div></div>}
-              {index === latestAssistantIndex && message.productCard && <div className="w-full min-w-0 rounded-[24px] border border-[#dfe7cd]">
-                <TeaCard key={message.productCard.drinkId} data={{ ...message.productCard, isMain: true }} configuredOrder={configuredOrders[message.productCard.drinkId]} onConfigure={configureOrder} onConfirm={() => saveFavorite(message.productCard!)} onAskMore={() => { setInput(''); inputRef.current?.focus(); }} />
+              {message.role === 'assistant' && !!message.notices?.length && <div role="note" className="flex w-full min-w-0 items-start gap-2 rounded-xl bg-[#f4eddd] px-3 py-2.5 text-[11px] leading-6 text-[#8c7447]"><Info className="mt-1 size-3.5 shrink-0" /><div className="min-w-0 space-y-1 [overflow-wrap:anywhere]">{message.notices.map((notice, noticeIndex) => <p key={noticeIndex}>{notice}</p>)}</div></div>}
+              {index === latestProductIndex && message.productCard && <div className="w-full min-w-0 rounded-[24px] border border-[#dfe7cd]">
+                {index !== currentSelectionIndex && <p className="px-4 py-3 text-[11px] leading-6 text-[#8b9281]">之前的茶单 · 仍可查看配置，下单前会重新核验</p>}
+                <TeaCard key={message.productCard.drinkId} data={{ ...message.productCard, isMain: true }} configuredOrder={index === currentSelectionIndex ? configuredOrders[message.productCard.drinkId] : message.orderDraft} onConfigure={(draft) => configureOrder(draft, message.productCard!, index)} onConfirm={() => saveFavorite(message.productCard!)} onAskMore={() => { setInput(''); inputRef.current?.focus(); }} />
               </div>}
             </div>)}
+            {currentSelectionIndex < 0 && currentCard && <div className="w-full min-w-0"><p className="mb-2 text-[11px] text-[#8b9281]">为你保留的茶单</p><TeaCard data={{ ...currentCard, isMain: true }} configuredOrder={configuredOrders[currentCard.drinkId]} onConfigure={(draft) => configureOrder(draft, currentCard)} onConfirm={() => saveFavorite(currentCard)} /></div>}
             {loading && <div className="flex items-center gap-2 pl-2 text-xs text-[#7a8867]"><Loader2 className="size-3.5 animate-spin" />{mode === 'preview' ? '正在核对菜单…' : '正在理解你的口味，挑选一杯好茶…'}</div>}
           </div>
           <div className="shrink-0 space-y-2 border-t border-[#253b2d]/[0.07] px-4 pb-4 pt-1 sm:space-y-2 sm:p-4">
@@ -278,18 +259,19 @@ export default function AIRecommendPage() {
         <section id="tea-selection-panel" className={`${mobilePane === 'selection' ? 'block' : 'hidden'} min-w-0 space-y-4 lg:block`} aria-label="推荐茶单">
           <div className="flex items-center justify-between px-1 py-1"><h2 className="flex items-baseline gap-2 font-serif text-xl">本次茶单<span className="hidden font-sans text-[9px] tracking-[0.2em] text-[#9ba48b] sm:inline">YOUR SELECTION</span></h2><button type="button" onClick={() => setShowFavorites(!showFavorites)} className="inline-flex min-h-11 items-center gap-1.5 text-[11px] text-[#7a8767]" aria-expanded={showFavorites}><Bookmark strokeWidth={1.3} className="size-3.5" />本机收藏（{favorites.length}）</button></div>
           {showFavorites && <div className="space-y-3 rounded-[22px] bg-white p-5"><div className="flex justify-between text-xs"><span className="text-[#7b866d]">收藏快照 · 价格可能已更新</span>{favorites.length > 0 && <button type="button" className="min-h-11 text-[#9ba48b]" onClick={() => { setFavorites([]); try { localStorage.removeItem(FAVORITES_KEY); } catch { /* Browser storage may be unavailable. */ } }}>清空收藏</button>}</div>{!favorites.length ? <p className="py-4 text-xs text-[#9ba48b]">还没有收藏的茶单。</p> : favorites.map((card) => <div key={card.drinkId} className="flex items-center justify-between gap-2 border-t border-[#253b2d]/[0.07] pt-3 text-sm"><span>{card.drinkName} <span className="ml-1 text-xs text-[#9ba48b]">¥{card.price}</span></span><Button size="sm" variant="outline" className="h-11 shrink-0 rounded-full border-[#253b2d]/10 text-[11px]" onClick={() => { setInput(`我想再看看${card.drinkName}，请检查当前菜单并推荐。`); setMobilePane('chat'); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); }}>重新核对</Button></div>)}</div>}
-          {loading ? <div className="flex min-h-[440px] flex-col items-center justify-center gap-4 rounded-[28px] bg-[#e6eccf] text-[#68774f]"><div className="flex size-20 items-center justify-center rounded-full border border-[#a0af7a]/30"><Loader2 strokeWidth={1} className="size-8 animate-spin" /></div><p className="font-serif text-2xl">好茶，值得等一会。</p><p className="text-xs">正在为这次需求准备茶单</p></div> : result ? <>
-            {result.mode === 'preview' && <p className="rounded-xl bg-[#eee6d3] px-4 py-3 text-[11px] text-[#8c7447]">以下为规则预览结果，非 AI 生成。</p>}
-            {result.notices.length > 0 && <details className="rounded-2xl bg-[#eee6d3]/70 px-4 py-3 text-xs leading-6 text-[#8c7447]" open={!result.cards.length}><summary className="cursor-pointer">茶单使用说明 · {result.notices.length} 条</summary><div className="mt-2 space-y-1">{result.notices.map((notice, index) => <p key={index}>{notice}</p>)}</div></details>}
-            {!result.cards.length && <div className="rounded-[24px] bg-[#e8edd7] p-7"><Leaf strokeWidth={1} className="mb-4 size-7 text-[#7f8f62]" /><p className="whitespace-pre-wrap text-sm leading-8 text-[#586649]">{result.reply}</p><Link className="mt-5 inline-flex items-center gap-2 text-xs text-[#53664a]" to="/menu">查看菜单资料<ArrowUpRight className="size-3.5" /></Link></div>}
-            {result.cards.map((card, index) => <TeaCard key={card.drinkId} data={{ ...card, isMain: index === 0 }} configuredOrder={configuredOrders[card.drinkId]} onConfigure={configureOrder} onConfirm={() => saveFavorite(card)} onRefresh={() => submit('在保留之前要求的前提下，换一款不同的饮品。', result.cards.map((item) => item.drinkId))} onAskMore={() => { setMobilePane('chat'); setInput(''); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); }} />)}
-            <details className="rounded-2xl bg-[#edeee3] px-5 py-4 text-xs text-[#818b73]"><summary className="min-h-11 cursor-pointer py-2 leading-7">这次推荐有帮助吗？</summary><div className="mt-4"><p className="mb-3 text-[11px]">你的反馈会用于后续人工审核与改进。</p><Input value={feedbackComment} onChange={(event) => setFeedbackComment(event.target.value)} placeholder="可选：哪里需要改善？" maxLength={500} disabled={!!feedback} className="mb-3 rounded-xl border-0 bg-white/75 text-xs shadow-none" /><div className="flex gap-2"><Button variant="outline" size="sm" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('up')} className="h-11 gap-1.5 rounded-full border-0 bg-white/75 text-xs"><ThumbsUp className="size-3" />{feedback === 'up' ? '已记录' : '有帮助'}</Button><Button variant="outline" size="sm" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('down')} className="h-11 gap-1.5 rounded-full border-0 bg-white/75 text-xs"><ThumbsDown className="size-3" />{feedback === 'down' ? '已记录' : '待改善'}</Button></div></div></details>
-          </> : lastRecommendedCard ? <TeaCard data={{ ...lastRecommendedCard, isMain: true }} configuredOrder={configuredOrders[lastRecommendedCard.drinkId]} onConfigure={configureOrder} onConfirm={() => saveFavorite(lastRecommendedCard)} onAskMore={() => { setMobilePane('chat'); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); }} /> : <div className="relative min-h-[490px] lg:min-h-[580px] overflow-hidden rounded-[28px] bg-[#dce6bd] px-7 pb-7 pt-9 sm:px-9">
+          {loading && !selectionResult ? <div className="flex min-h-[440px] flex-col items-center justify-center gap-4 rounded-[28px] bg-[#e6eccf] text-[#68774f]"><div className="flex size-20 items-center justify-center rounded-full border border-[#a0af7a]/30"><Loader2 strokeWidth={1} className="size-8 animate-spin" /></div><p className="font-serif text-2xl">好茶，值得等一会。</p><p className="text-xs">正在为这次需求准备茶单</p></div> : selectionResult ? <>
+            {selectionResult.mode === 'preview' && <p className="rounded-xl bg-[#eee6d3] px-4 py-3 text-[11px] text-[#8c7447]">以下为规则预览结果，非 AI 生成。</p>}
+            {selectionResult.notices.length > 0 && <details className="rounded-2xl bg-[#eee6d3]/70 px-4 py-3 text-xs leading-6 text-[#8c7447]" open={!selectionResult.cards.length}><summary className="cursor-pointer">茶单使用说明 · {selectionResult.notices.length} 条</summary><div className="mt-2 space-y-1">{selectionResult.notices.map((notice, index) => <p key={index}>{notice}</p>)}</div></details>}
+            {!selectionResult.cards.length && <div className="rounded-[24px] bg-[#e8edd7] p-7"><Leaf strokeWidth={1} className="mb-4 size-7 text-[#7f8f62]" /><p className="whitespace-pre-wrap text-sm leading-8 text-[#586649]">{selectionResult.reply}</p><Link className="mt-5 inline-flex items-center gap-2 text-xs text-[#53664a]" to="/menu">查看菜单资料<ArrowUpRight className="size-3.5" /></Link></div>}
+            {selectionResult.cards.map((card, index) => <TeaCard key={card.drinkId} data={{ ...card, isMain: index === 0 }} configuredOrder={configuredOrders[card.drinkId]} onConfigure={(draft) => configureOrder(draft, card)} onConfirm={() => saveFavorite(card)} onRefresh={() => submit('在保留之前要求的前提下，换一款不同的饮品。', selectionResult.cards.map((item) => item.drinkId))} onAskMore={() => { setMobilePane('chat'); setInput(''); requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true })); }} />)}
+
+          </> : <div className="relative min-h-[490px] lg:min-h-[580px] overflow-hidden rounded-[28px] bg-[#dce6bd] px-7 pb-7 pt-9 sm:px-9">
             <div className="relative z-10"><p className="text-[9px] tracking-[0.25em] text-[#718357]">A LITTLE JASMINE. A LITTLE JOY.</p><h3 className="mt-5 font-serif text-[34px] leading-[1.5] text-[#415433]">一杯茶，<br />刚刚好。</h3><p className="mt-3 max-w-[230px] text-[11px] leading-6 text-[#7a8a62]">花香、茶韵，还有你的偏爱。<br />专属于你的茶单，从一句话开始。</p></div>
             <div className="absolute -right-9 top-[158px] h-[370px] w-[350px] rotate-[-6deg] opacity-95 sm:-right-3 sm:top-[130px] sm:h-[390px] sm:w-[390px]"><DrinkArtwork category="纯茶原叶" name="茉莉" className="size-full !bg-transparent" /></div>
             <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-4 bg-gradient-to-t from-[#dce6bd] via-[#dce6bd]/90 to-transparent px-7 pb-7 pt-16 sm:px-9"><div><span className="block font-serif text-2xl tracking-widest text-[#647a49]">慢一点，香一点。</span><p className="mt-3 text-[10px] text-[#7a8a62]">先说说你的喜好，茶单将在这里呈现。</p><button type="button" onClick={() => setMobilePane('chat')} className="mt-3 min-h-11 rounded-full bg-[#253b2d] px-5 text-xs text-[#f7f7ef] lg:hidden">开始聊聊<ArrowUpRight className="ml-2 inline size-3" /></button></div><span className="mb-1 text-[8px] tracking-widest text-[#8a9c71] [writing-mode:vertical-rl]">JICUI · JASMINE</span></div>
             <span className="absolute right-5 top-5 text-[8px] text-[#889b6c]">图片仅供参考</span>
           </div>}
+          {result && <details className="rounded-2xl bg-[#edeee3] px-5 py-4 text-xs text-[#818b73]"><summary className="min-h-11 cursor-pointer py-2 leading-7">这次回答有帮助吗？</summary><div className="mt-4"><p className="mb-3 text-[11px]">你的反馈会用于后续人工审核与改进。</p><Input value={feedbackComment} onChange={(event) => setFeedbackComment(event.target.value)} placeholder="可选：哪里需要改善？" maxLength={500} disabled={!!feedback} className="mb-3 rounded-xl border-0 bg-white/75 text-xs shadow-none" /><div className="flex gap-2"><Button variant="outline" size="sm" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('up')} className="h-11 gap-1.5 rounded-full border-0 bg-white/75 text-xs"><ThumbsUp className="size-3" />{feedback === 'up' ? '已记录' : '有帮助'}</Button><Button variant="outline" size="sm" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('down')} className="h-11 gap-1.5 rounded-full border-0 bg-white/75 text-xs"><ThumbsDown className="size-3" />{feedback === 'down' ? '已记录' : '待改善'}</Button></div></div></details>}
         </section>
       </div>
     </div>

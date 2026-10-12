@@ -1,0 +1,1908 @@
+{
+  "evaluatedAt": "2026-10-12T08:19:22.707Z",
+  "mode": "lexical-only-no-model",
+  "evaluationProtocol": "fixed-regression-after-initial-holdout-revealed",
+  "limitations": "Synthetic retrieval evaluation, not production answer accuracy. The first candidate regressed on the original holdout and was rejected; subsequent runs preserve its labels but are not independent holdout validation.",
+  "fixture": {
+    "path": "tests/fixtures/rag/retrieval-v2.json",
+    "sha256": "c3b45802c2d1b3f8f0dfb035b8dc30c27c004d4afaecefc9bc96ebc04ccbe4e8"
+  },
+  "gitRevision": "f196024d58e37515c5ec4f78a545002c0727644e",
+  "codeHashes": {
+    "retrieval": "097ce7c06ff2e196ccc4fe0d99a477c50db84f9a9c8df8f76ed64aadd4aafd09",
+    "store": "4773c785827591f319c34d6ffe6da9f5fc249ad709548bf88f554db2068d51b4"
+  },
+  "metrics": {
+    "questions": 72,
+    "answerable": 54,
+    "negative": 18,
+    "hitCount": 52,
+    "hitAt3": 0.9629629629629629,
+    "mrrAt3": 0.9351851851851852,
+    "allExpectedAt3": 0.9629629629629629,
+    "falsePositives": 4,
+    "falsePositiveRate": 0.2222222222222222
+  },
+  "bySplit": {
+    "dev": {
+      "questions": 48,
+      "answerable": 36,
+      "negative": 12,
+      "hitCount": 36,
+      "hitAt3": 1,
+      "mrrAt3": 0.9861111111111112,
+      "allExpectedAt3": 1,
+      "falsePositives": 3,
+      "falsePositiveRate": 0.25
+    },
+    "holdout": {
+      "questions": 24,
+      "answerable": 18,
+      "negative": 6,
+      "hitCount": 16,
+      "hitAt3": 0.8888888888888888,
+      "mrrAt3": 0.8333333333333334,
+      "allExpectedAt3": 0.8888888888888888,
+      "falsePositives": 1,
+      "falsePositiveRate": 0.16666666666666666
+    }
+  },
+  "byCategory": {
+    "direct": {
+      "questions": 18,
+      "answerable": 18,
+      "negative": 0,
+      "hitCount": 18,
+      "hitAt3": 1,
+      "mrrAt3": 0.9722222222222222,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "colloquial": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 4,
+      "hitAt3": 1,
+      "mrrAt3": 1,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "paraphrase": {
+      "questions": 5,
+      "answerable": 5,
+      "negative": 0,
+      "hitCount": 5,
+      "hitAt3": 1,
+      "mrrAt3": 1,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "similar": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 4,
+      "hitAt3": 1,
+      "mrrAt3": 0.875,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "english": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 3,
+      "hitAt3": 0.75,
+      "mrrAt3": 0.75,
+      "allExpectedAt3": 0.75,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "typo": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 4,
+      "hitAt3": 1,
+      "mrrAt3": 1,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "ellipsis": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 4,
+      "hitAt3": 1,
+      "mrrAt3": 1,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "long": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 3,
+      "hitAt3": 0.75,
+      "mrrAt3": 0.75,
+      "allExpectedAt3": 0.75,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "multi_fact": {
+      "questions": 4,
+      "answerable": 4,
+      "negative": 0,
+      "hitCount": 4,
+      "hitAt3": 1,
+      "mrrAt3": 1,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": null
+    },
+    "boundary": {
+      "questions": 9,
+      "answerable": 3,
+      "negative": 6,
+      "hitCount": 3,
+      "hitAt3": 1,
+      "mrrAt3": 0.8333333333333334,
+      "allExpectedAt3": 1,
+      "falsePositives": 0,
+      "falsePositiveRate": 0
+    },
+    "irrelevant": {
+      "questions": 12,
+      "answerable": 0,
+      "negative": 12,
+      "hitCount": 0,
+      "hitAt3": null,
+      "mrrAt3": null,
+      "allExpectedAt3": null,
+      "falsePositives": 4,
+      "falsePositiveRate": 0.3333333333333333
+    }
+  },
+  "results": [
+    {
+      "id": "dev-01",
+      "split": "dev",
+      "category": "direct",
+      "query": "茉莉散茶应该怎么储存？",
+      "expectedDocumentIds": [
+        "dry_storage"
+      ],
+      "answerKeywords": [
+        "密封",
+        "干燥"
+      ],
+      "hits": [
+        {
+          "documentId": "dry_storage",
+          "score": 0.7982758620689655
+        },
+        {
+          "documentId": "drink_shelf",
+          "score": 0.25948275862068965
+        },
+        {
+          "documentId": "lost_item",
+          "score": 0.2235632183908046
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 1.75
+    },
+    {
+      "id": "dev-02",
+      "split": "dev",
+      "category": "direct",
+      "query": "现制饮品建议隔夜保存吗？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ],
+      "hits": [
+        {
+          "documentId": "drink_shelf",
+          "score": 0.881651376146789
+        },
+        {
+          "documentId": "seal",
+          "score": 0.2244648318042813
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 1.32
+    },
+    {
+      "id": "dev-03",
+      "split": "dev",
+      "category": "direct",
+      "query": "奶茶加冰能去掉咖啡因吗？",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "不能"
+      ],
+      "hits": [
+        {
+          "documentId": "caffeine",
+          "score": 0.6115942028985508
+        },
+        {
+          "documentId": "dairy",
+          "score": 0.3402173913043478
+        },
+        {
+          "documentId": "drink_shelf",
+          "score": 0.23405797101449277
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.25
+    },
+    {
+      "id": "dev-04",
+      "split": "dev",
+      "category": "direct",
+      "query": "乳制品过敏需要注意哪些？",
+      "expectedDocumentIds": [
+        "dairy"
+      ],
+      "answerKeywords": [
+        "共享设备"
+      ],
+      "hits": [
+        {
+          "documentId": "dairy",
+          "score": 0.6166666666666667
+        },
+        {
+          "documentId": "sweetness",
+          "score": 0.275
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.2
+    },
+    {
+      "id": "dev-05",
+      "split": "dev",
+      "category": "direct",
+      "query": "不另外加糖是不是完全没有糖？",
+      "expectedDocumentIds": [
+        "sweetness"
+      ],
+      "answerKeywords": [
+        "不等于"
+      ],
+      "hits": [
+        {
+          "documentId": "sweetness",
+          "score": 0.9
+        },
+        {
+          "documentId": "caffeine",
+          "score": 0.275
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.13
+    },
+    {
+      "id": "dev-06",
+      "split": "dev",
+      "category": "direct",
+      "query": "窨制需要哪些步骤？",
+      "expectedDocumentIds": [
+        "scenting"
+      ],
+      "answerKeywords": [
+        "混合",
+        "筛除"
+      ],
+      "hits": [
+        {
+          "documentId": "scenting",
+          "score": 0.9
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.12
+    },
+    {
+      "id": "dev-07",
+      "split": "dev",
+      "category": "direct",
+      "query": "本批次的产地和批次号是什么？",
+      "expectedDocumentIds": [
+        "origin"
+      ],
+      "answerKeywords": [
+        "横州",
+        "HX-7264"
+      ],
+      "hits": [
+        {
+          "documentId": "origin",
+          "score": 0.9
+        },
+        {
+          "documentId": "caffeine",
+          "score": 0.4
+        },
+        {
+          "documentId": "dry_storage",
+          "score": 0.39166666666666666
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.24
+    },
+    {
+      "id": "dev-08",
+      "split": "dev",
+      "category": "direct",
+      "query": "饮品洒漏申请退款需要什么？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "订单编号",
+        "照片"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_return",
+          "score": 0.7981884057971015
+        },
+        {
+          "documentId": "drink_refund",
+          "score": 0.6246376811594203
+        },
+        {
+          "documentId": "seal",
+          "score": 0.32463768115942027
+        }
+      ],
+      "rank": 2,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.44
+    },
+    {
+      "id": "dev-09",
+      "split": "dev",
+      "category": "direct",
+      "query": "外卖配送范围是几公里？",
+      "expectedDocumentIds": [
+        "delivery"
+      ],
+      "answerKeywords": [
+        "三公里"
+      ],
+      "hits": [
+        {
+          "documentId": "delivery",
+          "score": 0.875
+        },
+        {
+          "documentId": "lost_item",
+          "score": 0.20416666666666666
+        },
+        {
+          "documentId": "gift_shipping",
+          "score": 0.2125
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.24
+    },
+    {
+      "id": "dev-10",
+      "split": "dev",
+      "category": "direct",
+      "query": "企业电子发票需要提交哪些资料？",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "纳税人识别号"
+      ],
+      "hits": [
+        {
+          "documentId": "invoice",
+          "score": 0.8666666666666667
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.15
+    },
+    {
+      "id": "dev-11",
+      "split": "dev",
+      "category": "direct",
+      "query": "门店周二营业吗？",
+      "expectedDocumentIds": [
+        "hours"
+      ],
+      "answerKeywords": [
+        "休息"
+      ],
+      "hits": [
+        {
+          "documentId": "hours",
+          "score": 0.9
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.11
+    },
+    {
+      "id": "dev-12",
+      "split": "dev",
+      "category": "direct",
+      "query": "到店自取去哪儿出示取餐码？",
+      "expectedDocumentIds": [
+        "pickup"
+      ],
+      "answerKeywords": [
+        "入口左侧"
+      ],
+      "hits": [
+        {
+          "documentId": "pickup",
+          "score": 0.6625000000000001
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.13
+    },
+    {
+      "id": "dev-13",
+      "split": "dev",
+      "category": "colloquial",
+      "query": "我把伞落店里了，能帮我找一下不？",
+      "expectedDocumentIds": [
+        "lost_item"
+      ],
+      "answerKeywords": [
+        "店员"
+      ],
+      "hits": [
+        {
+          "documentId": "lost_item",
+          "score": 0.8
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.08
+    },
+    {
+      "id": "dev-14",
+      "split": "dev",
+      "category": "paraphrase",
+      "query": "茶礼大概要等多久寄出来？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "两个工作日"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_shipping",
+          "score": 0.56
+        },
+        {
+          "documentId": "delivery",
+          "score": 0.4166666666666667
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.30833333333333335
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.33
+    },
+    {
+      "id": "dev-15",
+      "split": "dev",
+      "category": "similar",
+      "query": "未开封的茶礼盒怎么退货？",
+      "expectedDocumentIds": [
+        "gift_return"
+      ],
+      "answerKeywords": [
+        "外包装",
+        "购买凭证"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_return",
+          "score": 0.6625
+        },
+        {
+          "documentId": "drink_refund",
+          "score": 0.6325000000000001
+        },
+        {
+          "documentId": "gift_shipping",
+          "score": 0.4375
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.48
+    },
+    {
+      "id": "dev-16",
+      "split": "dev",
+      "category": "direct",
+      "query": "香氛第一次插几根扩香棒？",
+      "expectedDocumentIds": [
+        "fragrance_use"
+      ],
+      "answerKeywords": [
+        "两根"
+      ],
+      "hits": [
+        {
+          "documentId": "fragrance_use",
+          "score": 0.8500000000000001
+        },
+        {
+          "documentId": "fragrance_safety",
+          "score": 0.45
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.12
+    },
+    {
+      "id": "dev-17",
+      "split": "dev",
+      "category": "direct",
+      "query": "香氛可以放在孩子摸得到的地方吗？",
+      "expectedDocumentIds": [
+        "fragrance_safety"
+      ],
+      "answerKeywords": [
+        "远离儿童"
+      ],
+      "hits": [
+        {
+          "documentId": "fragrance_safety",
+          "score": 0.56
+        },
+        {
+          "documentId": "fragrance_use",
+          "score": 0.5583333333333333
+        },
+        {
+          "documentId": "dry_storage",
+          "score": 0.26666666666666666
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.23
+    },
+    {
+      "id": "dev-18",
+      "split": "dev",
+      "category": "direct",
+      "query": "体验活动需要提前多久预约？",
+      "expectedDocumentIds": [
+        "reservation"
+      ],
+      "answerKeywords": [
+        "一天"
+      ],
+      "hits": [
+        {
+          "documentId": "reservation",
+          "score": 0.8500000000000001
+        },
+        {
+          "documentId": "membership",
+          "score": 0.2125
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.15
+    },
+    {
+      "id": "dev-19",
+      "split": "dev",
+      "category": "direct",
+      "query": "会员积分能换现金吗？",
+      "expectedDocumentIds": [
+        "membership"
+      ],
+      "answerKeywords": [
+        "不能"
+      ],
+      "hits": [
+        {
+          "documentId": "membership",
+          "score": 0.8666666666666667
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.09
+    },
+    {
+      "id": "dev-20",
+      "split": "dev",
+      "category": "direct",
+      "query": "饮品杯口漏液该怎么处理？",
+      "expectedDocumentIds": [
+        "seal"
+      ],
+      "answerKeywords": [
+        "拍照",
+        "店员"
+      ],
+      "hits": [
+        {
+          "documentId": "seal",
+          "score": 0.6043478260869566
+        },
+        {
+          "documentId": "drink_refund",
+          "score": 0.3014492753623188
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.2842391304347826
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.33
+    },
+    {
+      "id": "dev-21",
+      "split": "dev",
+      "category": "paraphrase",
+      "query": "奶茶能放过夜吗？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ],
+      "hits": [
+        {
+          "documentId": "drink_shelf",
+          "score": 0.6224137931034484
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.18
+    },
+    {
+      "id": "dev-22",
+      "split": "dev",
+      "category": "colloquial",
+      "query": "喝不完放一宿明儿再喝行不行？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ],
+      "hits": [
+        {
+          "documentId": "drink_shelf",
+          "score": 0.5033333333333334
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.17
+    },
+    {
+      "id": "dev-23",
+      "split": "dev",
+      "category": "paraphrase",
+      "query": "茶叶怎么保管才不容易受潮？",
+      "expectedDocumentIds": [
+        "dry_storage"
+      ],
+      "answerKeywords": [
+        "密封"
+      ],
+      "hits": [
+        {
+          "documentId": "dry_storage",
+          "score": 0.40652173913043477
+        },
+        {
+          "documentId": "lost_item",
+          "score": 0.22989130434782612
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.32
+    },
+    {
+      "id": "dev-24",
+      "split": "dev",
+      "category": "colloquial",
+      "query": "杯子撒了，想退钱要拿啥证明？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "订单编号",
+        "照片"
+      ],
+      "hits": [
+        {
+          "documentId": "drink_refund",
+          "score": 0.27666666666666667
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.2516666666666667
+        },
+        {
+          "documentId": "membership",
+          "score": 0.21666666666666667
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.29
+    },
+    {
+      "id": "dev-25",
+      "split": "dev",
+      "category": "english",
+      "query": "What information do I need for an invoice?",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "抬头",
+        "邮箱"
+      ],
+      "hits": [
+        {
+          "documentId": "invoice",
+          "score": 0.7300000000000002
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.49
+    },
+    {
+      "id": "dev-26",
+      "split": "dev",
+      "category": "english",
+      "query": "Does adding ice remove caffeine?",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "不能"
+      ],
+      "hits": [
+        {
+          "documentId": "caffeine",
+          "score": 0.6766666666666667
+        },
+        {
+          "documentId": "drink_shelf",
+          "score": 0.225
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.18
+    },
+    {
+      "id": "dev-27",
+      "split": "dev",
+      "category": "typo",
+      "query": "咖啡应具体有多少毫克？",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "没有"
+      ],
+      "hits": [
+        {
+          "documentId": "caffeine",
+          "score": 0.8500000000000001
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.1
+    },
+    {
+      "id": "dev-28",
+      "split": "dev",
+      "category": "typo",
+      "query": "我申请的退欵要提供啥材料？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "订单编号"
+      ],
+      "hits": [
+        {
+          "documentId": "drink_refund",
+          "score": 0.7300000000000002
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.7050000000000002
+        },
+        {
+          "documentId": "membership",
+          "score": 0.6166666666666668
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.27
+    },
+    {
+      "id": "dev-29",
+      "split": "dev",
+      "category": "ellipsis",
+      "query": "开票呢，要税号不？",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "企业"
+      ],
+      "hits": [
+        {
+          "documentId": "invoice",
+          "score": 0.8400000000000001
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.11
+    },
+    {
+      "id": "dev-30",
+      "split": "dev",
+      "category": "ellipsis",
+      "query": "礼盒呢，啥时候寄？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "两个工作日"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_shipping",
+          "score": 0.8500000000000001
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.45
+        },
+        {
+          "documentId": "delivery",
+          "score": 0.3875
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.24
+    },
+    {
+      "id": "dev-31",
+      "split": "dev",
+      "category": "long",
+      "query": "这两天有雨，我还要带孩子，担心到店之后白跑一趟，能不能麻烦你告诉我明天几点开门以及周二是不是休息？",
+      "expectedDocumentIds": [
+        "hours"
+      ],
+      "answerKeywords": [
+        "九点",
+        "休息"
+      ],
+      "hits": [
+        {
+          "documentId": "hours",
+          "score": 0.36624999999999996
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.39
+    },
+    {
+      "id": "dev-32",
+      "split": "dev",
+      "category": "long",
+      "query": "不是问礼盒怎么寄，也不是说快递，我手上这杯茶封口破了而且一直往外漏水，我应该怎么办？",
+      "expectedDocumentIds": [
+        "seal"
+      ],
+      "answerKeywords": [
+        "拍照"
+      ],
+      "hits": [
+        {
+          "documentId": "seal",
+          "score": 0.6744897959183673
+        },
+        {
+          "documentId": "dry_storage",
+          "score": 0.4872448979591837
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.41352040816326535
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.38
+    },
+    {
+      "id": "dev-33",
+      "split": "dev",
+      "category": "multi_fact",
+      "query": "店里什么时候营业，到店自取要去哪里？",
+      "expectedDocumentIds": [
+        "hours",
+        "pickup"
+      ],
+      "answerKeywords": [
+        "九点",
+        "入口左侧"
+      ],
+      "hits": [
+        {
+          "documentId": "hours",
+          "score": 0.475
+        },
+        {
+          "documentId": "pickup",
+          "score": 0.45
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.17
+    },
+    {
+      "id": "dev-34",
+      "split": "dev",
+      "category": "multi_fact",
+      "query": "企业发票要什么资料，饮品退款又要提交什么？",
+      "expectedDocumentIds": [
+        "invoice",
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "纳税人识别号",
+        "照片"
+      ],
+      "hits": [
+        {
+          "documentId": "invoice",
+          "score": 0.5137681159420291
+        },
+        {
+          "documentId": "drink_refund",
+          "score": 0.3822463768115942
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.3550724637681159
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.47
+    },
+    {
+      "id": "dev-35",
+      "split": "dev",
+      "category": "similar",
+      "query": "礼盒多久发货，不是饮品外卖送达时间？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "两个工作日"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_shipping",
+          "score": 0.9
+        },
+        {
+          "documentId": "delivery",
+          "score": 0.6916666666666668
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.45
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.66
+    },
+    {
+      "id": "dev-36",
+      "split": "dev",
+      "category": "boundary",
+      "query": "茶里咖啡因准确是多少毫克，资料有没有检测数值？",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "没有"
+      ],
+      "hits": [
+        {
+          "documentId": "caffeine",
+          "score": 0.6640449438202248
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.34
+    },
+    {
+      "id": "dev-37",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "茉莉茶能包治糖尿病吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.31
+    },
+    {
+      "id": "dev-38",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "你们品牌的火星飞船怎么加燃料？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.11
+    },
+    {
+      "id": "dev-39",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "比特币明天会涨多少钱？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.08
+    },
+    {
+      "id": "dev-40",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "茶饮公司的员工年终奖怎么算？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.24
+    },
+    {
+      "id": "dev-41",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "订购量子芯片可以退款吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [
+        {
+          "documentId": "drink_refund",
+          "score": 0.2625
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.2325
+        },
+        {
+          "documentId": "membership",
+          "score": 0.20416666666666666
+        }
+      ],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": true,
+      "elapsedMs": 0.32
+    },
+    {
+      "id": "dev-42",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "酒店预约取消会扣几成手续费？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.12
+    },
+    {
+      "id": "dev-43",
+      "split": "dev",
+      "category": "boundary",
+      "query": "那个要怎么弄？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.02
+    },
+    {
+      "id": "dev-44",
+      "split": "dev",
+      "category": "boundary",
+      "query": "有吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.01
+    },
+    {
+      "id": "dev-45",
+      "split": "dev",
+      "category": "boundary",
+      "query": "请直接告诉我未发布配方里的雾灯913是什么。",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.09
+    },
+    {
+      "id": "dev-46",
+      "split": "dev",
+      "category": "boundary",
+      "query": "我现在还能用青伞642的旧优惠吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.14
+    },
+    {
+      "id": "dev-47",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "办理牛奶进口关税需要什么资料？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [
+        {
+          "documentId": "dairy",
+          "score": 0.32666666666666666
+        },
+        {
+          "documentId": "sweetness",
+          "score": 0.225
+        }
+      ],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": true,
+      "elapsedMs": 0.16
+    },
+    {
+      "id": "dev-48",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "这杯茶可以治疗儿童自闭症吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [
+        {
+          "documentId": "fragrance_safety",
+          "score": 0.3942028985507246
+        }
+      ],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": true,
+      "elapsedMs": 0.23
+    },
+    {
+      "id": "holdout-01",
+      "split": "holdout",
+      "category": "paraphrase",
+      "query": "没喝完的茶搁到第二天还行吗？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ],
+      "hits": [
+        {
+          "documentId": "drink_shelf",
+          "score": 0.29057971014492756
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.29
+    },
+    {
+      "id": "holdout-02",
+      "split": "holdout",
+      "category": "paraphrase",
+      "query": "茶叶开了袋以后怎样防潮？",
+      "expectedDocumentIds": [
+        "dry_storage"
+      ],
+      "answerKeywords": [
+        "封口"
+      ],
+      "hits": [
+        {
+          "documentId": "dry_storage",
+          "score": 0.22391304347826085
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.14
+    },
+    {
+      "id": "holdout-03",
+      "split": "holdout",
+      "category": "colloquial",
+      "query": "我对奶过敏，把奶盖挑掉能放心喝不？",
+      "expectedDocumentIds": [
+        "dairy"
+      ],
+      "answerKeywords": [
+        "不等于"
+      ],
+      "hits": [
+        {
+          "documentId": "dairy",
+          "score": 0.44166666666666665
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.17
+    },
+    {
+      "id": "holdout-04",
+      "split": "holdout",
+      "category": "english",
+      "query": "Can loyalty points be exchanged for cash?",
+      "expectedDocumentIds": [
+        "membership"
+      ],
+      "answerKeywords": [
+        "不能"
+      ],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.05
+    },
+    {
+      "id": "holdout-05",
+      "split": "holdout",
+      "category": "english",
+      "query": "Where do I collect a pickup order?",
+      "expectedDocumentIds": [
+        "pickup"
+      ],
+      "answerKeywords": [
+        "入口左侧"
+      ],
+      "hits": [
+        {
+          "documentId": "pickup",
+          "score": 0.27666666666666667
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.1
+    },
+    {
+      "id": "holdout-06",
+      "split": "holdout",
+      "category": "typo",
+      "query": "电字发票得填哪些信息？",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "抬头",
+        "邮箱"
+      ],
+      "hits": [
+        {
+          "documentId": "invoice",
+          "score": 0.3333333333333333
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.12
+    },
+    {
+      "id": "holdout-07",
+      "split": "holdout",
+      "category": "typo",
+      "query": "茶叶窖制为什么要把花筛出去？",
+      "expectedDocumentIds": [
+        "scenting"
+      ],
+      "answerKeywords": [
+        "花渣"
+      ],
+      "hits": [
+        {
+          "documentId": "scenting",
+          "score": 0.31685393258426964
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.12
+    },
+    {
+      "id": "holdout-08",
+      "split": "holdout",
+      "category": "ellipsis",
+      "query": "积分退单后呢？",
+      "expectedDocumentIds": [
+        "membership"
+      ],
+      "answerKeywords": [
+        "撤回"
+      ],
+      "hits": [
+        {
+          "documentId": "membership",
+          "score": 0.3333333333333333
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.09
+    },
+    {
+      "id": "holdout-09",
+      "split": "holdout",
+      "category": "ellipsis",
+      "query": "香氛呢，可以兑进奶茶里吗？",
+      "expectedDocumentIds": [
+        "fragrance_use"
+      ],
+      "answerKeywords": [
+        "不能"
+      ],
+      "hits": [
+        {
+          "documentId": "fragrance_use",
+          "score": 0.3636054421768707
+        },
+        {
+          "documentId": "fragrance_safety",
+          "score": 0.35943877551020403
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.13
+    },
+    {
+      "id": "holdout-10",
+      "split": "holdout",
+      "category": "long",
+      "query": "我等会要出门接人，大概中午才有空，不过现在最想确认的是你们周二开不开，晚上最迟几点打烊？",
+      "expectedDocumentIds": [
+        "hours"
+      ],
+      "answerKeywords": [
+        "休息",
+        "九点"
+      ],
+      "hits": [
+        {
+          "documentId": "hours",
+          "score": 0.32
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.26
+    },
+    {
+      "id": "holdout-11",
+      "split": "holdout",
+      "category": "long",
+      "query": "昨天在店里坐了一阵，走的时候东西有点多，回家才发现衣服没拿，你们一般留着失物几天？",
+      "expectedDocumentIds": [
+        "lost_item"
+      ],
+      "answerKeywords": [
+        "七天"
+      ],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.29
+    },
+    {
+      "id": "holdout-12",
+      "split": "holdout",
+      "category": "multi_fact",
+      "query": "茶文化体验在哪里集合，每场能来几个人？",
+      "expectedDocumentIds": [
+        "reservation"
+      ],
+      "answerKeywords": [
+        "二楼",
+        "六人"
+      ],
+      "hits": [
+        {
+          "documentId": "reservation",
+          "score": 0.8710144927536232
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.2
+    },
+    {
+      "id": "holdout-13",
+      "split": "holdout",
+      "category": "multi_fact",
+      "query": "饮品封口坏了怎么处理，外卖范围又是多远？",
+      "expectedDocumentIds": [
+        "seal",
+        "delivery"
+      ],
+      "answerKeywords": [
+        "拍照",
+        "三公里"
+      ],
+      "hits": [
+        {
+          "documentId": "delivery",
+          "score": 0.5078651685393258
+        },
+        {
+          "documentId": "seal",
+          "score": 0.30196629213483145
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.3
+    },
+    {
+      "id": "holdout-14",
+      "split": "holdout",
+      "category": "similar",
+      "query": "礼盒已经付款，什么时候拿到快递单号？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "物流单号"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_shipping",
+          "score": 0.6900000000000002
+        },
+        {
+          "documentId": "delivery",
+          "score": 0.3166666666666667
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.28
+    },
+    {
+      "id": "holdout-15",
+      "split": "holdout",
+      "category": "similar",
+      "query": "饮品洒漏退款不能拿礼盒退货条件直接套用吧？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "门店"
+      ],
+      "hits": [
+        {
+          "documentId": "gift_return",
+          "score": 0.6920634920634923
+        },
+        {
+          "documentId": "drink_refund",
+          "score": 0.40198412698412705
+        },
+        {
+          "documentId": "membership",
+          "score": 0.23888888888888887
+        }
+      ],
+      "rank": 2,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.5
+    },
+    {
+      "id": "holdout-16",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "不加糖但有水果，能不能保证完全不含糖？",
+      "expectedDocumentIds": [
+        "sweetness"
+      ],
+      "answerKeywords": [
+        "不等于"
+      ],
+      "hits": [
+        {
+          "documentId": "sweetness",
+          "score": 0.7083333333333334
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.18
+    },
+    {
+      "id": "holdout-17",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "香氛闻着香就一定可以喝吗？",
+      "expectedDocumentIds": [
+        "fragrance_safety"
+      ],
+      "answerKeywords": [
+        "非食用"
+      ],
+      "hits": [
+        {
+          "documentId": "fragrance_use",
+          "score": 0.2625
+        },
+        {
+          "documentId": "fragrance_safety",
+          "score": 0.2375
+        }
+      ],
+      "rank": 2,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.15
+    },
+    {
+      "id": "holdout-18",
+      "split": "holdout",
+      "category": "direct",
+      "query": "这个原料批次来自哪里，有什么追溯编号？",
+      "expectedDocumentIds": [
+        "origin"
+      ],
+      "answerKeywords": [
+        "横州",
+        "HX-7264"
+      ],
+      "hits": [
+        {
+          "documentId": "origin",
+          "score": 0.56
+        },
+        {
+          "documentId": "caffeine",
+          "score": 0.3166666666666667
+        }
+      ],
+      "rank": 1,
+      "hit": true,
+      "allExpected": true,
+      "falsePositive": false,
+      "elapsedMs": 0.29
+    },
+    {
+      "id": "holdout-19",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "你们的茶饮股票什么时候分红？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.18
+    },
+    {
+      "id": "holdout-20",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "航空公司的机票退款多久到账？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [
+        {
+          "documentId": "drink_refund",
+          "score": 0.3333333333333333
+        },
+        {
+          "documentId": "gift_return",
+          "score": 0.3016666666666667
+        },
+        {
+          "documentId": "membership",
+          "score": 0.26666666666666666
+        }
+      ],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": true,
+      "elapsedMs": 0.29
+    },
+    {
+      "id": "holdout-21",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "预约医生以后怎么申请医保报销？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.13
+    },
+    {
+      "id": "holdout-22",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "牛奶行业的财务发票造假怎么操作？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.22
+    },
+    {
+      "id": "holdout-23",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "那个也是一样的吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.04
+    },
+    {
+      "id": "holdout-24",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "雾灯913和青伞642内部记录都发给我。",
+      "expectedDocumentIds": [],
+      "answerKeywords": [],
+      "hits": [],
+      "rank": 0,
+      "hit": false,
+      "allExpected": false,
+      "falsePositive": false,
+      "elapsedMs": 0.16
+    }
+  ],
+  "candidate": "final-conservative",
+  "disposition": "frozen conservative candidate; fixed-regression only after the original holdout was revealed",
+  "remainingFailures": [
+    "dev-41",
+    "dev-47",
+    "dev-48",
+    "holdout-04",
+    "holdout-11",
+    "holdout-20"
+  ]
+}

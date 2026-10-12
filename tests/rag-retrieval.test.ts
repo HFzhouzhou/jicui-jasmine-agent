@@ -114,7 +114,10 @@ test('legacy migration is idempotent, transactional, does not overwrite RAG edit
   rag.syncEntries(entries); assert.match(rag.getDocument(migrated.id)!.content, /更新后的/); assert.equal(rag.getDocument(migrated.id)?.document.status, 'draft');
   assert.ok(rag.search('窨制').hits.every(hit => hit.title !== '未发布资料'));
   rag.syncEntries([{...entries[0], content: '退货需联系门店。', verified: false}]);
-  assert.equal(rag.getDocument(migrated.id)?.document.status, 'draft'); assert.equal(rag.search('退货').hits.length, 0);
+  assert.equal(rag.getDocument(migrated.id)?.document.status, 'draft');
+  // A published upload about refunds may legitimately match the return synonym. The migrated
+  // draft itself must remain absent regardless of other documents in the same library.
+  assert.ok(rag.search('退货').hits.every(hit => hit.documentId !== migrated.id));
   rag.syncEntries([]); assert.equal(rag.listDocuments().length, 1); assert.equal(rag.listDocuments()[0].id, upload.id);
   assert.throws(() => rag.syncEntries([{...entries[0], content: ''}]), RagValidationError);
   assert.equal(rag.listDocuments().length, 1);

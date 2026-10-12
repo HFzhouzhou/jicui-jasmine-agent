@@ -208,6 +208,21 @@ npm run check
 
 `check` 运行前后端类型检查、代码检查及服务端回归测试。测试使用临时数据库和测试模型响应，不消耗真实模型额度，也不修改工作数据库。真实模型验收需要配置有效密钥后在浏览器执行。
 
+知识库与点单共用聊天入口的固定评测：
+
+```sh
+# 72 道固定检索回归题，不调用模型，不修改实际资料
+npm run eval:rag -- --output retrieval-report.json
+
+# 以下会调用 .env 中配置的 DeepSeek 并消耗额度；资料和商品均为内存中的虚构测试数据
+npm run eval:conversation -- --live --output conversation-report.json
+npm run eval:conversation -- --live --suite safety --output safety-report.json
+npm run eval:conversation -- --live --suite retrieval-safety --output retrieval-safety-report.json
+```
+
+第一项检索评测无需密钥；后三项必须显式添加 `--live` 并已配置有效密钥，可用 `--cases k01,t02` 选择对话场景。脚本既不上传生产资料，也不读写正在使用的 SQLite。它默认关闭向量服务，以避免更换检索条件；若要评估向量方案，应另立实验，不与本次数据混算。结果包含逐题回答、失败原因和耗时；不要把报告中的虚构资料导入真实知识库。评测方法、优化前后数据和已知限制见 [知识问答评测报告](docs/RAG_EVALUATION.md)。
+
+
 后续更新时，先停止应用；有本地源码改动时先自行提交或妥善保存，再依次执行：
 
 ```sh

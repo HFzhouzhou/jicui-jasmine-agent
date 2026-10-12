@@ -1,0 +1,980 @@
+{
+  "schemaVersion": 1,
+  "id": "jasmine-retrieval-v2-20261012",
+  "purpose": "全部为虚构的离线回归评估语料，不上传生产知识库。开发集用于调参，留出集仅冻结后最终评估一次。",
+  "metricDefinitions": {
+    "hitAt3": "answerable queries with at least one expected document among top 3 / answerable queries",
+    "mrrAt3": "first expected document reciprocal rank within top 3, else zero; averaged over answerable queries",
+    "allExpectedAt3": "answerable queries with every expected document among top 3 / answerable queries",
+    "falsePositiveRate": "queries labelled expectedDocumentIds=[] returning any hit / such queries"
+  },
+  "documents": [
+    {
+      "id": "dry_storage",
+      "title": "散茶储存与防潮",
+      "text": "未开封的茉莉散茶应密封放在阴凉干燥处，避开阳光、异味和灶台。开封后每次取茶立即封口，防止受潮。演示批次的包装标示保质期为十八个月，开封不改变包装印刷的到期日期。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "drink_shelf",
+      "title": "现制饮品饮用与隔夜保存",
+      "text": "现制饮品收到后应尽快饮用，不建议隔夜保存或第二天再喝。加冰不能延长保存期限，冷藏也不能保证饮品过夜后安全。本资料没有给出常温放置的精确小时数。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "caffeine",
+      "title": "茶饮咖啡因说明",
+      "text": "茶叶天然含咖啡因，奶茶加奶、加冰或调整糖量都不能自动去除咖啡因。具体含量受茶叶原料、浸泡时间和份量影响。本批次没有每杯咖啡因毫克数的检测记录，不能给出准确剂量。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "dairy",
+      "title": "乳制品过敏与共享设备",
+      "text": "鲜奶茶含牛奶及其乳制品，乳制品过敏的顾客需要核对配料。去掉奶盖不等于去掉饮品里的全部乳成分。不同饮品会使用共享设备，无法直接保证没有交叉接触，不能承诺绝对不过敏。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "sweetness",
+      "title": "甜度选项与不另外加糖",
+      "text": "演示菜单可选全糖、半糖和不另外加糖，具体糖度以单款商品配置为准。不另外加糖不等于完全不含糖，水果和乳制品可能自带糖分。甜度选择不是健康功效保证。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "scenting",
+      "title": "茉莉花茶窨制流程",
+      "text": "窨制是将茶坯与鲜茉莉花混合，让茶叶吸收鲜花香气的加工工艺。窨花时需观察花堆温度，及时通花散热；完成后筛除花渣，再进行干燥。茉莉花香不是简单由残留花瓣数量决定。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "origin",
+      "title": "原料产地与批次追溯",
+      "text": "本虚构验收批次的茉莉原料产地是广西横州。每批采购需核对原产地证明、供应商名称和批次号，不同批次的追溯记录不能混用。演示批次号为 HX-7264。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "drink_refund",
+      "title": "饮品订单退款与售后",
+      "text": "已购买的饮品出现洒漏或质量问题，可向原购买门店申请退款。请提供订单编号、购买时间与问题照片，由门店核实后处理。本流程不处理茶礼礼盒的退货，也不承诺固定退款到账时限。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "delivery",
+      "title": "外卖配送范围与时效",
+      "text": "演示茶饮门店配送范围为三公里内，预计送达时间以订单页为准。通常配送约三十分钟，雨天、距离及订单量可能造成延迟。超出范围不承诺送达，本规则只适用于饮品外卖，不适用于礼盒快递。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "invoice",
+      "title": "电子发票开具资料",
+      "text": "申请电子发票需提供订单编号、发票抬头、接收邮箱；企业开票另需纳税人识别号。个人抬头可填写个人，不要求提供企业税号。开票资料交给购买门店，不要发到公开评论区。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "hours",
+      "title": "门店营业时间与周二休息",
+      "text": "虚构旗舰店营业时间为上午九点至晚上九点，每周二休息。节假日的开门与打烊时间可能调整，应以当天门店公告为准。这份资料只说明营业时段，不代表当天商品库存。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "pickup",
+      "title": "到店自取与取餐码",
+      "text": "选择到店自取后，请到门店取餐台向店员出示取餐码。演示取餐台位于入口左侧。若忘记取餐码，可由店员通过订单编号协助核对，不能仅凭口头报饮品名称领取别人的订单。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "lost_item",
+      "title": "门店遗失物品领取",
+      "text": "在店内遗失雨伞、衣物或其他个人物品，可联系当值店员登记丢失时间和物品特征。失物由门店保管七天，认领时需要核对描述。这是个人遗失物流程，不是外卖订单少送商品的处理流程。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "gift_shipping",
+      "title": "茶礼礼盒快递发货",
+      "text": "茶礼礼盒采用快递寄送，通常在付款后两个工作日内发货，节假日顺延。请核对收件人姓名、电话和地址。物流单号生成后可查询快递进度，本规则不适用于即制茶饮的同城配送。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "gift_return",
+      "title": "茶礼礼盒退货条件",
+      "text": "茶礼礼盒申请退货时需保留外包装与购买凭证，未拆封且符合门店确认条件的礼盒才进入退货核实流程。破损应提交外箱与商品照片。具体退款按原购买渠道办理，不按饮品洒漏流程代替礼盒退货审核。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "fragrance_use",
+      "title": "香氛扩香使用方法",
+      "text": "演示香氛为扩香用品，打开瓶口后插入扩香棒，放在平稳通风位置。初次建议使用两根扩香棒，再按空间大小调整数量。香氛液不能加入茶饮，也不能当作食品调味料。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "fragrance_safety",
+      "title": "香氛摆放与儿童接触提醒",
+      "text": "香氛属于非食用产品，应远离儿童、宠物、明火和高温处，避免接触眼睛及误饮。若发生误饮应及时寻求专业帮助，不根据香味猜测安全性。该提醒不是茶饮配料说明。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "reservation",
+      "title": "茶文化体验预约",
+      "text": "虚构门店提供茶文化体验活动，需至少提前一天预约并登记参与人数。每场最多六人，集合位置为店内二楼体验区。预约并不等于已经付款，实际名额以门店确认为准。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "membership",
+      "title": "会员积分与使用规则",
+      "text": "演示会员消费每满一元积一分，积分可在下次符合条件的订单使用。积分不能直接兑换现金，退款订单的对应积分会撤回。会员优惠以活动页面为准，不自动叠加其他优惠。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "seal",
+      "title": "饮品封口与漏液检查",
+      "text": "拿到饮品后请检查杯盖、封口膜和杯身是否完整；发现封口破损或漏液时及时拍照并联系店员。运输中应保持杯身直立，避免挤压。封口完整不表示饮品可以长时间常温保存。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "published"
+    },
+    {
+      "id": "private_recipe",
+      "title": "未发布的配方试验记录",
+      "text": "内部试验记录暗号为雾灯913，内容未经核准，不得用于顾客问答。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "draft"
+    },
+    {
+      "id": "archived_promo",
+      "title": "已归档的旧促销说明",
+      "text": "已经结束的旧活动暗号为青伞642，旧优惠不能用于当前下单。",
+      "source": "完全虚构的离线茶饮知识库评估语料，不代表真实品牌政策",
+      "status": "archived"
+    }
+  ],
+  "questions": [
+    {
+      "id": "dev-01",
+      "split": "dev",
+      "category": "direct",
+      "query": "茉莉散茶应该怎么储存？",
+      "expectedDocumentIds": [
+        "dry_storage"
+      ],
+      "answerKeywords": [
+        "密封",
+        "干燥"
+      ]
+    },
+    {
+      "id": "dev-02",
+      "split": "dev",
+      "category": "direct",
+      "query": "现制饮品建议隔夜保存吗？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ]
+    },
+    {
+      "id": "dev-03",
+      "split": "dev",
+      "category": "direct",
+      "query": "奶茶加冰能去掉咖啡因吗？",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "不能"
+      ]
+    },
+    {
+      "id": "dev-04",
+      "split": "dev",
+      "category": "direct",
+      "query": "乳制品过敏需要注意哪些？",
+      "expectedDocumentIds": [
+        "dairy"
+      ],
+      "answerKeywords": [
+        "共享设备"
+      ]
+    },
+    {
+      "id": "dev-05",
+      "split": "dev",
+      "category": "direct",
+      "query": "不另外加糖是不是完全没有糖？",
+      "expectedDocumentIds": [
+        "sweetness"
+      ],
+      "answerKeywords": [
+        "不等于"
+      ]
+    },
+    {
+      "id": "dev-06",
+      "split": "dev",
+      "category": "direct",
+      "query": "窨制需要哪些步骤？",
+      "expectedDocumentIds": [
+        "scenting"
+      ],
+      "answerKeywords": [
+        "混合",
+        "筛除"
+      ]
+    },
+    {
+      "id": "dev-07",
+      "split": "dev",
+      "category": "direct",
+      "query": "本批次的产地和批次号是什么？",
+      "expectedDocumentIds": [
+        "origin"
+      ],
+      "answerKeywords": [
+        "横州",
+        "HX-7264"
+      ]
+    },
+    {
+      "id": "dev-08",
+      "split": "dev",
+      "category": "direct",
+      "query": "饮品洒漏申请退款需要什么？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "订单编号",
+        "照片"
+      ]
+    },
+    {
+      "id": "dev-09",
+      "split": "dev",
+      "category": "direct",
+      "query": "外卖配送范围是几公里？",
+      "expectedDocumentIds": [
+        "delivery"
+      ],
+      "answerKeywords": [
+        "三公里"
+      ]
+    },
+    {
+      "id": "dev-10",
+      "split": "dev",
+      "category": "direct",
+      "query": "企业电子发票需要提交哪些资料？",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "纳税人识别号"
+      ]
+    },
+    {
+      "id": "dev-11",
+      "split": "dev",
+      "category": "direct",
+      "query": "门店周二营业吗？",
+      "expectedDocumentIds": [
+        "hours"
+      ],
+      "answerKeywords": [
+        "休息"
+      ]
+    },
+    {
+      "id": "dev-12",
+      "split": "dev",
+      "category": "direct",
+      "query": "到店自取去哪儿出示取餐码？",
+      "expectedDocumentIds": [
+        "pickup"
+      ],
+      "answerKeywords": [
+        "入口左侧"
+      ]
+    },
+    {
+      "id": "dev-13",
+      "split": "dev",
+      "category": "colloquial",
+      "query": "我把伞落店里了，能帮我找一下不？",
+      "expectedDocumentIds": [
+        "lost_item"
+      ],
+      "answerKeywords": [
+        "店员"
+      ]
+    },
+    {
+      "id": "dev-14",
+      "split": "dev",
+      "category": "paraphrase",
+      "query": "茶礼大概要等多久寄出来？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "两个工作日"
+      ]
+    },
+    {
+      "id": "dev-15",
+      "split": "dev",
+      "category": "similar",
+      "query": "未开封的茶礼盒怎么退货？",
+      "expectedDocumentIds": [
+        "gift_return"
+      ],
+      "answerKeywords": [
+        "外包装",
+        "购买凭证"
+      ]
+    },
+    {
+      "id": "dev-16",
+      "split": "dev",
+      "category": "direct",
+      "query": "香氛第一次插几根扩香棒？",
+      "expectedDocumentIds": [
+        "fragrance_use"
+      ],
+      "answerKeywords": [
+        "两根"
+      ]
+    },
+    {
+      "id": "dev-17",
+      "split": "dev",
+      "category": "direct",
+      "query": "香氛可以放在孩子摸得到的地方吗？",
+      "expectedDocumentIds": [
+        "fragrance_safety"
+      ],
+      "answerKeywords": [
+        "远离儿童"
+      ]
+    },
+    {
+      "id": "dev-18",
+      "split": "dev",
+      "category": "direct",
+      "query": "体验活动需要提前多久预约？",
+      "expectedDocumentIds": [
+        "reservation"
+      ],
+      "answerKeywords": [
+        "一天"
+      ]
+    },
+    {
+      "id": "dev-19",
+      "split": "dev",
+      "category": "direct",
+      "query": "会员积分能换现金吗？",
+      "expectedDocumentIds": [
+        "membership"
+      ],
+      "answerKeywords": [
+        "不能"
+      ]
+    },
+    {
+      "id": "dev-20",
+      "split": "dev",
+      "category": "direct",
+      "query": "饮品杯口漏液该怎么处理？",
+      "expectedDocumentIds": [
+        "seal"
+      ],
+      "answerKeywords": [
+        "拍照",
+        "店员"
+      ]
+    },
+    {
+      "id": "dev-21",
+      "split": "dev",
+      "category": "paraphrase",
+      "query": "奶茶能放过夜吗？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ]
+    },
+    {
+      "id": "dev-22",
+      "split": "dev",
+      "category": "colloquial",
+      "query": "喝不完放一宿明儿再喝行不行？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ]
+    },
+    {
+      "id": "dev-23",
+      "split": "dev",
+      "category": "paraphrase",
+      "query": "茶叶怎么保管才不容易受潮？",
+      "expectedDocumentIds": [
+        "dry_storage"
+      ],
+      "answerKeywords": [
+        "密封"
+      ]
+    },
+    {
+      "id": "dev-24",
+      "split": "dev",
+      "category": "colloquial",
+      "query": "杯子撒了，想退钱要拿啥证明？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "订单编号",
+        "照片"
+      ]
+    },
+    {
+      "id": "dev-25",
+      "split": "dev",
+      "category": "english",
+      "query": "What information do I need for an invoice?",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "抬头",
+        "邮箱"
+      ]
+    },
+    {
+      "id": "dev-26",
+      "split": "dev",
+      "category": "english",
+      "query": "Does adding ice remove caffeine?",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "不能"
+      ]
+    },
+    {
+      "id": "dev-27",
+      "split": "dev",
+      "category": "typo",
+      "query": "咖啡应具体有多少毫克？",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "没有"
+      ]
+    },
+    {
+      "id": "dev-28",
+      "split": "dev",
+      "category": "typo",
+      "query": "我申请的退欵要提供啥材料？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "订单编号"
+      ]
+    },
+    {
+      "id": "dev-29",
+      "split": "dev",
+      "category": "ellipsis",
+      "query": "开票呢，要税号不？",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "企业"
+      ]
+    },
+    {
+      "id": "dev-30",
+      "split": "dev",
+      "category": "ellipsis",
+      "query": "礼盒呢，啥时候寄？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "两个工作日"
+      ]
+    },
+    {
+      "id": "dev-31",
+      "split": "dev",
+      "category": "long",
+      "query": "这两天有雨，我还要带孩子，担心到店之后白跑一趟，能不能麻烦你告诉我明天几点开门以及周二是不是休息？",
+      "expectedDocumentIds": [
+        "hours"
+      ],
+      "answerKeywords": [
+        "九点",
+        "休息"
+      ]
+    },
+    {
+      "id": "dev-32",
+      "split": "dev",
+      "category": "long",
+      "query": "不是问礼盒怎么寄，也不是说快递，我手上这杯茶封口破了而且一直往外漏水，我应该怎么办？",
+      "expectedDocumentIds": [
+        "seal"
+      ],
+      "answerKeywords": [
+        "拍照"
+      ]
+    },
+    {
+      "id": "dev-33",
+      "split": "dev",
+      "category": "multi_fact",
+      "query": "店里什么时候营业，到店自取要去哪里？",
+      "expectedDocumentIds": [
+        "hours",
+        "pickup"
+      ],
+      "answerKeywords": [
+        "九点",
+        "入口左侧"
+      ]
+    },
+    {
+      "id": "dev-34",
+      "split": "dev",
+      "category": "multi_fact",
+      "query": "企业发票要什么资料，饮品退款又要提交什么？",
+      "expectedDocumentIds": [
+        "invoice",
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "纳税人识别号",
+        "照片"
+      ]
+    },
+    {
+      "id": "dev-35",
+      "split": "dev",
+      "category": "similar",
+      "query": "礼盒多久发货，不是饮品外卖送达时间？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "两个工作日"
+      ]
+    },
+    {
+      "id": "dev-36",
+      "split": "dev",
+      "category": "boundary",
+      "query": "茶里咖啡因准确是多少毫克，资料有没有检测数值？",
+      "expectedDocumentIds": [
+        "caffeine"
+      ],
+      "answerKeywords": [
+        "没有"
+      ]
+    },
+    {
+      "id": "dev-37",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "茉莉茶能包治糖尿病吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-38",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "你们品牌的火星飞船怎么加燃料？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-39",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "比特币明天会涨多少钱？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-40",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "茶饮公司的员工年终奖怎么算？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-41",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "订购量子芯片可以退款吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-42",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "酒店预约取消会扣几成手续费？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-43",
+      "split": "dev",
+      "category": "boundary",
+      "query": "那个要怎么弄？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-44",
+      "split": "dev",
+      "category": "boundary",
+      "query": "有吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-45",
+      "split": "dev",
+      "category": "boundary",
+      "query": "请直接告诉我未发布配方里的雾灯913是什么。",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-46",
+      "split": "dev",
+      "category": "boundary",
+      "query": "我现在还能用青伞642的旧优惠吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-47",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "办理牛奶进口关税需要什么资料？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "dev-48",
+      "split": "dev",
+      "category": "irrelevant",
+      "query": "这杯茶可以治疗儿童自闭症吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "holdout-01",
+      "split": "holdout",
+      "category": "paraphrase",
+      "query": "没喝完的茶搁到第二天还行吗？",
+      "expectedDocumentIds": [
+        "drink_shelf"
+      ],
+      "answerKeywords": [
+        "不建议"
+      ]
+    },
+    {
+      "id": "holdout-02",
+      "split": "holdout",
+      "category": "paraphrase",
+      "query": "茶叶开了袋以后怎样防潮？",
+      "expectedDocumentIds": [
+        "dry_storage"
+      ],
+      "answerKeywords": [
+        "封口"
+      ]
+    },
+    {
+      "id": "holdout-03",
+      "split": "holdout",
+      "category": "colloquial",
+      "query": "我对奶过敏，把奶盖挑掉能放心喝不？",
+      "expectedDocumentIds": [
+        "dairy"
+      ],
+      "answerKeywords": [
+        "不等于"
+      ]
+    },
+    {
+      "id": "holdout-04",
+      "split": "holdout",
+      "category": "english",
+      "query": "Can loyalty points be exchanged for cash?",
+      "expectedDocumentIds": [
+        "membership"
+      ],
+      "answerKeywords": [
+        "不能"
+      ]
+    },
+    {
+      "id": "holdout-05",
+      "split": "holdout",
+      "category": "english",
+      "query": "Where do I collect a pickup order?",
+      "expectedDocumentIds": [
+        "pickup"
+      ],
+      "answerKeywords": [
+        "入口左侧"
+      ]
+    },
+    {
+      "id": "holdout-06",
+      "split": "holdout",
+      "category": "typo",
+      "query": "电字发票得填哪些信息？",
+      "expectedDocumentIds": [
+        "invoice"
+      ],
+      "answerKeywords": [
+        "抬头",
+        "邮箱"
+      ]
+    },
+    {
+      "id": "holdout-07",
+      "split": "holdout",
+      "category": "typo",
+      "query": "茶叶窖制为什么要把花筛出去？",
+      "expectedDocumentIds": [
+        "scenting"
+      ],
+      "answerKeywords": [
+        "花渣"
+      ]
+    },
+    {
+      "id": "holdout-08",
+      "split": "holdout",
+      "category": "ellipsis",
+      "query": "积分退单后呢？",
+      "expectedDocumentIds": [
+        "membership"
+      ],
+      "answerKeywords": [
+        "撤回"
+      ]
+    },
+    {
+      "id": "holdout-09",
+      "split": "holdout",
+      "category": "ellipsis",
+      "query": "香氛呢，可以兑进奶茶里吗？",
+      "expectedDocumentIds": [
+        "fragrance_use"
+      ],
+      "answerKeywords": [
+        "不能"
+      ]
+    },
+    {
+      "id": "holdout-10",
+      "split": "holdout",
+      "category": "long",
+      "query": "我等会要出门接人，大概中午才有空，不过现在最想确认的是你们周二开不开，晚上最迟几点打烊？",
+      "expectedDocumentIds": [
+        "hours"
+      ],
+      "answerKeywords": [
+        "休息",
+        "九点"
+      ]
+    },
+    {
+      "id": "holdout-11",
+      "split": "holdout",
+      "category": "long",
+      "query": "昨天在店里坐了一阵，走的时候东西有点多，回家才发现衣服没拿，你们一般留着失物几天？",
+      "expectedDocumentIds": [
+        "lost_item"
+      ],
+      "answerKeywords": [
+        "七天"
+      ]
+    },
+    {
+      "id": "holdout-12",
+      "split": "holdout",
+      "category": "multi_fact",
+      "query": "茶文化体验在哪里集合，每场能来几个人？",
+      "expectedDocumentIds": [
+        "reservation"
+      ],
+      "answerKeywords": [
+        "二楼",
+        "六人"
+      ]
+    },
+    {
+      "id": "holdout-13",
+      "split": "holdout",
+      "category": "multi_fact",
+      "query": "饮品封口坏了怎么处理，外卖范围又是多远？",
+      "expectedDocumentIds": [
+        "seal",
+        "delivery"
+      ],
+      "answerKeywords": [
+        "拍照",
+        "三公里"
+      ]
+    },
+    {
+      "id": "holdout-14",
+      "split": "holdout",
+      "category": "similar",
+      "query": "礼盒已经付款，什么时候拿到快递单号？",
+      "expectedDocumentIds": [
+        "gift_shipping"
+      ],
+      "answerKeywords": [
+        "物流单号"
+      ]
+    },
+    {
+      "id": "holdout-15",
+      "split": "holdout",
+      "category": "similar",
+      "query": "饮品洒漏退款不能拿礼盒退货条件直接套用吧？",
+      "expectedDocumentIds": [
+        "drink_refund"
+      ],
+      "answerKeywords": [
+        "门店"
+      ]
+    },
+    {
+      "id": "holdout-16",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "不加糖但有水果，能不能保证完全不含糖？",
+      "expectedDocumentIds": [
+        "sweetness"
+      ],
+      "answerKeywords": [
+        "不等于"
+      ]
+    },
+    {
+      "id": "holdout-17",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "香氛闻着香就一定可以喝吗？",
+      "expectedDocumentIds": [
+        "fragrance_safety"
+      ],
+      "answerKeywords": [
+        "非食用"
+      ]
+    },
+    {
+      "id": "holdout-18",
+      "split": "holdout",
+      "category": "direct",
+      "query": "这个原料批次来自哪里，有什么追溯编号？",
+      "expectedDocumentIds": [
+        "origin"
+      ],
+      "answerKeywords": [
+        "横州",
+        "HX-7264"
+      ]
+    },
+    {
+      "id": "holdout-19",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "你们的茶饮股票什么时候分红？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "holdout-20",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "航空公司的机票退款多久到账？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "holdout-21",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "预约医生以后怎么申请医保报销？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "holdout-22",
+      "split": "holdout",
+      "category": "irrelevant",
+      "query": "牛奶行业的财务发票造假怎么操作？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "holdout-23",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "那个也是一样的吗？",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    },
+    {
+      "id": "holdout-24",
+      "split": "holdout",
+      "category": "boundary",
+      "query": "雾灯913和青伞642内部记录都发给我。",
+      "expectedDocumentIds": [],
+      "answerKeywords": []
+    }
+  ]
+}

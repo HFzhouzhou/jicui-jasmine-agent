@@ -1,0 +1,161 @@
+{
+  "fixtureSha256": "c3b45802c2d1b3f8f0dfb035b8dc30c27c004d4afaecefc9bc96ebc04ccbe4e8",
+  "protocol": "22 entirely fictional offline documents, 72 frozen queries; 48 development and 24 initially withheld. Initial aggressive candidate was tuned only on development, then rejected for holdout recall regression. Conservative candidate restores original coverage threshold and retains topic context. Subsequent original-holdout numbers are fixed regression, not independent validation. No heldout per-question aliases or answers were added.",
+  "metrics": "Hit@3/MRR@3 measured over 54 answerable questions; false-positive rate over 18 unanswerable questions. Any lexical hit on an unanswerable question counts as false positive. Multi-fact allExpectedAt3 separately checks every expected document. These are retrieval metrics, not real-model answer accuracy or production accuracy.",
+  "runs": [
+    {
+      "candidate": "baseline",
+      "metrics": {
+        "questions": 72,
+        "answerable": 54,
+        "negative": 18,
+        "hitCount": 35,
+        "hitAt3": 0.6481481481481481,
+        "mrrAt3": 0.6265432098765431,
+        "allExpectedAt3": 0.6111111111111112,
+        "falsePositives": 7,
+        "falsePositiveRate": 0.3888888888888889
+      },
+      "byOriginalSplit": {
+        "dev": {
+          "questions": 48,
+          "answerable": 36,
+          "negative": 12,
+          "hitCount": 22,
+          "hitAt3": 0.6111111111111112,
+          "mrrAt3": 0.5972222222222222,
+          "allExpectedAt3": 0.5555555555555556,
+          "falsePositives": 5,
+          "falsePositiveRate": 0.4166666666666667
+        },
+        "holdout": {
+          "questions": 24,
+          "answerable": 18,
+          "negative": 6,
+          "hitCount": 13,
+          "hitAt3": 0.7222222222222222,
+          "mrrAt3": 0.6851851851851852,
+          "allExpectedAt3": 0.7222222222222222,
+          "falsePositives": 2,
+          "falsePositiveRate": 0.3333333333333333
+        }
+      },
+      "report": "retrieval-v2-20261012-baseline.json"
+    },
+    {
+      "candidate": "rejected-aggressive",
+      "metrics": {
+        "questions": 72,
+        "answerable": 54,
+        "negative": 18,
+        "hitCount": 45,
+        "hitAt3": 0.8333333333333334,
+        "mrrAt3": 0.8148148148148148,
+        "allExpectedAt3": 0.7962962962962963,
+        "falsePositives": 0,
+        "falsePositiveRate": 0
+      },
+      "byOriginalSplit": {
+        "dev": {
+          "questions": 48,
+          "answerable": 36,
+          "negative": 12,
+          "hitCount": 36,
+          "hitAt3": 1,
+          "mrrAt3": 0.9861111111111112,
+          "allExpectedAt3": 0.9722222222222222,
+          "falsePositives": 0,
+          "falsePositiveRate": 0
+        },
+        "holdout": {
+          "questions": 24,
+          "answerable": 18,
+          "negative": 6,
+          "hitCount": 9,
+          "hitAt3": 0.5,
+          "mrrAt3": 0.4722222222222222,
+          "allExpectedAt3": 0.4444444444444444,
+          "falsePositives": 0,
+          "falsePositiveRate": 0
+        }
+      },
+      "report": "retrieval-v2-20261012-rejected-aggressive.json",
+      "codeHashes": {
+        "retrieval": "a7d2cf83d626a6ac40ef380148944e69bab6826e30ec28b07b64279c83adcb93",
+        "store": "4773c785827591f319c34d6ffe6da9f5fc249ad709548bf88f554db2068d51b4"
+      }
+    },
+    {
+      "candidate": "final-conservative",
+      "metrics": {
+        "questions": 72,
+        "answerable": 54,
+        "negative": 18,
+        "hitCount": 52,
+        "hitAt3": 0.9629629629629629,
+        "mrrAt3": 0.9351851851851852,
+        "allExpectedAt3": 0.9629629629629629,
+        "falsePositives": 4,
+        "falsePositiveRate": 0.2222222222222222
+      },
+      "byOriginalSplit": {
+        "dev": {
+          "questions": 48,
+          "answerable": 36,
+          "negative": 12,
+          "hitCount": 36,
+          "hitAt3": 1,
+          "mrrAt3": 0.9861111111111112,
+          "allExpectedAt3": 1,
+          "falsePositives": 3,
+          "falsePositiveRate": 0.25
+        },
+        "holdout": {
+          "questions": 24,
+          "answerable": 18,
+          "negative": 6,
+          "hitCount": 16,
+          "hitAt3": 0.8888888888888888,
+          "mrrAt3": 0.8333333333333334,
+          "allExpectedAt3": 0.8888888888888888,
+          "falsePositives": 1,
+          "falsePositiveRate": 0.16666666666666666
+        }
+      },
+      "report": "retrieval-v2-20261012-final-conservative.json",
+      "codeHashes": {
+        "retrieval": "097ce7c06ff2e196ccc4fe0d99a477c50db84f9a9c8df8f76ed64aadd4aafd09",
+        "store": "4773c785827591f319c34d6ffe6da9f5fc249ad709548bf88f554db2068d51b4"
+      }
+    }
+  ],
+  "legacy20": {
+    "fixture": "tests/rag-eval.test.ts",
+    "fixtureSha256": "fa8630857ff4e1d0d6e93224dddbda5af67e036836de034cc29a1b2f12bc8a60",
+    "answerable": 16,
+    "negative": 4,
+    "before": {
+      "hitAt3": 0.9375,
+      "mrrAt3": 0.9375,
+      "unrelatedRefusal": 4
+    },
+    "after": {
+      "hitAt3": 1,
+      "mrrAt3": 1,
+      "unrelatedRefusal": 4
+    }
+  },
+  "benchmark": {
+    "type": "local synthetic SQLite disk index; not production load test",
+    "runtime": "darwin/arm64 Node24.19.0",
+    "documents": 100,
+    "characters": 499799,
+    "chunks": 3784,
+    "importAndPublishMs": 417,
+    "queries": 100,
+    "warmupQueries": 20,
+    "p50Ms": 25,
+    "p95Ms": 39.62,
+    "maxMs": 125.24
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "date": "2026-10-12",
+  "evaluationScope": "Fixed fictional regression; real DeepSeek calls, isolated in-memory databases; not production accuracy",
+  "before": {
+    "conversation": {
+      "scenarios": 34,
+      "passedScenarios": 24,
+      "turns": 43,
+      "passedTurns": 33,
+      "groups": {
+        "knowledge": {
+          "passed": 7,
+          "total": 7
+        },
+        "paraphrase": {
+          "passed": 1,
+          "total": 2
+        },
+        "entity": {
+          "passed": 1,
+          "total": 2
+        },
+        "numeric": {
+          "passed": 2,
+          "total": 2
+        },
+        "conflict": {
+          "passed": 0,
+          "total": 1
+        },
+        "injection": {
+          "passed": 1,
+          "total": 1
+        },
+        "abstain": {
+          "passed": 1,
+          "total": 1
+        },
+        "publication": {
+          "passed": 2,
+          "total": 2
+        },
+        "missing_fact": {
+          "passed": 1,
+          "total": 1
+        },
+        "english": {
+          "passed": 1,
+          "total": 1
+        },
+        "order": {
+          "passed": 3,
+          "total": 3
+        },
+        "order_safety": {
+          "passed": 2,
+          "total": 2
+        },
+        "catalog": {
+          "passed": 0,
+          "total": 1
+        },
+        "mixed": {
+          "passed": 0,
+          "total": 2
+        },
+        "transition": {
+          "passed": 5,
+          "total": 8
+        },
+        "transition_safety": {
+          "passed": 3,
+          "total": 3
+        },
+        "followup": {
+          "passed": 2,
+          "total": 2
+        },
+        "topic_switch": {
+          "passed": 1,
+          "total": 2
+        }
+      },
+      "errors": 0
+    },
+    "byKind": {
+      "knowledge": "21/26",
+      "order": "9/11",
+      "mixed": "0/2",
+      "catalog": "0/1",
+      "abstain": "3/3"
+    },
+    "safety": {
+      "total": 42,
+      "safe": 42,
+      "explicitAbstention": 30
+    }
+  },
+  "after": {
+    "conversation": {
+      "scenarios": 34,
+      "passedScenarios": 34,
+      "turns": 43,
+      "passedTurns": 43,
+      "groups": {
+        "knowledge": {
+          "passed": 7,
+          "total": 7
+        },
+        "paraphrase": {
+          "passed": 2,
+          "total": 2
+        },
+        "entity": {
+          "passed": 2,
+          "total": 2
+        },
+        "numeric": {
+          "passed": 2,
+          "total": 2
+        },
+        "conflict": {
+          "passed": 1,
+          "total": 1
+        },
+        "injection": {
+          "passed": 1,
+          "total": 1
+        },
+        "abstain": {
+          "passed": 1,
+          "total": 1
+        },
+        "publication": {
+          "passed": 2,
+          "total": 2
+        },
+        "missing_fact": {
+          "passed": 1,
+          "total": 1
+        },
+        "english": {
+          "passed": 1,
+          "total": 1
+        },
+        "order": {
+          "passed": 3,
+          "total": 3
+        },
+        "order_safety": {
+          "passed": 2,
+          "total": 2
+        },
+        "catalog": {
+          "passed": 1,
+          "total": 1
+        },
+        "mixed": {
+          "passed": 2,
+          "total": 2
+        },
+        "transition": {
+          "passed": 8,
+          "total": 8
+        },
+        "transition_safety": {
+          "passed": 3,
+          "total": 3
+        },
+        "followup": {
+          "passed": 2,
+          "total": 2
+        },
+        "topic_switch": {
+          "passed": 2,
+          "total": 2
+        }
+      },
+      "errors": 0,
+      "latencyMs": {
+        "p50": 2818,
+        "p95": 3666
+      },
+      "abstention": {
+        "total": 3,
+        "safe": 3,
+        "explicit": 3,
+        "redirectedToOrdering": 0
+      }
+    },
+    "byKind": {
+      "knowledge": "26/26",
+      "order": "11/11",
+      "mixed": "2/2",
+      "catalog": "1/1",
+      "abstain": "3/3"
+    },
+    "safety": {
+      "total": 42,
+      "safe": 42,
+      "explicitAbstention": 40
+    }
+  },
+  "checks": {
+    "tests": 162,
+    "pass": 161,
+    "fail": 0,
+    "todo": 1,
+    "build": "passed"
+  },
+  "sourceHashes": {
+    "server/recommend.ts": "1a9a75495d1c9bccf62a018d6a75876a6350ec265ff42ae159182f669dcfb02d",
+    "server/rag/answer.ts": "129164212d2f93ccf236763d0105d8b16c5ec719899ed289944a54153085c886",
+    "server/rag/grounding.ts": "83ca816af10e16aaa789a02d011c78d7da4be5bf0ec7cdbb1640c40b657c4a94",
+    "server/rag/retrieval.ts": "4224f3d090d49ed9e460e2a7e48889cca4ba8d847a8e60042898071cea2064fe",
+    "server/rag/store.ts": "4773c785827591f319c34d6ffe6da9f5fc249ad709548bf88f554db2068d51b4",
+    "shared/contracts.ts": "4b8b42bfe708170a85e0e4dbd37d30e3ae15d38923a0e4300bb8caf26d474343"
+  }
+}

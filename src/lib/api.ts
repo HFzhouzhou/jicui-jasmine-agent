@@ -1,4 +1,5 @@
-import type { ApiError, HealthResponse, RecommendRequest, RecommendResponse, TeaCard } from '@shared/contracts';
+import type { ApiError, HealthResponse, RecommendRequest, RecommendResponse } from '@shared/contracts';
+import { customerId } from '@/lib/customer';
 
 export class RequestError extends Error {
   constructor(message: string, public code = 'REQUEST_FAILED', public requestId?: string) {
@@ -21,6 +22,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, timeou
       headers: (() => {
         const headers = new Headers(init.headers);
         if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+        if (path.startsWith('/api/') && !path.startsWith('/api/admin') && !headers.has('X-Customer-Id')) headers.set('X-Customer-Id', customerId());
         return headers;
       })(),
       signal: controller.signal,
@@ -43,13 +45,8 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, timeou
   }
 }
 
-export function isTeaCard(value: unknown): value is TeaCard {
-  if (!value || typeof value !== 'object') return false;
-  const card = value as Record<string, unknown>;
-  return ['drinkId', 'drinkName', 'drinkNameEn', 'volume', 'sweetness', 'temperature', 'toppings', 'reason', 'message', 'funFact', 'orderPhrase'].every((field) => typeof card[field] === 'string')
-    && typeof card.price === 'number' && Number.isFinite(card.price) && card.price >= 0
-    && typeof card.verified === 'boolean';
-}
+import { isTeaCard } from '@/lib/tea-card';
+export { isTeaCard };
 
 export const getHealth = (signal?: AbortSignal) => apiRequest<HealthResponse>('/api/health', { signal }, 10000);
 

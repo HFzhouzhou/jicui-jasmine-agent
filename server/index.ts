@@ -8,12 +8,13 @@ import { z } from 'zod';
 import { Store, StoreConflict } from './database.js';
 import { loadConfig, type ServerConfig } from './config.js';
 import { ApiFailure } from './errors.js';
-import { recommend, requestSchema } from './recommend.js';
+import { requestSchema } from './recommend.js';
+import { assist } from './assistant.js';
 import { createRagRouter } from './rag/routes.js';
 import { DocumentParseError } from './rag/parser.js';
 import { RagConflict, RagValidationError } from './rag/store.js';
 import { MulterError } from 'multer';
-import type { KnowledgeEntry, OfficialOrderDraft, OfficialOrderHandoffResponse } from '../shared/contracts.js';
+import type { KnowledgeEntry, OfficialOrderDraft, OfficialOrderHandoffResponse, PromotionRule, TasteMemory } from '../shared/contracts.js';
 
 const textItem = z.string().trim().min(1).max(160);
 const drinkPatch = z.object({
@@ -25,6 +26,7 @@ const drinkPatch = z.object({
   toppings: z.array(z.object({name: textItem, price: z.number().finite().min(0).max(1000).refine(value => Math.abs(value * 100 - Math.round(value * 100)) < 1e-8)}).strict()).max(30),
   source: z.string().trim().min(1).max(1000),
   catalogStatus: z.enum(['observed', 'managed', 'legacy']),
+  calories: z.number().int().min(0).max(5000).nullable(),
 }).partial().strict().refine(value => Object.keys(value).some(key => key !== 'expectedUpdatedAt'), '至少更新一个字段');
 const knowledgeSchema = z.object({expectedVersion: z.string().max(100).optional(), entries: z.array(z.object({
   id: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/), title: z.string().trim().min(1).max(160),
@@ -45,6 +47,35 @@ const orderDraftSchema: z.ZodType<OfficialOrderDraft> = z.object({
   note: z.string().trim().max(500).optional(),
 }).strict();
 
+const shortText = z.string().trim().min(1).max(40);
+const orderItemSchema = z.object({
+  drinkId: z.string().regex(/^[a-zA-Z0-9_-]{1,64}$/), quantity: z.number().int().min(1).max(20),
+  volume: z.string().trim().max(40).optional(), sweetness: z.string().trim().max(40).optional(), temperature: z.string().trim().max(40).optional(),
+  toppings: z.array(shortText).max(6).optional(), note: z.string().trim().max(120).optional(),
+}).strict();
+const quoteSchema = z.object({items: z.array(orderItemSchema).min(1).max(10)}).strict();
+const confirmSchema = z.object({expectedTotal: z.number().finite().min(0).max(100000), confirm: z.literal(true)}).strict();
+const afterSalesSchema = z.object({type: z.enum(['remake', 'refund', 'other']), reason: z.string().trim().min(2).max(300)}).strict();
+const memorySchema: z.ZodType<TasteMemory> = z.object({
+  sweetness: shortText.optional(), temperature: shortText.optional(), toppings: z.array(shortText).max(8).optional(), skipToppings: z.array(shortText).max(8).optional(),
+  avoid: z.array(shortText).max(12).optional(), allergies: z.array(shortText).max(12).optional(), likes: z.array(shortText).max(8).optional(), budget: z.number().min(0).max(1000).nullable().optional(),
+}).strict();
+const promotionsSchema = z.object({rules: z.array(z.object({
+  id: z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/), type: z.enum(['second_half', 'threshold']), title: z.string().trim().min(1).max(30), enabled: z.boolean(),
+  rate: z.number().min(0).max(1).optional(), threshold: z.number().min(0).max(10000).optional(), off: z.number().min(0).max(10000).optional(), note: z.string().trim().max(200),
+}).strict().refine(rule => rule.type === 'second_half' ? rule.rate !== undefined : rule.threshold !== undefined && rule.off !== undefined && rule.off < rule.threshold, '优惠参数不完整')).max(10)}).strict();
+const adminOrderSchema = z.object({status: z.enum(['accepted', 'making', 'ready', 'completed', 'cancelled']), note: z.string().trim().max(120).optional()}).strict();
+const adminAfterSalesSchema = z.object({status: z.enum(['resolved', 'rejected']), reply: z.string().trim().min(1).max(300)}).strict();
+/** Anonymous per-browser customer ID: it scopes orders and taste memory, nothing more. */
+function customerId(req: Request, required: true): string;
+function customerId(req: Request, required?: false): string | undefined;
+function customerId(req: Request, required = false) {
+  const value = req.get('X-Customer-Id') || '';
+  if (/^[a-zA-Z0-9-]{16,64}$/.test(value)) return value;
+  if (required) throw new ApiFailure(400, 'CUSTOMER_ID_REQUIRED', '无法识别当前浏览器，请刷新页面后重试。');
+  return undefined;
+}
+
 export interface AppOptions {
   config?: Partial<ServerConfig>;
   databasePath?: string;
@@ -53,7 +84,7 @@ export interface AppOptions {
 /** Each app owns its database; call app.locals.close() after integration tests. */
 export function createApp(options: AppOptions = {}) {
   const config = {...loadConfig(), ...options.config};
-  const store = new Store(options.databasePath || join(config.dataDir, 'jasmine.sqlite'));
+  const store = new Store(options.databasePath || join(config.dataDir, 'jasmine.sqlite'), config.orders);
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
@@ -99,7 +130,7 @@ export function createApp(options: AppOptions = {}) {
     const controller = new AbortController();
     const disconnected = () => {if (!res.writableEnded) controller.abort();};
     res.once('close', disconnected);
-    try { res.json(await recommend(input, mode, store, config, options.fetcher || fetch, controller.signal)); }
+    try { res.json(await assist(input, mode, store, config, options.fetcher || fetch, controller.signal, customerId(req))); }
     finally { inFlight--; res.off('close', disconnected); }
   };
   app.post('/api/recommend', limiter(config.rateLimit, 'recommend'), recommendations('live'));
@@ -119,6 +150,42 @@ export function createApp(options: AppOptions = {}) {
     };
     res.json(result);
   });
+  app.post('/api/orders/quote', limiter(30, 'orders'), (req, res) => {
+    const id = customerId(req, true);
+    const {items} = quoteSchema.parse(req.body);
+    res.status(201).json({quote: store.commerce.quote(id, items, store.drinks())});
+  });
+  app.post('/api/orders/:id/confirm', limiter(20, 'orders-confirm'), (req, res) => {
+    const id = customerId(req, true);
+    const {expectedTotal} = confirmSchema.parse(req.body);
+    res.json({order: store.commerce.confirm(id, String(req.params.id), expectedTotal, store.drinks())});
+  });
+  app.get('/api/orders', (req, res) => {
+    const id = customerId(req);
+    res.json({orders: id ? store.commerce.orders(id) : []});
+  });
+  app.get('/api/orders/:id', (req, res) => {
+    const order = store.commerce.order(customerId(req, true), String(req.params.id));
+    if (!order) throw new ApiFailure(404, 'ORDER_NOT_FOUND', '找不到这笔订单。');
+    res.json({order});
+  });
+  app.post('/api/orders/:id/cancel', limiter(20, 'orders-cancel'), (req, res) => res.json({order: store.commerce.cancel(customerId(req, true), String(req.params.id))}));
+  app.post('/api/orders/:id/after-sales', limiter(10, 'after-sales'), (req, res) => {
+    const input = afterSalesSchema.parse(req.body);
+    res.status(201).json({order: store.commerce.requestAfterSales(customerId(req, true), String(req.params.id), input.type, input.reason)});
+  });
+  app.get('/api/memory', (req, res) => {
+    const id = customerId(req);
+    res.json({memory: id ? store.commerce.memory(id) : {}});
+  });
+  app.put('/api/memory', limiter(30, 'memory'), (req, res) => {
+    const id = customerId(req, true);
+    const input = memorySchema.parse(req.body);
+    const previous = store.commerce.memory(id);
+    res.json({memory: store.commerce.saveMemory(id, {...input, ...(previous.favorites ? {favorites: previous.favorites} : {}), ...(previous.lastOrder ? {lastOrder: previous.lastOrder} : {})})});
+  });
+  app.delete('/api/memory', (req, res) => {store.commerce.clearMemory(customerId(req, true)); res.json({memory: {}});});
+  app.get('/api/promotions', (_req, res) => res.json({rules: store.commerce.promotions().filter(rule => rule.enabled), limits: {maxAmount: config.orders.maxAmount, dailyLimit: config.orders.dailyLimit, maxCups: config.orders.maxCups}}));
   app.post('/api/feedback', limiter(30, 'feedback'), (req, res) => {
     const input = feedbackSchema.parse(req.body);
     if (!store.feedback(input.requestId, input.rating, input.comment || '')) throw new ApiFailure(404, 'REQUEST_NOT_FOUND', '找不到这次推荐记录。');
@@ -142,6 +209,21 @@ export function createApp(options: AppOptions = {}) {
     const drink = store.updateDrink(String(req.params.id), input, expectedUpdatedAt);
     if (!drink) throw new ApiFailure(404, 'DRINK_NOT_FOUND', '找不到这个商品。');
     res.json({drink});
+  });
+  app.get('/api/admin/orders', (_req, res) => res.json({orders: store.commerce.adminOrders()}));
+  app.patch('/api/admin/orders/:id', (req, res) => {
+    const input = adminOrderSchema.parse(req.body);
+    res.json({order: store.commerce.adminUpdate(String(req.params.id), input.status, input.note)});
+  });
+  app.patch('/api/admin/orders/:id/after-sales/:requestId', (req, res) => {
+    const input = adminAfterSalesSchema.parse(req.body);
+    res.json({order: store.commerce.adminAfterSales(String(req.params.id), String(req.params.requestId), input.status, input.reply)});
+  });
+  app.get('/api/admin/promotions', (_req, res) => res.json({rules: store.commerce.promotions()}));
+  app.put('/api/admin/promotions', (req, res) => {
+    const {rules} = promotionsSchema.parse(req.body);
+    if (new Set(rules.map(rule => rule.id)).size !== rules.length) throw new ApiFailure(400, 'DUPLICATE_PROMOTION', '优惠规则 ID 不能重复。');
+    res.json({rules: store.commerce.setPromotions(rules as PromotionRule[])});
   });
   app.get('/api/admin/knowledge', (_req, res) => res.json({entries: store.knowledge(), version: store.knowledgeVersion()}));
   app.put('/api/admin/knowledge', (req, res) => {

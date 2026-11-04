@@ -85,7 +85,10 @@ test('verified ingredients, caffeine and approved sugar/ice options govern filte
   assert.equal((await request('/api/admin/menu/p01', patch, 'PATCH', true)).status, 200);
   const result = await (await request('/api/recommend/preview', {message: '10元以内，不含乳制品，无咖啡因，无糖，热饮'})).json();
   assert.deepEqual(result.cards.map((card: any) => card.drinkId), ['p01']); assert.equal(result.cards[0].sweetness, '无糖'); assert.equal(result.cards[0].temperature, '热饮');
-  const unsupported = await (await request('/api/recommend/preview', {message: '三分糖热饮'})).json(); assert.deepEqual(unsupported.cards, []);
+  // A verified option list is binding; unverified drinks keep the request as a preference pending store confirmation.
+  const unsupported = await (await request('/api/recommend/preview', {message: '三分糖热饮'})).json();
+  assert.ok(!unsupported.cards.some((card: any) => card.drinkId === 'p01'));
+  assert.ok(unsupported.cards.length > 0 && unsupported.cards.every((card: any) => card.sweetness === '三分糖（待门店确认）' && card.temperature === '热饮（待门店确认）' && !card.verified));
 });
 
 test('upstream timeout and error responses do not leak secrets', async t => {

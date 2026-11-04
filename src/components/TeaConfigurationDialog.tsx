@@ -20,7 +20,7 @@ interface Props {
 function ChoiceGroup({ label, value, options, onChange, unconfirmed = [] }: { label: string; value: string; options: string[]; onChange: (value: string) => void; unconfirmed?: string[] }) {
   return <fieldset className="space-y-3">
     <legend className="text-xs font-medium text-[#526147]">{label}</legend>
-    <div className="flex flex-wrap gap-2">{options.map((option) => <button key={option} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className={`min-h-10 rounded-xl border px-3.5 py-2 text-xs transition-colors ${value === option ? 'border-[#627749] bg-[#edf1e2] text-[#314b2f] shadow-[inset_0_0_0_0.5px_#627749]' : 'border-[#e5e8db] bg-white text-[#7c886d] hover:border-[#94a67b]'}`}>{option}{unconfirmed.includes(option) && <span className="ml-1 text-[9px] opacity-65">· 待确认</span>}</button>)}</div>
+    <div className="flex flex-wrap gap-2">{options.map((option) => <button key={option} type="button" aria-pressed={value === option} onClick={() => onChange(option)} className={`min-h-10 rounded-xl border px-3.5 py-2 text-xs transition-colors ${value === option ? 'border-[#627749] bg-[#edf1e2] text-[#314b2f] shadow-[inset_0_0_0_0.5px_#627749]' : 'border-[#e5e8db] bg-white text-[#7c886d] hover:border-[#94a67b]'}`}>{option}{unconfirmed.includes(option) && <span className="ml-1 text-[12.5px] opacity-65">· 待确认</span>}</button>)}</div>
   </fieldset>;
 }
 
@@ -36,7 +36,9 @@ function preserveToppings(value: string) {
 }
 
 function meaningfulOption(value: string) {
-  return value && !/待|未知|确认/.test(value) ? value : '';
+  // "三分糖（待门店确认）" is still the customer's choice; only bare placeholders are dropped.
+  const choice = (value || '').replace(/（待门店确认）$/, '').trim();
+  return choice && !/待|未知|确认/.test(choice) ? choice : '';
 }
 
 /** The parent remounts this form for each edit, so cancelling never changes the saved draft. */
@@ -67,7 +69,7 @@ export default function TeaConfigurationDialog({ open, onOpenChange, data, categ
   }, [open, data.drinkId]);
 
   const knownVolumes = volumeChoices(data, product);
-  const knownSweetness = product?.verified && product.sweetnessOptions.length ? product.sweetnessOptions : ['随门店标准', '无额外加糖', '微甜', '半糖', '正常甜'];
+  const knownSweetness = product?.verified && product.sweetnessOptions.length ? product.sweetnessOptions : ['随门店标准', '无糖', '三分糖', '五分糖', '七分糖', '全糖'];
   const knownTemperatures = product?.verified && product.temperatureOptions.length ? product.temperatureOptions : ['随门店标准', '正常冰', '少冰', '去冰', '常温', '热饮'];
   const knownToppings = ['不额外加料', ...(product?.verified ? product.toppings.map((item) => item.name) : [])];
   const includeSelection = (options: string[], selected: string) => [...new Set([...options, selected])];
@@ -87,7 +89,7 @@ export default function TeaConfigurationDialog({ open, onOpenChange, data, categ
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="!bottom-0 !top-auto flex max-h-[94dvh] !max-w-full !translate-y-0 flex-col gap-0 overflow-hidden rounded-t-[28px] rounded-b-none border-0 bg-[#fbfcf5] p-0 sm:!bottom-auto sm:!top-1/2 sm:!max-w-[780px] sm:!-translate-y-1/2 sm:rounded-[28px]">
       <div className="shrink-0 border-b border-[#e8ebdf] px-6 pt-5 pb-4 sm:px-7">
-        <p className="mb-2 text-[9px] tracking-[0.2em] text-[#93a27c]">MAKE IT YOURS</p>
+        <p className="mb-2 text-[12.5px] tracking-[0.2em] text-[#93a27c]">MAKE IT YOURS</p>
         <DialogTitle className="font-serif text-xl font-normal text-[#263f2c]">把这杯，调成你的喜欢</DialogTitle>
         <DialogDescription className="mt-2 text-xs text-[#889379]">选好口味，茉莉娘子为你留好这份配置。</DialogDescription>
       </div>
@@ -97,13 +99,13 @@ export default function TeaConfigurationDialog({ open, onOpenChange, data, categ
             <div className="flex items-center gap-5 sm:block">
               <DrinkArtwork category={product?.category || category} name={data.drinkName} className="h-28 w-28 shrink-0 rounded-2xl sm:mb-5 sm:h-48 sm:w-full" />
               <div className="min-w-0">
-                <p className="mb-1.5 text-[9px] tracking-wider text-[#8c9a78]">{product?.category || '极萃东方茉莉'}</p>
+                <p className="mb-1.5 text-[12.5px] tracking-wider text-[#8c9a78]">{product?.category || '极萃东方茉莉'}</p>
                 <h3 className="font-serif text-[23px] leading-snug text-[#2d4430]">{data.drinkName}</h3>
-                <div className="mt-3 flex items-baseline gap-1.5 text-[#2d4430]"><span className="text-xs">¥</span><span className="font-serif text-3xl">{data.price}</span>{data.startingPrice && <span className="text-xs">起</span>}<span className="ml-1 text-[10px] text-[#8b977a]">原推荐参考价</span></div>
+                <div className="mt-3 flex items-baseline gap-1.5 text-[#2d4430]"><span className="text-xs">¥</span><span className="font-serif text-3xl">{data.price}</span>{data.startingPrice && <span className="text-xs">起</span>}<span className="ml-1 text-[11.5px] text-[#8b977a]">原推荐参考价</span></div>
               </div>
             </div>
             <p className="mt-4 text-xs leading-6 text-[#7c896a]">{(product?.verified && product.description) || data.reason || '一杯东方茉莉，留给此刻的自己。'}</p>
-            {data.catalogEvidence?.storeName && <p className="mt-3 text-[10px] leading-5 text-[#919d80]">{data.catalogEvidence.storeName}</p>}
+            {data.catalogEvidence?.storeName && <p className="mt-3 text-[11.5px] leading-5 text-[#919d80]">{data.catalogEvidence.storeName}</p>}
           </div>
           <div className="space-y-6 p-5 sm:p-6">
             {loading && <p className="flex items-center gap-2 text-xs text-[#81926b]" role="status"><LoaderCircle className="size-3.5 animate-spin" />正在读取商品详情</p>}
@@ -113,13 +115,13 @@ export default function TeaConfigurationDialog({ open, onOpenChange, data, categ
             <ChoiceGroup label={product?.verified && product.temperatureOptions.length ? '冰量 / 温度' : '冰量 / 温度偏好'} value={selection.temperature} options={tempOptions} unconfirmed={knownTemperatures.includes(temperature) ? [] : [temperature]} onChange={setTemperature} />
             {toppingOptions.length > 1 ? <ChoiceGroup label="小料" value={selection.toppings} options={toppingOptions} unconfirmed={toppingConfirmed ? [] : [toppings]} onChange={setToppings} /> : <div className="flex items-center justify-between border-y border-[#e5e8db] py-4 text-xs"><span className="text-[#526147]">小料</span><span className="text-[#879375]">不额外加料</span></div>}
             <div className="flex items-center justify-between"><span className="text-xs font-medium text-[#526147]">数量</span><div className="flex items-center gap-4 rounded-full border border-[#dfe5d3] bg-white p-1"><button type="button" aria-label="减少数量" disabled={quantity <= 1} onClick={() => setQuantity((value) => Math.max(1, value - 1))} className="flex size-10 items-center justify-center rounded-full text-[#526147] hover:bg-[#f0f3e7] disabled:opacity-30"><Minus className="size-4" /></button><output aria-label="饮品数量" className="min-w-4 text-center text-sm tabular-nums text-[#2d4430]">{quantity}</output><button type="button" aria-label="增加数量" disabled={quantity >= 20} onClick={() => setQuantity((value) => Math.min(20, value + 1))} className="flex size-10 items-center justify-center rounded-full text-[#526147] hover:bg-[#f0f3e7] disabled:opacity-30"><Plus className="size-4" /></button></div></div>
-            <div><label htmlFor={noteId} className="mb-3 block text-xs font-medium text-[#526147]">给这杯的一点备注 <span className="font-normal text-[#a0aa91]">选填</span></label><textarea id={noteId} value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} rows={2} placeholder="还有什么希望店员知道的？" className="w-full resize-none rounded-2xl border border-[#e0e5d5] bg-white p-3 text-xs leading-6 text-[#526147] outline-none placeholder:text-[#abb49d] focus:border-[#78945b]" /><div className="mt-1 text-right text-[9px] text-[#a0aa91]">{note.length} / 200</div></div>
-            <p className="text-[10px] leading-5 text-[#99a18d]">甜度与冰量按你的偏好记录，实际可选项及价格以门店为准。</p>
+            <div><label htmlFor={noteId} className="mb-3 block text-xs font-medium text-[#526147]">给这杯的一点备注 <span className="font-normal text-[#a0aa91]">选填</span></label><textarea id={noteId} value={note} onChange={(event) => setNote(event.target.value)} maxLength={200} rows={2} placeholder="还有什么希望店员知道的？" className="w-full resize-none rounded-2xl border border-[#e0e5d5] bg-white p-3 text-xs leading-6 text-[#526147] outline-none placeholder:text-[#abb49d] focus:border-[#78945b]" /><div className="mt-1 text-right text-[12.5px] text-[#a0aa91]">{note.length} / 200</div></div>
+            <p className="text-[11.5px] leading-5 text-[#99a18d]">甜度与冰量按你的偏好记录，实际可选项及价格以门店为准。</p>
           </div>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-4 border-t border-[#e4e9d9] bg-white px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-7">
-        <div className="min-w-0 flex-1"><p className="flex items-center gap-1.5 text-xs font-medium text-[#435b37]"><ShoppingBag className="size-3.5" />{quantity} 杯 · 我的配置</p><p className="mt-1 truncate text-[10px] text-[#8b9878]">{selection.volume} · {selection.sweetness} · {selection.temperature}</p></div>
+        <div className="min-w-0 flex-1"><p className="flex items-center gap-1.5 text-xs font-medium text-[#435b37]"><ShoppingBag className="size-3.5" />{quantity} 杯 · 我的配置</p><p className="mt-1 truncate text-[11.5px] text-[#8b9878]">{selection.volume} · {selection.sweetness} · {selection.temperature}</p></div>
         <Button onClick={save} disabled={!data.drinkId || loading || Boolean(menuError)} className="h-12 shrink-0 gap-2 rounded-full bg-[#2e4933] px-5 text-xs text-white hover:bg-[#3e5d3f]">{initialDraft ? <Check className="size-4" /> : <ArrowRight className="size-4" />}{initialDraft ? '保存这份配置' : '就这样配'}</Button>
       </div>
     </DialogContent>

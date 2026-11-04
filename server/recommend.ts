@@ -1,15 +1,22 @@
 import { formatVolumeLabel } from '../shared/catalog-display.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { Drink, KnowledgeEntry, RecommendRequest, RecommendResponse, TeaCard } from '../shared/contracts.js';
+import type { Drink, KnowledgeEntry, OrderItemInput, RecommendRequest, RecommendResponse, TeaCard } from '../shared/contracts.js';
 import type { ServerConfig } from './config.js';
 import { ApiFailure } from './errors.js';
 import type { Store } from './database.js';
 import { answerKnowledge } from './rag/answer.js';
 import type { KnowledgeCitation } from '../shared/rag.js';
 
+const actionSchema = z.discriminatedUnion('type', [
+  z.object({type: z.literal('blindbox'), mood: z.string().trim().min(1).max(30), weather: z.string().trim().max(20).optional()}).strict(),
+  z.object({type: z.literal('bundle'), people: z.number().int().min(2).max(3), totalBudget: z.number().min(0).max(1000).nullable().optional(), tastes: z.array(z.string().trim().max(20)).max(4).optional()}).strict(),
+  z.object({type: z.literal('repeat'), change: z.enum(['base', 'none']).optional()}).strict(),
+  z.object({type: z.literal('orders')}).strict(),
+]);
 export const requestSchema = z.object({
   message: z.string().trim().min(1).max(2000),
+  action: actionSchema.optional(),
   history: z.array(z.object({role: z.enum(['user', 'assistant']), content: z.string().max(3000)}).strict()).max(24).default([]),
   profile: z.object({sweetness: z.string().max(40).optional(), temperature: z.string().max(40).optional(), dietary: z.array(z.string().max(60)).max(12).optional(), budget: z.string().max(60).optional()}).strict().optional(),
   excludeIds: z.array(z.string().max(60)).max(100).default([]),
@@ -26,25 +33,39 @@ const intentSchema = z.object({
   toppings: z.array(z.string().max(40)).max(5).default([]),
   knowledgeIds: z.array(z.string().max(60)).max(5).default([]),
   searchQuery: z.string().max(240).default(''),
+  quantity: z.number().int().min(1).max(20).nullable().default(null),
+  avoidToppings: z.array(z.string().max(40)).max(10).default([]),
+  /** Set by a dietary restriction (legacy "no_cold"): temperature becomes a hard requirement. */
+  strictTemperature: z.boolean().default(false),
 });
-type Intent = z.infer<typeof intentSchema>;
+export type Intent = z.infer<typeof intentSchema>;
+export const TOPPING_WORDS = ['珍珠', '椰果', '布丁', '奶盖', '芝士', '红豆', '芋圆', '芋泥', '仙草', '果冻', '燕麦', '西米', '波波', '脆波波', '小料'];
+const CN_NUMBERS: Record<string, number> = {一: 1, 两: 2, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10};
+export function parseCount(value: string): number {return /^\d+$/.test(value) ? Number(value) : CN_NUMBERS[value] || 1;}
+/** "来两杯" / "3杯" sets cup count for one drink; group requests are handled as bundles. */
+export function parseQuantity(text: string): number | null {
+  const match = [...text.matchAll(/(?:来|要|点|买|下|帮我点)?(\d{1,2}|[一两二三四五六七八九十])\s*杯/g)].at(-1);
+  if (!match) return null;
+  const count = parseCount(match[1]);
+  return count >= 1 && count <= 20 ? count : null;
+}
 type LocalIntent = Intent & { route: TurnRoute; explicit: {budget: boolean; sweetness: boolean; temperature: boolean; dietaryCleared: boolean; caffeineCleared: boolean; toppingsCleared: boolean} };
 const unrestricted = /^(不限|无|无偏好|无忌口|都可以|均可|随便|默认|不限制|无特殊要求|没有忌口)$/;
 const aliases: Record<string, string[]> = {
   '乳制品': ['乳', '奶', '芝士', '酪', '乳糖', '酥'], '坚果': ['坚果', '花生', '核桃', '杏仁', '腰果', '榛子'], '大豆': ['大豆', '豆乳', '豆奶', '黄豆'], '麸质': ['麸质', '小麦', '燕麦', '饼干'], '芒果': ['芒果'], '芝麻': ['芝麻', '麻酱'], '椰子': ['椰子', '椰乳', '椰奶', '椰浆'], '鸡蛋': ['鸡蛋', '蛋白', '蛋黄'],
 };
-function normalizeIngredient(value: string): string {
+export function normalizeIngredient(value: string): string {
   if (/(奶|乳|芝士|酪)/.test(value)) return '乳制品';
   for (const [key, values] of Object.entries(aliases)) if (values.some(alias => value.includes(alias))) return key;
   return value.replace(/(过敏|不能|不要|不含|不吃|不喝|不加|避免|忌口|不耐受|对|有|的)/g, '').trim() || value;
 }
-function normalizeOption(value: string | null, type: 'sweetness' | 'temperature'): string | null {
+export function normalizeOption(value: string | null, type: 'sweetness' | 'temperature'): string | null {
   if (!value || unrestricted.test(value)) return null;
   const sugar: Record<string, string> = {'0糖': '无糖', '零糖': '无糖', '不加糖': '无糖', '不要糖': '无糖', '不加蔗糖': '无糖', '3分糖': '三分糖', '三分甜': '三分糖', '5分糖': '五分糖', '半糖': '五分糖', '7分糖': '七分糖', '正常糖': '全糖'};
   const temp: Record<string, string> = {'热的': '热饮', '热': '热饮', '常温的': '常温', '温的': '温饮', '温热': '温饮', '冰的': '正常冰', '冰饮': '正常冰', '不加冰': '去冰', '不冰': '去冰'};
   return (type === 'sweetness' ? sugar : temp)[value] || value;
 }
-function budgetDirective(value: string): number | null | undefined {
+export function budgetDirective(value: string): number | null | undefined {
   const legacy: Record<string, number> = {under10: 10, '10to15': 15, '15to20': 20};
   if (value in legacy) return legacy[value];
   const candidates: {index: number; amount: number | null}[] = [];
@@ -71,7 +92,7 @@ const barePreference = /^(?:清爽|奶香|果香|茉莉茶|茉莉|果茶|奶茶|
 const tasteDirective = /(?:想要|要|喜欢|偏好)(?:清爽|奶香|果香|茉莉|果茶|奶茶|酸甜|醇厚|清香|柠檬|平价|红茶|绿茶)/;
 
 /** A factual mention is not a purchasing instruction. Personal restrictions remain explicit data. */
-function classifyTurn(message: string): TurnRoute {
+export function classifyTurn(message: string): TurnRoute {
   if (/^(?:那|还有)?(?:其他的|别的|更多)[吗呢？?。]*$/.test(message.trim())) return {intent: null, orderText: '', knowledgeText: '', catalogText: ''};
   if (message.startsWith('我在商品卡中保存了这份期望配置')) return {intent: 'recommend', orderText: message, knowledgeText: '', catalogText: ''};
   const clauses = message.split(/(?<=[，。！？,;；?\n])|(?:顺便|另外|同时|然后|并且|而且|以及)|(?:并|再)(?=(?:给我|帮我|请|推荐|介绍|解释|告诉我|说明|讲讲))/u).map(value => value.trim()).filter(Boolean);
@@ -115,7 +136,7 @@ export function parseLocalIntent(input: RecommendRequest): LocalIntent {
   intent.temperature = normalizeOption(input.profile?.temperature || null, 'temperature');
   for (let dietary of input.profile?.dietary || []) {
     const legacy: Record<string, string> = {caffeine_free: '无咖啡因', lactose_intolerant: '乳糖不耐受', no_ginger: '姜'};
-    if (dietary === 'no_cold') {intent.temperature = '常温'; intent.explicit.temperature = true; continue;}
+    if (dietary === 'no_cold') {intent.temperature = '常温'; intent.explicit.temperature = true; intent.strictTemperature = true; continue;}
     dietary = legacy[dietary] || dietary;
     if (unrestricted.test(dietary)) continue;
     if (/(咖啡因|咖啡)/.test(dietary)) intent.caffeineFree = true;
@@ -158,8 +179,11 @@ export function parseLocalIntent(input: RecommendRequest): LocalIntent {
         if (new RegExp(`(?:不(?:能|要|喝|吃|加|含)|避免|忌|过敏)[^，。！？,;]{0,5}${token}|${token}[^，。！？,;]{0,5}(?:过敏|不耐(?:受)?)`).test(content)) intent.avoidIngredients.push(key);
       }
     }
-    const unknown = content.matchAll(/(?:不吃|不喝|不要|不加|不含|避免)([^，。！？,;\s]{1,12})/g);
+    const unknown = content.matchAll(/(?:不吃|不喝|不要|不加|不含|避免|不碰)([^，。！？,;\s]{1,12})/g);
     for (const match of unknown) {
+      // "不要珍珠" removes an add-on; it is a taste choice, not an allergy declaration.
+      const topping = TOPPING_WORDS.find(word => word !== '小料' && match[1].startsWith(word));
+      if (topping && !/过敏|不耐/.test(content)) {intent.avoidToppings.push(topping); intent.toppings = intent.toppings.filter(name => name !== topping); continue;}
       if (/(糖|甜|冰|热|咖啡因|超过|贵|推荐|解释|回复|文字|价格|限制|预算|加料|小料)/.test(match[1])) continue;
       intent.avoidIngredients.push(normalizeIngredient(match[1]));
     }
@@ -170,14 +194,18 @@ export function parseLocalIntent(input: RecommendRequest): LocalIntent {
       for (const term of terms) intent.avoidIngredients.push(normalizeIngredient(term));
     }
     for (const tag of ['清爽', '茉莉', '果茶', '奶茶', '酸甜', '醇厚', '清香', '柠檬', '平价', '红茶', '绿茶']) if (content.includes(tag)) intent.tags.push(tag);
+    for (const [pattern, tag] of [[/解腻|清新|爽口/, '清爽'], [/浓郁|浓一点|厚重/, '醇厚'], [/奶香|奶味/, '奶茶'], [/果香|水果/, '果茶'], [/花香/, '茉莉']] as const) if (pattern.test(content)) intent.tags.push(tag);
+    const quantity = parseQuantity(content);
+    if (quantity) intent.quantity = quantity;
   }
+  intent.avoidToppings = [...new Set(intent.avoidToppings)];
   intent.avoidIngredients = [...new Set(intent.avoidIngredients)];
   intent.tags = [...new Set(intent.tags)];
   intent.toppings = [...new Set(intent.toppings)];
   return intent;
 }
 function mergeConstraints(local: LocalIntent, model: Intent): Intent {
-  return {...model,
+  return {...model, strictTemperature: local.strictTemperature, quantity: local.quantity ?? model.quantity, avoidToppings: [...new Set([...local.avoidToppings, ...model.avoidToppings])],
     maxBudget: local.explicit.budget ? local.maxBudget : local.maxBudget === null ? model.maxBudget : Math.min(local.maxBudget, model.maxBudget ?? Infinity),
     sweetness: local.explicit.sweetness ? local.sweetness : local.sweetness || normalizeOption(model.sweetness, 'sweetness'),
     temperature: local.explicit.temperature ? local.temperature : local.temperature || normalizeOption(model.temperature, 'temperature'),
@@ -187,14 +215,17 @@ function mergeConstraints(local: LocalIntent, model: Intent): Intent {
     toppings: local.explicit.toppingsCleared ? local.toppings : [...new Set([...local.toppings, ...model.toppings])],
   };
 }
-function totalPrice(drink: Drink, intent: Intent): number {return Math.round((drink.price + intent.toppings.reduce((sum, name) => sum + (drink.toppings.find(item => item.name === name)?.price || 0), 0)) * 100) / 100;}
-function eligible(drink: Drink, intent: Intent, excluded: string[]): boolean {
+export function totalPrice(drink: Drink, intent: Intent): number {return Math.round((drink.price + intent.toppings.reduce((sum, name) => sum + (drink.toppings.find(item => item.name === name)?.price || 0), 0)) * 100) / 100;}
+export function eligible(drink: Drink, intent: Intent, excluded: string[]): boolean {
   if (!['observed', 'managed'].includes(drink.catalogStatus || '') || !drink.available || excluded.includes(drink.id) || (intent.maxBudget !== null && totalPrice(drink, intent) > intent.maxBudget)) return false;
   if (intent.toppings.length && (!drink.verified || !intent.toppings.every(name => drink.toppings.some(item => item.name === name)))) return false;
   // Add-on metadata currently has no ingredients/allergens/caffeine of its own. Never promise dietary compatibility for add-ons.
   if (intent.toppings.length && (intent.avoidIngredients.length || intent.caffeineFree)) return false;
-  if (intent.sweetness && (!drink.verified || !drink.sweetnessOptions.some(value => normalizeOption(value, 'sweetness') === intent.sweetness))) return false;
-  if (intent.temperature && (!drink.verified || !drink.temperatureOptions.some(value => normalizeOption(value, 'temperature') === intent.temperature))) return false;
+  // Sweetness and ice are preferences, not safety facts: a verified option list must match;
+  // without one the request is kept on the card as "待门店确认" instead of being promised.
+  if (intent.sweetness && drink.verified && drink.sweetnessOptions.length && !drink.sweetnessOptions.some(value => normalizeOption(value, 'sweetness') === intent.sweetness)) return false;
+  if (intent.temperature && (intent.strictTemperature ? !optionConfirmed(drink, 'temperature', intent.temperature) : drink.verified && drink.temperatureOptions.length && !drink.temperatureOptions.some(value => normalizeOption(value, 'temperature') === intent.temperature))) return false;
+  if (intent.avoidToppings.some(name => drink.name.includes(name))) return false;
   if (intent.caffeineFree && (!drink.verified || drink.caffeine !== 'none')) return false;
   if (intent.avoidIngredients.length) {
     if (!drink.verified || !drink.ingredients.length || drink.allergens === null || intent.avoidIngredients.includes('未明确的过敏原')) return false;
@@ -203,7 +234,12 @@ function eligible(drink: Drink, intent: Intent, excluded: string[]): boolean {
   }
   return true;
 }
-function card(drink: Drink, intent: Intent, main: boolean): TeaCard {
+/** Whether a requested sweetness/ice choice is backed by a verified option list. */
+export function optionConfirmed(drink: Drink, type: 'sweetness' | 'temperature', value: string | null): boolean {
+  const options = type === 'sweetness' ? drink.sweetnessOptions : drink.temperatureOptions;
+  return Boolean(value && drink.verified && options.some(option => normalizeOption(option, type) === value));
+}
+export function card(drink: Drink, intent: Intent, main: boolean): TeaCard {
   const tags = drink.verified ? drink.tags.filter(tag => intent.tags.some(preference => tag.includes(preference) || preference.includes(tag))) : [];
   const startingPrice = Boolean(drink.catalogEvidence?.startingPrice && drink.catalogEvidence.verifiedFields.includes('price'));
   const constraints = [intent.maxBudget === null ? '' : startingPrice ? `目录起价不超过 ${intent.maxBudget} 元，所选规格的最终价需门店确认` : `符合不超过 ${intent.maxBudget} 元的预算`, ...tags.slice(0, 2).map(tag => `菜单标签：${tag}`)].filter(Boolean);
@@ -211,7 +247,8 @@ function card(drink: Drink, intent: Intent, main: boolean): TeaCard {
   const volume = drink.verified || drink.catalogEvidence?.verifiedFields.includes('volume') ? formatVolumeLabel(drink.volume) : '规格待门店确认';
   const toppings = intent.toppings.length ? intent.toppings.map(name => `${name}（¥${drink.toppings.find(item => item.name === name)!.price}）`).join('、') : '未加料';
   return { drinkId: drink.id, drinkName: drink.name, drinkNameEn: drink.nameEn, price: amount, volume,
-    sweetness: intent.sweetness || '待门店确认', temperature: intent.temperature || '待门店确认', toppings,
+    sweetness: intent.sweetness ? optionConfirmed(drink, 'sweetness', intent.sweetness) ? intent.sweetness : `${intent.sweetness}（待门店确认）` : '待门店确认',
+    temperature: intent.temperature ? optionConfirmed(drink, 'temperature', intent.temperature) ? intent.temperature : `${intent.temperature}（待门店确认）` : '待门店确认', toppings,
     reason: constraints.join('；') || '根据你的需求与门店茶单，为你挑选这一杯。',
     message: '配料、可选规格与当日供应以门店为准。如有饮食限制，请先向店员确认。',
     funFact: '', orderPhrase: `${drink.name}，${volume}，${startingPrice ? '参考起价' : '合计'} ¥${amount}${intent.toppings.length ? `，加料：${toppings}` : ''}${intent.sweetness ? `，${intent.sweetness}` : ''}${intent.temperature ? `，${intent.temperature}` : ''}。请店员确认规格、配料和最终金额。`,
@@ -285,6 +322,11 @@ function shoppingContext(input: RecommendRequest, checkedPreviousIds: string[]):
   return {...input, history, message: classifyTurn(input.message).orderText || input.message};
 }
 
+/** Store drinks named verbatim (or without the "极萃·" style prefix) in the text. */
+export function namedDrinks(text: string, drinks: Drink[]): Drink[] {
+  return drinks.filter(drink => ['observed', 'managed'].includes(drink.catalogStatus || '') && [drink.name, drink.name.replace(/^[^·.]{1,4}[·.]/, '')].some(name => name.length >= 3 && text.includes(name)));
+}
+
 function hasCatalogContext(question: string, drinks: Drink[], previousIds: string[]) {
   const compact = question.replace(/[\s，。！？,;；?!]/g, '');
   const shortCatalogQuestion = /^(?:请问|那|那么)?(?:这(?:杯|款|个)|那(?:杯|款|个)|它)?(?:现在)?(?:多少钱|价格(?:是多少|多少)?|售价(?:是多少|多少)?|还有货吗|售罄了吗|有库存吗)$/.test(compact);
@@ -352,6 +394,8 @@ export async function recommend(input: RecommendRequest, mode: 'live' | 'preview
   const recoveredOrdering = Boolean(model && (model.intent === 'knowledge' || model.intent === 'catalog' || model.intent === 'clarify') && (intent.intent === 'recommend' || intent.intent === 'mixed'));
   const notices = mode === 'preview' ? ['规则预览：未调用 AI，仅演示菜单筛选；不能据此判断模型效果。'] : [];
   let reply: string; let cards: TeaCard[] = []; let citations: KnowledgeCitation[] | undefined;
+  const suggestions: string[] = []; let proposal: OrderItemInput[] | undefined;
+  let responseIntent: RecommendResponse['intent'] = intent.intent;
   let knowledgeReply = '';
   if (intent.intent === 'knowledge' || (intent.intent === 'mixed' && (local.route.knowledgeText || !local.route.catalogText))) {
     const knowledgeInput = {...input, message: local.route.knowledgeText || input.message};
@@ -373,13 +417,59 @@ export async function recommend(input: RecommendRequest, mode: 'live' | 'preview
     reply = '你更喜欢清爽茶香、果香还是奶香？也可以告诉我每杯预算，以及需要避开的原料。';
   } else {
     // Re-read after the remote request: a manager may have changed availability or prices while AI was thinking.
-    const candidates = store.drinks().filter(drink => eligible(drink, intent, excluded));
-    const score = (drink: Drink) => intent.tags.filter(tag => [drink.name, drink.category, ...drink.tags].some(value => value.includes(tag))).length;
+    const current = store.drinks();
+    const candidates = current.filter(drink => eligible(drink, intent, excluded));
+    const named = new Set(namedDrinks(local.route.orderText || input.message, current).map(drink => drink.id));
+    const confirmed = (drink: Drink) => Number(!intent.sweetness || optionConfirmed(drink, 'sweetness', intent.sweetness)) + Number(!intent.temperature || optionConfirmed(drink, 'temperature', intent.temperature));
+    const score = (drink: Drink) => (named.has(drink.id) ? 100 : 0) + intent.tags.filter(tag => [drink.name, drink.category, ...drink.tags].some(value => value.includes(tag))).length * 2 + confirmed(drink);
     candidates.sort((a, b) => score(b) - score(a) || a.price - b.price);
     const resumeEmptySelection = mode === 'live' && !intent.drinkIds.length && previousIds.length > 0 && isPureContinuation(local.route.orderText);
-    const selected = mode === 'live' && !recoveredOrdering && !resumeEmptySelection ? intent.drinkIds.map(id => candidates.find(drink => drink.id === id)).filter((drink): drink is Drink => !!drink) : candidates.slice(0, 3);
+    let selected = mode === 'live' && !recoveredOrdering && !resumeEmptySelection ? intent.drinkIds.map(id => candidates.find(drink => drink.id === id)).filter((drink): drink is Drink => !!drink) : candidates.slice(0, 3);
+    // "来一杯芒芒椰椰，三分糖" is an order, not a browse: answer with exactly the named drink(s).
+    const orderText = local.route.orderText || input.message;
+    const namedEligible = candidates.filter(drink => named.has(drink.id));
+    const wantsAlternatives = /推荐|换(?:一|个|成)?|其他|别的|类似|对比|比较|或者|还有什么/.test(orderText);
+    const directOrder = namedEligible.length > 0 && !wantsAlternatives && !resumeEmptySelection;
+    if (directOrder) selected = namedEligible;
     cards = [...new Map(selected.map(drink => [drink.id, drink])).values()].slice(0, 3).map((drink, index) => card(drink, intent, index === 0));
     reply = cards.length ? `为你筛选了 ${cards.length} 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。` : '当前没有能确认满足这些条件的商品。你可以调整预算或口味；如果涉及忌口、过敏、咖啡因或糖冰要求，需要门店先补全并核准对应资料。';
+    if (directOrder && cards.length) {
+      const chosen = cards.map(item => [item.drinkName, !/^待/.test(item.sweetness) ? item.sweetness : '', !/^待/.test(item.temperature) ? item.temperature : '', item.toppings !== '未加料' ? `加${item.toppings}` : ''].filter(Boolean).join('，'));
+      reply = `好的，${chosen.join('；')}。点「确认下单」我会先复述一遍，你确认后才会提交给门店。`;
+    }
+    // A named, in-stock drink that fails a verified rule: ask instead of silently swapping it.
+    const conflicts = directOrder ? [] : current.filter(drink => named.has(drink.id) && drink.available && ['observed', 'managed'].includes(drink.catalogStatus || '') && !candidates.some(item => item.id === drink.id)).map(drink => {
+      const issues: {text: string; fixes: string[]}[] = [];
+      for (const type of ['sweetness', 'temperature'] as const) {
+        const requested = intent[type];
+        const options = type === 'sweetness' ? drink.sweetnessOptions : drink.temperatureOptions;
+        if (requested && drink.verified && options.length && !optionConfirmed(drink, type, requested)) issues.push({text: `${type === 'sweetness' ? '甜度' : '冰量 / 温度'}没有「${requested}」，可选：${options.join('、')}`, fixes: options.slice(0, 3).map(option => `${drink.name}，${option}`)});
+      }
+      if (intent.maxBudget !== null && totalPrice(drink, intent) > intent.maxBudget) issues.push({text: `参考价 ¥${totalPrice(drink, intent)}，超出你 ¥${intent.maxBudget} 的预算`, fixes: [`${drink.name}，预算放宽到 ${Math.ceil(totalPrice(drink, intent))} 元`, `换一杯 ${intent.maxBudget} 元以内的`]});
+      return {drink, issues};
+    }).filter(entry => entry.issues.length);
+    if (conflicts.length && !cards.some(item => named.has(item.drinkId))) {
+      const [first] = conflicts;
+      reply = `${first.drink.name}的${first.issues.map(issue => issue.text).join('；')}。你想怎么调整？`;
+      suggestions.push(...first.issues.flatMap(issue => issue.fixes));
+      cards = []; responseIntent = 'clarify';
+    }
+    // Clarify instead of silently dropping: sold-out named drinks and unregistered add-ons.
+    const soldOut = current.filter(drink => named.has(drink.id) && ['observed', 'managed'].includes(drink.catalogStatus || '') && !drink.available);
+    if (soldOut.length && !cards.some(item => named.has(item.drinkId))) {
+      const alternatives = current.filter(drink => eligible(drink, {...intent, toppings: []}, [...excluded, ...soldOut.map(item => item.id)]) && drink.category === soldOut[0].category).slice(0, 2);
+      reply = `${soldOut.map(drink => drink.name).join('、')}在菜单记录中暂不可选。${alternatives.length ? `要不要换成同系列的${alternatives.map(drink => drink.name).join('或')}？` : '要换一款别的吗？'}\n\n${reply}`;
+      suggestions.push(...(alternatives.length ? alternatives.map(drink => drink.name) : cards.slice(0, 2).map(item => item.drinkName)).map(name => `换成${name}，其他要求不变`));
+    }
+    if (intent.toppings.length && !cards.length) {
+      const withoutToppings = current.filter(drink => eligible(drink, {...intent, toppings: []}, excluded));
+      if (withoutToppings.length) {
+        reply = `「${intent.toppings.filter(name => !/尚未明确|暂不支持/.test(name)).join('、') || '小料'}」还没有登记为本店可加的小料，我不能替门店答应。要不要先不加小料，其他要求不变？`;
+        suggestions.push('先不加小料，其他要求不变', '加料的事到店问店员');
+      }
+    }
+    if (intent.quantity && intent.quantity > 1 && cards.length) reply += `\n已按 ${intent.quantity} 杯准备，下单前会再复述一遍让你确认。`;
+    proposal = cards.map(item => ({drinkId: item.drinkId, quantity: intent.quantity || 1, ...(intent.sweetness ? {sweetness: intent.sweetness} : {}), ...(intent.temperature ? {temperature: intent.temperature} : {}), toppings: intent.toppings}));
     if (mode === 'live' && intent.drinkIds.some(id => !candidates.some(drink => drink.id === id))) notices.push('已剔除模型提出的无效、停售或不符合条件的商品。');
     if (intent.toppings.length) notices.push(cards.length ? '合计包含已核准小料价格，每种一份；最终制作前请门店确认。' : '你提出的加料尚无法按已核准资料满足：请确认小料名称与价格；暂不支持同种多份，涉及忌口时也不能确认小料配料。');
     if (intent.avoidIngredients.length || intent.caffeineFree) notices.push('涉及饮用限制时，仅筛选已核准且资料完整的商品；实际配料及交叉接触情况仍需门店确认。');
@@ -391,5 +481,5 @@ export async function recommend(input: RecommendRequest, mode: 'live' | 'preview
     reply = [knowledgeReply, catalogReply, reply].filter(Boolean).join('\n\n');
   }
   const requestId = randomUUID(); store.recordRequest(requestId, mode);
-  return {reply, cards, notices, mode, requestId, intent: intent.intent, ...(citations ? {citations} : {})};
+  return {reply, cards, notices, mode, requestId, intent: responseIntent, ...(citations ? {citations} : {}), ...(proposal?.length ? {proposal} : {}), ...(suggestions.length ? {suggestions: [...new Set(suggestions)].slice(0, 4)} : {})};
 }

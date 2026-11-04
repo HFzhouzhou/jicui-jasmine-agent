@@ -5,6 +5,7 @@ import { MOCK_MENU } from '../src/data/menu.js';
 import type { Drink, KnowledgeEntry } from '../shared/contracts.js';
 import { OFFICIAL_CATALOG, type OfficialCatalogBatch } from './data/official-catalog.js';
 import { RagStore } from './rag/store.js';
+import { CommerceStore, DEFAULT_LIMITS, type OrderLimits } from './commerce.js';
 
 export class StoreConflict extends Error {}
 const nextTimestamp = (previous = '') => new Date(Math.max(Date.now(), (Date.parse(previous) || 0) + 1)).toISOString();
@@ -24,7 +25,8 @@ function hasAdminChanges(drink: Drink): boolean {
 export class Store {
   readonly db: DatabaseSync;
   readonly rag: RagStore;
-  constructor(path: string) {
+  readonly commerce: CommerceStore;
+  constructor(path: string, limits: OrderLimits = DEFAULT_LIMITS) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
@@ -47,6 +49,7 @@ export class Store {
     this.syncOfficialCatalog();
     this.rag = new RagStore(this.db);
     this.rag.syncEntries(this.knowledge());
+    this.commerce = new CommerceStore(this.db, limits);
   }
   /** Versioned, field-by-field import. Never delete legacy records or overwrite manager edits. */
   syncOfficialCatalog(batch: OfficialCatalogBatch = OFFICIAL_CATALOG): CatalogSyncReport {

@@ -1,14 +1,14 @@
 import { formatVolumeLabel } from '@shared/catalog-display';
-import { useEffect, useState } from 'react';
-import type { Drink, OfficialOrderDraft, OfficialOrderHandoffResponse } from '@shared/contracts';
-import { ArrowUpRight, Bookmark, Check, CheckCheck, ChevronRight, Copy, Leaf, LoaderCircle, MessageCircle, RefreshCw, ShoppingBag, SlidersHorizontal } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { useMemo, useState } from 'react';
+import type { Drink, OfficialOrderDraft, Order, OrderItemInput } from '@shared/contracts';
+import { Bookmark, Check, Copy, MessageCircle, RefreshCw, ShoppingBag, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import TeaNameDIY from '@/components/TeaNameDIY';
 import DrinkArtwork from '@/components/DrinkArtwork';
 import TeaConfigurationDialog from '@/components/TeaConfigurationDialog';
-import { formatConfiguredOrder, requestOfficialOrder } from '@/lib/order-handoff';
+import OrderConfirmDialog from '@/components/order/OrderConfirmDialog';
+import { formatConfiguredOrder } from '@/lib/order-handoff';
 
 // Optional legacy fields are retained for saved cards from earlier versions.
 export interface ITeaCardData {
@@ -39,13 +39,17 @@ export interface ITeaCardData {
 
 interface TeaCardProps {
   data: ITeaCardData;
+  /** Server-prefilled order line from the conversation (cups, sweetness, ice, add-ons). */
+  proposal?: OrderItemInput;
   onRefresh?: () => void;
   onAskMore?: () => void;
   onConfirm?: () => void;
   onNameChange?: (name: string, style: 'elegant' | 'fun') => void;
+  onOrdered?: (order: Order) => void;
   /** Supply both props to share one configured draft between conversation and tea list. */
   configuredOrder?: OfficialOrderDraft;
   onConfigure?: (draft: OfficialOrderDraft) => void;
+  compact?: boolean;
 }
 
 export function formatTeaOrder(data: ITeaCardData) {
@@ -61,98 +65,71 @@ export function formatTeaOrder(data: ITeaCardData) {
   ].join('\n');
 }
 
-function OfficialCheckoutDialog({ draft, onClose }: { draft: OfficialOrderDraft; onClose: () => void }) {
-  const [response, setResponse] = useState<OfficialOrderHandoffResponse | null>(null);
-  const [error, setError] = useState('');
-  const [attempt, setAttempt] = useState(0);
-  useEffect(() => {
-    let active = true;
-    requestOfficialOrder(draft).then((result) => { if (active) setResponse(result); }).catch((reason: unknown) => { if (active) setError(reason instanceof Error ? reason.message : '暂时无法打开官方下单，请稍后再试。'); });
-    return () => { active = false; };
-  }, [draft, attempt]);
-  const pending = !response && !error;
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(formatConfiguredOrder(draft)); toast.success('这份配置已复制'); } catch { toast.error('暂时无法复制，请长按配置文字复制'); }
-  };
-  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-    <DialogContent className="max-h-[90dvh] overflow-y-auto rounded-[28px] border-0 bg-[#fbfcf5] p-6 sm:p-8">
-      <div className="mb-1 flex size-12 items-center justify-center rounded-2xl bg-[#eaf0df] text-[#5b7341]"><ShoppingBag strokeWidth={1.4} className="size-6" /></div>
-      <DialogTitle className="font-serif text-2xl font-normal text-[#2c442e]">带上这份喜欢，去下单</DialogTitle>
-      <DialogDescription className="text-xs leading-6 text-[#8b9879]">{response?.status === 'ready' ? '配置已准备好，前往官方小程序确认门店与订单。' : '你的口味已经配好，先为你留在这里。'}</DialogDescription>
-      <div className="rounded-2xl border border-[#e3e9d7] bg-white p-5">
-        <div className="flex items-start justify-between gap-3"><h3 className="font-serif text-xl text-[#2c442e]">{draft.drinkName}</h3><span className="rounded-full bg-[#eff3e6] px-2.5 py-1 text-xs text-[#6f8258]">× {draft.quantity}</span></div>
-        <p className="mt-3 text-xs leading-6 text-[#7b8c65]">{draft.options.volume} · {draft.options.sweetness} · {draft.options.temperature}</p>
-        <p className="mt-1 text-xs leading-6 text-[#7b8c65]">{draft.options.toppings}</p>
-        {draft.storeName && <p className="mt-3 border-t border-[#edf0e5] pt-3 text-[10px] leading-5 text-[#8d997d]">{draft.storeName}</p>}
-        {draft.note && <p className="mt-2 break-words text-xs leading-6 text-[#7b8c65]">备注：{draft.note}</p>}
-      </div>
-      <div role="status" aria-live="polite" className="rounded-2xl bg-[#eff2e6] px-4 py-3 text-xs leading-6 text-[#788b61]">
-        {pending ? <span className="flex items-center gap-2"><LoaderCircle className="size-4 animate-spin" />正在准备官方下单入口…</span> : error || (response?.status === 'unavailable' ? '官方小程序下单暂未开放，配置已保留，你可以先复制这份茶单。' : '最终规格、库存和金额请在官方小程序确认。')}
-      </div>
-      {response?.status === 'ready' ? <Button asChild className="h-12 rounded-full bg-[#2e4933] text-xs text-white hover:bg-[#405d3f]"><a href={response.url}>前往官方小程序<ArrowUpRight className="size-4" /></a></Button> : <Button onClick={copy} className="h-12 gap-2 rounded-full bg-[#2e4933] text-xs text-white hover:bg-[#405d3f]"><Copy className="size-4" />复制这份配置</Button>}
-      {error && <Button variant="ghost" onClick={() => { setError(''); setResponse(null); setAttempt((value) => value + 1); }} className="h-10 text-xs text-[#78925b]">重新尝试</Button>}
-      <p className="text-center text-[10px] text-[#a1ac91]">当前尚未提交订单</p>
-    </DialogContent>
-  </Dialog>;
+const DEFAULTISH = /随门店|门店标准|按门店|待/;
+/** A saved configuration (strings) becomes an order line; store defaults stay unspecified. */
+export function draftToItem(draft: OfficialOrderDraft): OrderItemInput {
+  const pick = (value: string) => DEFAULTISH.test(value) ? undefined : value;
+  const toppings = draft.options.toppings.split(/[、,，]/).map((value) => value.trim()).filter((value) => value && !/^(?:不额外加料|未加料|无)$/.test(value));
+  return { drinkId: draft.drinkId, quantity: draft.quantity, ...(pick(draft.options.volume) ? { volume: draft.options.volume } : {}), ...(pick(draft.options.sweetness) ? { sweetness: draft.options.sweetness } : {}), ...(pick(draft.options.temperature) ? { temperature: draft.options.temperature } : {}), toppings, ...(draft.note ? { note: draft.note } : {}) };
+}
+function proposalToDraft(data: ITeaCardData, proposal: OrderItemInput): OfficialOrderDraft {
+  return { drinkId: proposal.drinkId, drinkName: data.drinkName, quantity: proposal.quantity, options: { volume: proposal.volume || '', sweetness: proposal.sweetness || '随门店标准', temperature: proposal.temperature || '随门店标准', toppings: proposal.toppings?.length ? proposal.toppings.join('、') : '不额外加料' }, ...(proposal.note ? { note: proposal.note } : {}) };
 }
 
-function TeaCardContent({ data, onRefresh, onAskMore, onConfirm, onNameChange, configuredOrder, onConfigure }: TeaCardProps) {
+function TeaCardContent({ data, proposal, onRefresh, onAskMore, onConfirm, onNameChange, onOrdered, configuredOrder, onConfigure, compact }: TeaCardProps) {
   const [copied, setCopied] = useState(false);
   const [configuring, setConfiguring] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [ordering, setOrdering] = useState(false);
   const [localOrder, setLocalOrder] = useState<OfficialOrderDraft>();
   const candidate = onConfigure ? configuredOrder : configuredOrder || localOrder;
   const draft = candidate?.drinkId === data.drinkId ? candidate : undefined;
+  const usableProposal = proposal?.drinkId === data.drinkId ? proposal : undefined;
+  const item = useMemo<OrderItemInput | undefined>(() => !data.drinkId ? undefined : draft ? draftToItem(draft) : usableProposal || { drinkId: data.drinkId, quantity: 1, toppings: [] }, [data.drinkId, draft, usableProposal]);
+  const items = useMemo(() => item ? [item] : [], [item]);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(draft ? formatConfiguredOrder(draft) : formatTeaOrder(data));
-      setCopied(true);
-      toast.success(draft ? '这份配置已复制' : '参考茶单已复制');
-    } catch { toast.error('浏览器不允许自动复制，请长按茶单文字复制'); }
+      setCopied(true); toast.success('已复制，可以直接发给店员');
+    } catch { toast.error('浏览器不允许自动复制，请长按文字复制'); }
   };
-  const saveConfiguration = (value: OfficialOrderDraft) => {
-    if (onConfigure) onConfigure(value); else setLocalOrder(value);
-    setCopied(false);
-  };
-  const artCategory = /咖啡|拿铁|美式/.test(data.drinkName) ? '咖啡' : /奶|乳|芝士/.test(data.drinkName) ? '鲜奶茶' : /桃|柠檬|葡萄|橙|果|莓/.test(data.drinkName) ? '鲜果茶' : '纯茶原叶';
+  const saveConfiguration = (value: OfficialOrderDraft) => { if (onConfigure) onConfigure(value); else setLocalOrder(value); setCopied(false); };
+  const artCategory = /咖啡|拿铁|美式/.test(data.drinkName) ? '咖啡' : /奶|乳|芝士|酪/.test(data.drinkName) ? '鲜奶茶' : /桃|柠檬|葡萄|橙|果|莓|芒|椰/.test(data.drinkName) ? '鲜果茶' : '纯茶原叶';
+  const chips = draft
+    ? [draft.options.volume, draft.options.sweetness, draft.options.temperature, draft.options.toppings, `${draft.quantity} 杯`]
+    : [formatVolumeLabel(data.volume) || '杯型待确认', data.sweetness && !/^待/.test(data.sweetness) ? data.sweetness : '', data.temperature && !/^待/.test(data.temperature) ? data.temperature : '', data.toppings && data.toppings !== '未加料' ? data.toppings : '', usableProposal && usableProposal.quantity > 1 ? `${usableProposal.quantity} 杯` : ''].filter(Boolean);
+  const total = item ? Math.round(data.price * item.quantity * 100) / 100 : data.price;
+
   return <>
-    <article className={`overflow-hidden rounded-[24px] border ${data.isMain ? 'border-[#dfe7d2] bg-white shadow-[0_12px_40px_-25px_#253b2d40]' : 'border-[#e0e7d5] bg-[#f7f9f0]'}`}>
-      <div className="flex min-h-[178px] gap-4 border-b border-[#e9eddf] bg-[#f4f7ec] p-5 sm:gap-5 sm:p-6">
-        <div className="min-w-0 flex-1">
-          <span className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.14em] text-[#83966f]">{draft ? <CheckCheck strokeWidth={1.4} className="size-3.5" /> : <Leaf strokeWidth={1.4} className="size-3.5" />}{draft ? '按你的喜欢，配好了' : data.isMain ? '为你精选 / YOUR TEA' : '也许你也喜欢 / ALSO LOVELY'}</span>
-          <h3 className="mt-3 break-words font-serif text-[25px] leading-snug text-[#253b2d]">{data.drinkName}</h3>
-          {data.drinkNameEn && <p className="mt-1.5 text-[9px] tracking-wider text-[#9ba28d]">{data.drinkNameEn}</p>}
-          {data.customName && <p className="mt-2 text-xs text-[#7d8d65]">我的昵称：{data.customName}</p>}
-          <div className="mt-4 flex flex-wrap items-baseline gap-1.5"><span className="text-xs text-[#536847]">¥</span><span className="font-serif text-3xl leading-none text-[#253b2d]">{data.price}</span>{data.startingPrice && <span className="text-xs text-[#536847]">起</span>}<span className="ml-1 text-[9px] text-[#99a086]">{draft ? '原推荐参考价' : '参考单价'}</span></div>
+    <article className={cn('group/card overflow-hidden rounded-[28px] bg-cream ring-1 ring-line/70 transition-shadow', data.isMain ? 'shadow-[0_24px_60px_-36px_rgba(20,40,28,.45)]' : 'shadow-[0_10px_30px_-24px_rgba(20,40,28,.35)]')}>
+      <div className={cn('flex gap-4 p-4 sm:gap-5 sm:p-5', compact && 'p-4')}>
+        <div className="relative w-[112px] shrink-0 sm:w-[132px]">
+          <DrinkArtwork category={artCategory} name={data.drinkName} className={cn('w-full rounded-[22px] bg-paper', compact ? 'h-[128px]' : 'h-[148px] sm:h-[164px]')} />
+          {data.isMain && <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-jade/90 px-2 py-0.5 text-[11px] text-cream backdrop-blur"><Sparkles className="size-3" />{draft ? '已配好' : '首选'}</span>}
         </div>
-        <div className="w-[110px] shrink-0 sm:w-[135px]"><DrinkArtwork category={artCategory} name={data.drinkName} className="h-[140px] w-full rounded-[18px] sm:h-[156px]" /></div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h3 className="font-serif text-[21px] font-semibold leading-snug text-ink sm:text-[23px]">{data.drinkName}</h3>
+          {data.drinkNameEn && <p className="mt-0.5 truncate text-[12px] tracking-wide text-stone/80">{data.drinkNameEn}</p>}
+          {data.customName && <p className="mt-1 text-[13px] text-leaf">昵称：{data.customName}</p>}
+          <div className="mt-2 flex items-baseline gap-1 text-ink"><span className="text-[13px]">¥</span><span className="font-serif text-[30px] font-semibold leading-none tabular-nums">{data.price}</span>{data.startingPrice && <span className="text-[13px]">起</span>}{item && item.quantity > 1 && <span className="ml-2 text-[13px] text-stone">× {item.quantity} = ¥{total}</span>}</div>
+          <div className="mt-3 flex flex-wrap gap-1.5">{chips.map((chip, index) => <span key={`${chip}-${index}`} className={cn('rounded-full px-2.5 py-1 text-[12px]', /待门店确认|待确认/.test(chip) ? 'bg-honey/55 text-[#7a5a1c]' : 'bg-mist text-jade')}>{chip}</span>)}</div>
+        </div>
       </div>
-      <div className="p-5 sm:p-6">
-        {draft ? <div className="rounded-2xl border border-[#e4ead8] bg-[#f6f8ef] p-4">
-          <div className="mb-3 flex items-center justify-between gap-2"><p className="flex items-center gap-1.5 text-[10px] tracking-wide text-[#799061]"><Check className="size-3" />我的专属配置</p><span className="rounded-full bg-white px-2.5 py-1 text-[10px] text-[#6f8554]">{draft.quantity} 杯</span></div>
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-xs"><div><dt className="mb-1 text-[9px] text-[#9ca58c]">杯型</dt><dd className="text-[#50653e]">{draft.options.volume}</dd></div><div><dt className="mb-1 text-[9px] text-[#9ca58c]">甜度偏好</dt><dd className="text-[#50653e]">{draft.options.sweetness}</dd></div><div><dt className="mb-1 text-[9px] text-[#9ca58c]">冰量 / 温度偏好</dt><dd className="text-[#50653e]">{draft.options.temperature}</dd></div><div><dt className="mb-1 text-[9px] text-[#9ca58c]">小料</dt><dd className="text-[#50653e]">{draft.options.toppings}</dd></div></dl>
-          {draft.note && <p className="mt-3 break-words border-t border-[#e3e9d7] pt-3 text-[11px] leading-6 text-[#7e8f6b]">备注：{draft.note}</p>}
-        </div> : <>
-          <div className="flex flex-wrap gap-2">{[formatVolumeLabel(data.volume) || '杯型待确认', ...(data.matchTags || []).slice(0, 2)].map((tag, index) => <span key={`${tag}-${index}`} className="rounded-full bg-[#eef2e4] px-3 py-1.5 text-[10px] text-[#7c9062]">{tag}</span>)}</div>
-          {data.reason && <p className="mt-4 text-xs leading-7 text-[#738160]">{data.reason}</p>}
-        </>}
-        {data.catalogEvidence && <p className="mt-3 text-[9px] leading-5 text-[#96a081]">{data.catalogEvidence.storeName}</p>}
-        <div className="mt-5 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <Button onClick={() => draft ? setCheckoutOpen(true) : setConfiguring(true)} disabled={!data.drinkId} className="h-12 min-w-0 w-full gap-2 rounded-full sm:flex-1 bg-[#2e4933] px-4 text-xs text-[#fbfcf5] hover:bg-[#405d3f]">{draft ? <ShoppingBag strokeWidth={1.4} className="size-4" /> : <SlidersHorizontal strokeWidth={1.4} className="size-4" />}{draft ? '去官方小程序下单' : '配置这杯'}<ChevronRight strokeWidth={1.4} className="ml-auto size-4" /></Button>
-          {draft && <Button variant="outline" onClick={() => setConfiguring(true)} className="h-11 shrink-0 rounded-full border-[#d9e2cb] sm:h-12 bg-transparent px-4 text-[11px] text-[#748a5b] hover:bg-[#e9efde]">调整配置</Button>}
-        </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-0.5">
-          <Button variant="ghost" onClick={copy} className="h-10 gap-1.5 rounded-full px-2.5 text-[10px] text-[#8c987b] hover:bg-[#e9efde]">{copied ? <Check strokeWidth={1.3} className="size-3.5" /> : <Copy strokeWidth={1.3} className="size-3.5" />}{copied ? '已复制' : '复制茶单'}</Button>
-          {onConfirm && <Button variant="ghost" onClick={onConfirm} className="h-10 gap-1.5 rounded-full px-2.5 text-[10px] text-[#8c987b] hover:bg-[#e9efde]"><Bookmark strokeWidth={1.3} className="size-3.5" />收藏</Button>}
-          {onRefresh && <Button variant="ghost" onClick={onRefresh} className="h-10 gap-1.5 rounded-full px-2.5 text-[10px] text-[#8c987b] hover:bg-[#e9efde]"><RefreshCw strokeWidth={1.3} className="size-3.5" />换一杯</Button>}
-          {onAskMore && <Button variant="ghost" onClick={onAskMore} className="h-10 gap-1.5 rounded-full px-2.5 text-[10px] text-[#8c987b] hover:bg-[#e9efde]"><MessageCircle strokeWidth={1.3} className="size-3.5" />继续调整</Button>}
-          {onNameChange && <TeaNameDIY drinkName={data.drinkName} currentName={data.customName} onApply={onNameChange} trigger={<Button variant="ghost" className="h-10 rounded-full px-2.5 text-[10px] text-[#8c987b]">给茶起昵称</Button>} />}
-        </div>
-        <p className="mt-2 text-[9px] leading-5 text-[#a0ac90]">{!data.drinkId ? '此茶单暂无法配置，请重新选一杯。' : draft ? '最终规格与价格以门店为准，当前尚未提交订单。' : '选好口味，再带着配置前往官方下单。'}</p>
+      {!compact && (data.reason || data.funFact) && <div className="mx-4 mb-1 rounded-[20px] bg-paper px-4 py-3 text-[13px] leading-6 text-stone sm:mx-5">{data.funFact && <p className="mb-1 font-serif text-[15px] text-jade">“{data.funFact}”</p>}{data.reason}</div>}
+      <div className="flex gap-2 p-4 pt-3 sm:p-5 sm:pt-3">
+        <button type="button" disabled={!item} onClick={() => setOrdering(true)} className="btn-jade h-12 min-w-0 flex-1 whitespace-nowrap"><ShoppingBag className="size-4" />确认下单{item && item.quantity > 1 ? ` · ${item.quantity} 杯` : ''}</button>
+        <button type="button" disabled={!data.drinkId} onClick={() => setConfiguring(true)} className="btn-ghost h-12 shrink-0 whitespace-nowrap"><SlidersHorizontal className="size-4" />{draft ? '调整' : '调口味'}</button>
+      </div>
+      <div className="flex flex-wrap items-center gap-0.5 border-t border-line/70 px-3 py-1.5">
+        <button type="button" onClick={copy} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] text-stone hover:bg-mist hover:text-jade">{copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}{copied ? '已复制' : '复制'}</button>
+        {onConfirm && <button type="button" onClick={onConfirm} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] text-stone hover:bg-mist hover:text-jade"><Bookmark className="size-3.5" />收藏</button>}
+        {onRefresh && <button type="button" onClick={onRefresh} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] text-stone hover:bg-mist hover:text-jade"><RefreshCw className="size-3.5" />换一杯</button>}
+        {onAskMore && <button type="button" onClick={onAskMore} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[12px] text-stone hover:bg-mist hover:text-jade"><MessageCircle className="size-3.5" />继续聊</button>}
+        {onNameChange && <TeaNameDIY drinkName={data.drinkName} currentName={data.customName} onApply={onNameChange} trigger={<button type="button" className="inline-flex h-9 items-center rounded-full px-3 text-[12px] text-stone hover:bg-mist">起昵称</button>} />}
+        <span className="ml-auto pr-2 text-[11px] text-stone/70">到店付款 · 图片仅供参考</span>
       </div>
     </article>
-    {configuring && <TeaConfigurationDialog open onOpenChange={setConfiguring} data={data} category={artCategory} initialDraft={draft} onSave={saveConfiguration} />}
-    {checkoutOpen && draft && <OfficialCheckoutDialog key={JSON.stringify(draft)} draft={draft} onClose={() => setCheckoutOpen(false)} />}
+    {configuring && <TeaConfigurationDialog open onOpenChange={setConfiguring} data={data} category={artCategory} initialDraft={draft || (usableProposal ? proposalToDraft(data, usableProposal) : undefined)} onSave={saveConfiguration} />}
+    {ordering && <OrderConfirmDialog open onOpenChange={setOrdering} items={items} onSubmitted={onOrdered} />}
   </>;
 }
 

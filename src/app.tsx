@@ -8,6 +8,7 @@ const MenuLibraryPage = lazy(() => import("@/pages/MenuLibraryPage/MenuLibraryPa
 const ProjectPage = lazy(() => import("@/pages/ProjectPage/ProjectPage"));
 const PersonalityPage = lazy(() => import("@/pages/PersonalityPage/PersonalityPage"));
 const AdminPage = lazy(() => import("@/pages/AdminPage/AdminPage"));
+const OrdersPage = lazy(() => import("@/pages/OrdersPage/OrdersPage"));
 import NotFoundPage from "@/pages/NotFoundPage/NotFoundPage";
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
            <Route path="personality" element={<PersonalityPage />} />
           <Route path="admin" element={<AdminPage />} />
           <Route path="menu" element={<MenuLibraryPage />} />
+          <Route path="orders" element={<OrdersPage />} />
           <Route path="project" element={<ProjectPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />

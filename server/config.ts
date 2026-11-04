@@ -14,6 +14,8 @@ export interface ServerConfig {
   rateLimit: number;
   trustProxy: false | number | string;
   embedding?: {baseUrl: string; apiKey: string; model: string; timeoutMs: number};
+  /** Guardrails for the store pickup queue. The app never takes payment. */
+  orders: {maxAmount: number; dailyLimit: number; maxCups: number; quoteTtlMs: number};
 }
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const number = (key: string, fallback: number, min: number, max: number) => {
@@ -51,5 +53,5 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     if (!['https:', 'http:'].includes(endpoint.protocol) || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || (endpoint.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname))) throw new Error('RAG_EMBEDDING_BASE_URL 必须为 HTTPS 或本地模型地址');
     embedding = {baseUrl: embeddingBase.replace(/\/+$/, ''), model: embeddingModel, apiKey: env.RAG_EMBEDDING_API_KEY?.trim() || '', timeoutMs: number('RAG_EMBEDDING_TIMEOUT_MS', 8000, 100, 15000)};
   }
-  return { apiKey, baseUrl, model: env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash', timeoutMs: number('AI_TIMEOUT_MS', 30000, 100, 120000), adminToken, dataDir: resolve(env.DATA_DIR || 'data'), port: number('PORT', 3001, 0, 65535), host: env.HOST || '127.0.0.1', staticDir: resolve('dist/client'), rateLimit: 20, trustProxy, ...(embedding ? {embedding} : {}) };
+  return { apiKey, baseUrl, model: env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash', timeoutMs: number('AI_TIMEOUT_MS', 30000, 100, 120000), adminToken, dataDir: resolve(env.DATA_DIR || 'data'), port: number('PORT', 3001, 0, 65535), host: env.HOST || '127.0.0.1', staticDir: resolve('dist/client'), rateLimit: 20, trustProxy, orders: {maxAmount: number('ORDER_MAX_AMOUNT', 300, 1, 100000), dailyLimit: number('ORDER_DAILY_LIMIT', 10, 1, 1000), maxCups: number('ORDER_MAX_CUPS', 20, 1, 200), quoteTtlMs: 10 * 60_000}, ...(embedding ? {embedding} : {}) };
 }

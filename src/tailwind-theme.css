@@ -9,20 +9,20 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: #f7f7ef;
-  --foreground: #253b2d;
-  --card: #fffffa;
-  --card-foreground: #253b2d;
-  --popover: #fffffa;
-  --popover-foreground: #253b2d;
-  --primary: #324f39;
-  --primary-foreground: #fffff5;
-  --secondary: #e5eccf;
-  --secondary-foreground: #35482e;
-  --muted: #efefe4;
-  --muted-foreground: #717566;
-  --accent: #e5eccf;
-  --accent-foreground: #35482e;
+  --background: #f8f5ec;
+  --foreground: #17301f;
+  --card: #fffdf7;
+  --card-foreground: #17301f;
+  --popover: #fffdf7;
+  --popover-foreground: #17301f;
+  --primary: #1f4a33;
+  --primary-foreground: #fffdf5;
+  --secondary: #e6efdc;
+  --secondary-foreground: #1f4a33;
+  --muted: #f1eee3;
+  --muted-foreground: #646b5f;
+  --accent: #f4e8c8;
+  --accent-foreground: #5e4517;
   --info: hsl(221 83% 53%);
   --info-foreground: hsl(230 100% 98%);
   --destructive: hsl(0 84% 60%);
@@ -31,9 +31,9 @@
   --success-foreground: hsl(115 77% 97%);
   --warning: hsl(26 90% 49%);
   --warning-foreground: hsl(33 100% 96%);
-  --border: #dfe1d3;
-  --input: #d7dbca;
-  --ring: #748861;
+  --border: #e5e1d2;
+  --input: #dcd8c7;
+  --ring: #5f8a54;
   --chart-1: hsl(148 38% 55%);
   --chart-2: hsl(178 38% 55%);
   --chart-3: hsl(208 38% 55%);
@@ -60,10 +60,9 @@
     'Microsoft Yahei', 'Arial', 'Hiragino Sans GB', 'sans-serif',
     'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif:
-    'Songti SC', 'STSong', ui-serif, Georgia, Cambria, 'Times New Roman',
-    Times, serif;
+    'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', 'SimSun', ui-serif, Georgia, serif;
   --font-mono: Source Code Pro, monospace;
-  --radius: 0.8rem;
+  --radius: 0.9rem;
   --shadow-x: 0px;
   --shadow-y: 2px;
   --shadow-blur: 12px;
@@ -127,7 +126,21 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+  /* Jasmine tea house palette */
+  --color-ink: #14281c;
+  --color-jade: #1f4a33;
+  --color-jade-soft: #2c5f42;
+  --color-leaf: #6f9a58;
+  --color-sage: #a8c08e;
+  --color-mist: #e6efdc;
+  --color-paper: #f8f5ec;
+  --color-cream: #fffdf7;
+  --color-honey: #f3e2b3;
+  --color-gold: #b3842f;
+  --color-blush: #f7e8dc;
+  --color-stone: #646b5f;
+  --color-line: #e5e1d2;
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 

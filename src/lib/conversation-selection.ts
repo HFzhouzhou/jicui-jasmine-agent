@@ -1,7 +1,8 @@
 import type { ChatMessage, OfficialOrderDraft, RecommendResponse, TeaCard } from '../../shared/contracts.js';
 import type { KnowledgeCitation } from '../../shared/rag.js';
+import { pickExtras, type ChatExtras } from './chat-extras.js';
 
-export interface ConversationMessage extends ChatMessage {
+export interface ConversationMessage extends ChatMessage, ChatExtras {
   cardContext?: string;
   productCard?: TeaCard;
   orderDraft?: OfficialOrderDraft;
@@ -19,8 +20,10 @@ export interface TeaSelection {
 
 const RESTORED_SELECTION_ID = 'local-restored-selection';
 
+/** Answers that carry no new drinks (knowledge, memory, order status…) keep the current tea list. */
 export function preservesTeaSelection(response: RecommendResponse) {
-  if (response.intent) return ['knowledge', 'catalog', 'clarify'].includes(response.intent);
+  if (response.intent === 'ingredient') return response.cards.length === 0;
+  if (response.intent) return ['knowledge', 'catalog', 'clarify', 'memory', 'order_status', 'after_sales'].includes(response.intent);
   return Array.isArray(response.citations) && response.cards.length === 0;
 }
 
@@ -103,7 +106,7 @@ export function restoreSelection(value: unknown, messages: ConversationMessage[]
       return isSavedOrderDraft(draft, card.drinkId) ? [[card.drinkId, draft]] : [];
     }));
     return {
-      response: { reply: response.reply.slice(0, 6000), requestId: response.requestId.slice(0, 200), mode: response.mode, cards: response.cards, notices: response.notices.slice(0, 6).map(notice => notice.slice(0, 2000)), ...(['knowledge', 'catalog', 'clarify', 'recommend', 'mixed'].includes(response.intent || '') ? { intent: response.intent } : {}) },
+      response: { reply: response.reply.slice(0, 6000), requestId: response.requestId.slice(0, 200), mode: response.mode, cards: response.cards, notices: response.notices.slice(0, 6).map(notice => notice.slice(0, 2000)), ...pickExtras(response) },
       activeDrinkId: response.cards.find(card => card.drinkId === saved.activeDrinkId)?.drinkId || response.cards[0]?.drinkId,
       orders,
     };

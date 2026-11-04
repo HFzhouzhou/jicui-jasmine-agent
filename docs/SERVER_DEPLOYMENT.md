@@ -1,6 +1,6 @@
 # 服务器部署与维护记录
 
-更新日期：2026-10-12。服务器：`8.148.11.126`。当前运行代码版本为 [`77dddad`](https://github.com/HFzhouzhou/jicui-jasmine-agent/commit/77dddad)，已推送 GitHub 并完成下方[本轮发布验收](#rag-release-43cd50a)。后续仅记录验收结果的文档提交不改变运行代码版本。本页不包含模型密钥、管理员口令或证书私钥。
+更新日期：2026-11-04。服务器：`8.148.11.126`。当前运行代码版本为 [`417541d`](https://github.com/HFzhouzhou/jicui-jasmine-agent/commit/417541d)，已推送 GitHub 并完成下方[本轮发布验收](#ordering-release-87806f6)。后续仅记录验收结果的文档提交不改变运行代码版本。本页不包含模型密钥、管理员口令或证书私钥。
 
 ## 当前访问入口
 
@@ -14,6 +14,33 @@
 IP 入口已使用 Let's Encrypt 签发的 IP 证书。证书目录为 `/etc/letsencrypt/live/jingshu-ip`，独立网关已使用该证书。
 
 此前已完成的验收包括：两站公网 IP 入口首页、茶饮公网健康检查、内部静态文件核对及项目检查/构建。此前服务器内部的真实 DeepSeek 请求已返回 `live` 模式及 3 个候选；该结果与健康检查中仅表示密钥已配置的 `aiConfigured` 不同。最新知识库的公网文件上传与真实问答验收见下方记录。
+
+<a id="ordering-release-87806f6"></a>
+
+## 2026-11-04 AI 下单闭环与依赖安全更新发布验收（87806f6 / 417541d）
+
+### 版本与检查
+
+- `87806f6`：AI 随心配下单闭环、口味长期记忆、情绪盲盒、套餐随心配、订单查询与售后、门店接单台与优惠规则，以及前端视觉与手机布局更新。
+- `417541d`：只更新 `package-lock.json`，在既有版本范围内升级 body-parser 2.4.0、multer 2.5.0、qs 6.17.1、zod 4.6.7，修复 `87806f6` 部署后审计出的 4 个生产依赖漏洞（1 个中危、3 个高危：GHSA-27r3-jxmh-p828、GHSA-q7qp-rjg7-q26m、GHSA-6pq8-jhm2-2vcw、GHSA-mrhx-c7xc-m3w5）。服务器 `current` 已切换到 `/srv/jingshu/shop/releases/417541d`；`87806f6` 与 `77dddad` 目录保留，用于回退。
+- 两个版本均在新的 release 目录中单独执行 `npm ci`、`npm run check`、`npm run build` 后再切换。服务器回归均为 **179 项：178 项通过、0 项失败、1 项 TODO**，TODO 与此前相同，是已知词法误召回边界。`417541d` 的 `npm audit --omit=dev` 返回 0 个已知漏洞。开发依赖中 eslint 链上的 minimatch 仍有一项中危提示；它不进入生产运行，npm 给出的强制修复会把 eslint 降级到 4.0.0，因此未采用。
+- 数据库变更只新增 `orders`、`customers` 两张表（`CREATE TABLE IF NOT EXISTS`），不改写既有数据。切换后正式库 `PRAGMA quick_check` 为 `ok`，表数由 14 增至 16。
+- 服务器私有配置 `shared/.env` 未改动：核对后，DeepSeek 密钥与本次提供的密钥一致。订单护栏 `ORDER_MAX_AMOUNT`、`ORDER_DAILY_LIMIT`、`ORDER_MAX_CUPS` 未写入私有配置，使用代码默认值 300 元、10 单、20 杯。
+
+### 切换方式与其他服务保护
+
+- 本轮**未使用** `/usr/local/sbin/jingshu-sites restart`：该命令会同时停止并重启 `www`、`shop` 与 `gateway`。茶饮单独发布的流程为：暂停 `jingshu-watchdog.timer` → 向 `shop:0.0` 发送 Ctrl-C → 复制停服时的完整数据目录 → 更新 `current` → 按 `jingshu-sites` 中相同的 `tmux new-session` 与 `pipe-pane` 写法只启动 `shop` → 健康检查通过后恢复看门狗。健康检查失败时脚本会自动切回上一版本。
+- 切换 `87806f6` 时，`shop` 在 Ctrl-C 后 10 秒内未退出，脚本只结束了 `shop` 会话，并确认旧进程已经退出；切换 `417541d` 时 Ctrl-C 正常退出，切换耗时约 1 秒。
+- 两次切换前后，`www`、`gateway` 的进程 ID 不变，Nginx 配置未改，原网站首页 SHA-256 仍为 `47eb2aafaff79de524696bbf248b6aa463416ce09b34049c983220e01c8f1cb5`。服务器上另有一个 tmux 会话 `18`，不属于本项目，发布时未触碰，进程 ID 前后一致。
+- 备份目录：`/srv/jingshu/shop/backups/pre-ordering-20261104-87806f6` 和 `/srv/jingshu/shop/backups/pre-security-20261104-417541d`，均包含切换前私有配置、停服时复制的完整 `data-at-switch`，以及安装、检查、构建日志。本轮没有另做在线 SQLite 备份。
+- root 的 `~/.ssh/authorized_keys` 新增一把部署用公钥（注释 `jasmine-deploy`），用于密钥登录发布；本页不记录任何私钥或口令。
+
+### 公网验收
+
+- `https://8.148.11.126:888/api/health` 返回 `ok`，DeepSeek 已配置，菜单 84 款。
+- 带 `Accept: text/html` 请求 `/`、`/menu`、`/orders`、`/admin`、`/ai-recommend` 均为 200，首页引用的构建文件与本次构建一致。服务端只对浏览器类 HTML 请求返回单页应用入口；用 curl 默认 `Accept: */*` 请求页面路径会得到 404，属既有设计，不代表部署异常。
+- 真实 DeepSeek 请求（「来一杯茉莉毛峰，少冰」）返回 `mode: live`、意图 `recommend`，推荐「极萃·茉莉毛峰 ¥10」，约 1.2 秒；`87806f6` 时另经浏览器发送推荐请求，返回 3 款预算内候选，浏览器无错误。无效 JSON 请求返回 400 `INVALID_JSON`。
+- 本轮**没有**在正式库提交测试订单，也没有新增、发布或删除知识库资料；下单提交、门店接单台和售后流程的公网验收仍待门店实际操作或在隔离库中补测。域名备案与放行状态本轮未重新核查。
 
 <a id="rag-release-43cd50a"></a>
 
@@ -206,6 +233,7 @@ journalctl -u jingshu-tmux.service -n 100 --no-pager
 ## 发布更新与回退原则
 
 - 新版本在独立 release 目录完成依赖安装、检查与构建后，再更新 `current`；保留上一个可用版本，便于回退。
+- 只发布茶饮应用时，不要用 `jingshu-sites restart`（会同时重启原网站与网关），按[2026-11-04 记录](#ordering-release-87806f6)的方式只重启 `shop` 会话。
 - Node 服务端构建仍依赖生产 `node_modules`，部署时不能只复制 `dist`。
 - `shared/.env` 和 `shared/data` 属于持久运行资料，不放进版本替换或清理范围。
 - 数据备份应在服务停止后复制整个 SQLite 数据目录，避免单独复制正在写入的主数据库而遗漏 WAL 内容。

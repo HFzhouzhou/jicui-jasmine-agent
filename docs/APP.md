@@ -52,7 +52,7 @@ npm run app:android     # 或 npm run app:ios
 
 ## 方式二：独立安装包（发给店员或顾客试用）
 
-安装包里带着页面，直接访问线上服务器。**前提：服务器已部署本版本后端**（包含订单、口味记忆、接单台和 `/api/app/version`）。当前服务器运行的 `77dddad` 还没有这些接口。
+安装包里带着页面，直接访问线上服务器。**前提：服务器已部署本版本后端**（包含订单、口味记忆、接单台和 `/api/app/version`）。线上 `https://8.148.11.126:888` 自 2026-11-06 起运行 [`81840f0`](https://github.com/HFzhouzhou/jicui-jasmine-agent/commit/81840f0)，已包含这些接口，并按默认 `APP_ORIGINS` 放行安卓与 iOS 的 App 来源（验收见 [服务器部署记录](SERVER_DEPLOYMENT.md#app-release-81840f0)）。
 
 ```sh
 cp .env.app.example .env.app
@@ -71,6 +71,44 @@ cd android && ./gradlew assembleDebug   # 提示 permission denied 时先执行 
 把 APK 发到安卓手机安装（需要允许「安装未知来源应用」）。正式分发请在 Android Studio 用 Build → Generate Signed App Bundle / APK 生成签名包，**签名文件和密码务必备份**，丢失后无法再更新同一个 App。
 
 **iOS**：在 Xcode 选 Product → Archive，通过 TestFlight 分发（需要 Apple 开发者账号）。
+
+### 不装 Android Studio 的命令行构建
+
+只需 JDK 21、Android SDK 命令行工具和 Gradle，不需要 Android Studio。下面的路径是 2026-11-06 在本机实际使用的位置，均装在用户目录、无需 sudo：
+
+| 组件 | 版本 | 位置 |
+| --- | --- | --- |
+| Temurin JDK | 21.0.13+9 | `~/.local/jdk-21` |
+| Android SDK | platforms;android-36、build-tools;36.0.0、platform-tools | `~/Library/Android/sdk`（需接受 Android SDK License） |
+| Gradle | 8.14.3（与 `gradle-wrapper.properties` 一致） | `~/.local/gradle-8.14.3` |
+
+```sh
+export JAVA_HOME=~/.local/jdk-21/Contents/Home
+export ANDROID_HOME=~/Library/Android/sdk
+cd android && ~/.local/gradle-8.14.3/bin/gradle assembleDebug   # 网络通畅时也可以直接用 ./gradlew
+```
+
+国内网络下 GitHub Releases、`services.gradle.org` 和 Maven Central 可能很慢（本机实测分别约 14 KB/s、无法连接、约 33 KB/s），`dl.google.com` 正常。可从清华 TUNA 的 Adoptium 镜像下载 JDK、从阿里云镜像下载 Gradle，并**用官方公布的 SHA-256 校验**；构建时可用一次性的 Gradle init 脚本（`gradle -I 脚本路径 assembleDebug`）把 `https://repo.maven.apache.org/maven2` 替换为 `https://maven.aliyun.com/repository/public`，不必修改项目里的 Gradle 文件。首次构建需下载依赖，本机约 50 分钟，之后为增量构建。
+
+**iOS 模拟器版（不需要签名）**：
+
+```sh
+cd ios/App
+xcodebuild -project App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator \
+  -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=NO build
+# 产物：build/DerivedData/Build/Products/Debug-iphonesimulator/App.app
+```
+
+模拟器版只能装进 iOS 模拟器（`xcrun simctl install booted App.app`），不能装到真机；运行前需在 Xcode → Settings → Components 安装 iOS 模拟器运行时（约 8 GB）。`ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved` 锁定 `capacitor-swift-pm` 的实际提交，随仓库提交。
+
+### 2026-11-06 首次构建记录
+
+| 平台 | 产物 | 说明 |
+| --- | --- | --- |
+| 安卓 | `app-debug.apk`，约 16 MB，SHA-256 `216f6b3b…0682c9264` | `cn.moliniangzi.app`、versionCode 1 / versionName 1.0、targetSdk 36；Android Debug 签名，只用于测试安装 |
+| iOS | 模拟器 `App.app`，约 19 MB（arm64 + x86_64） | Bundle ID `cn.moliniangzi.app`、版本 1.0、最低 iOS 15.0；未签名 |
+
+两个包都使用打包模式（无 `CAP_SERVER_URL`、未开启明文 HTTP），`VITE_API_BASE=https://8.148.11.126:888`。服务器端已用两个 App 来源完成跨域预检、菜单请求与真实 DeepSeek 推荐验收。**两个包尚未在真机或模拟器上实际启动验收**；安卓正式签名包与 iOS 真机签名、TestFlight 仍待完成。
 
 ## 服务端相关配置（`.env`）
 

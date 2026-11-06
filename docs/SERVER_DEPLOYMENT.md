@@ -1,6 +1,6 @@
 # 服务器部署与维护记录
 
-更新日期：2026-11-04。服务器：`8.148.11.126`。当前运行代码版本为 [`417541d`](https://github.com/HFzhouzhou/jicui-jasmine-agent/commit/417541d)，已推送 GitHub 并完成下方[本轮发布验收](#ordering-release-87806f6)。后续仅记录验收结果的文档提交不改变运行代码版本。本页不包含模型密钥、管理员口令或证书私钥。
+更新日期：2026-11-06。服务器：`8.148.11.126`。当前运行代码版本为 [`81840f0`](https://github.com/HFzhouzhou/jicui-jasmine-agent/commit/81840f0)，已推送 GitHub 并完成下方[本轮发布验收](#app-release-81840f0)。后续仅记录验收结果的文档提交不改变运行代码版本。本页不包含模型密钥、管理员口令或证书私钥。
 
 ## 当前访问入口
 
@@ -14,6 +14,34 @@
 IP 入口已使用 Let's Encrypt 签发的 IP 证书。证书目录为 `/etc/letsencrypt/live/jingshu-ip`，独立网关已使用该证书。
 
 此前已完成的验收包括：两站公网 IP 入口首页、茶饮公网健康检查、内部静态文件核对及项目检查/构建。此前服务器内部的真实 DeepSeek 请求已返回 `live` 模式及 3 个候选；该结果与健康检查中仅表示密钥已配置的 `aiConfigured` 不同。最新知识库的公网文件上传与真实问答验收见下方记录。
+
+<a id="app-release-81840f0"></a>
+
+## 2026-11-06 App 外壳与 App 接口发布验收（81840f0）
+
+### 版本与检查
+
+- `81840f0` 新增 Capacitor 安卓 / iOS 原生工程与 App 外壳；服务端只改 `server/config.ts`、`server/index.ts`：对 `APP_ORIGINS` 中的来源返回 CORS 头（默认 `https://localhost`、`capacitor://localhost`，配置为 `*` 时拒绝启动），预检请求在限流之前直接返回 204；新增只读 `/api/app/version`。数据库没有变化。
+- 新 release 目录单独执行 `npm ci`、`npm run check`、`npm run build`：**182 项：181 项通过、0 项失败、1 项 TODO**（与此前相同的已知词法误召回边界）；`npm audit --omit=dev` 为 0 个已知漏洞。服务器 `current` 已切换到 `/srv/jingshu/shop/releases/81840f0`，`417541d`、`87806f6`、`77dddad` 目录保留用于回退。
+- 私有配置 `shared/.env` 未改动：`APP_ORIGINS` 使用代码默认值；`APP_LATEST_VERSION`、`APP_MIN_VERSION`、`APP_DOWNLOAD_URL` 未配置，`/api/app/version` 返回三个 `null`，App 不会弹出更新提示。
+
+### 切换与其他服务保护
+
+- 按[只重启 shop 的流程](#ordering-release-87806f6)切换：暂停看门狗 → Ctrl-C 停止 `shop`（本次正常退出）→ 复制停服时的完整数据目录 → 更新 `current` → 只启动 `shop` → 健康检查通过后恢复看门狗。切换耗时约 1 秒，旧进程已退出。
+- `www`、`gateway` 与非本项目的 tmux 会话 `18` 进程 ID 前后不变，Nginx 配置未改；原网站首页 SHA-256 仍为 `47eb2aafaff79de524696bbf248b6aa463416ce09b34049c983220e01c8f1cb5`。
+- 备份目录：`/srv/jingshu/shop/backups/pre-app-20261106-81840f0`，包含切换前私有配置、停服时的 `data-at-switch` 以及安装、检查、构建日志。
+
+### 公网验收
+
+| 请求来源 | 预检 `OPTIONS /api/recommend` | `GET /api/menu` |
+| --- | --- | --- |
+| `https://localhost`（安卓 App） | 204，返回对应 `Access-Control-Allow-Origin` 与允许的方法、请求头 | 200，带 `Access-Control-Allow-Origin` |
+| `capacitor://localhost`（iOS App） | 204，同上 | 200，带 `Access-Control-Allow-Origin` |
+| 其他来源（`https://evil.example`） | 404，无 CORS 头 | 200，无 CORS 头，浏览器会拦截读取 |
+
+- 以 `capacitor://localhost` 来源发送真实 DeepSeek 请求（「来一杯茉莉毛峰，少冰」），返回 `mode: live` 与「极萃·茉莉毛峰 ¥10」。
+- `/`、`/menu`、`/admin` 带 `Accept: text/html` 均为 200；健康检查 `ok`，DeepSeek 已配置，菜单 84 款。
+- 本轮在 App 来源下只做了接口级验收：**尚未在真机或模拟器中启动 App 验收**，也没有在正式库提交测试订单。App 构建记录见 [App 打包与测试](APP.md#2026-11-06-首次构建记录)。
 
 <a id="ordering-release-87806f6"></a>
 

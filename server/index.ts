@@ -94,6 +94,15 @@ export function createApp(options: AppOptions = {}) {
   app.locals.close = () => {for (const controller of activeParsers) controller.abort(); store.close();};
   app.use((_req, res, next) => { res.set({'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'same-origin', 'X-Frame-Options': 'DENY'}); next(); });
   app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
+  // Native app shells load the UI from their own origin; only those listed origins may call the API.
+  const appOrigins = new Set(config.appOrigins);
+  app.use('/api', (req, res, next) => {
+    const origin = req.get('Origin');
+    if (!origin || !appOrigins.has(origin)) return next();
+    res.set({'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Customer-Id', 'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS', 'Access-Control-Max-Age': '600'});
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    next();
+  });
   const parseJson = express.json({limit: '256kb', strict: true});
   app.use((req, res, next) => /^\/api\/admin\/rag(?:\/|$)/.test(req.path) ? next() : parseJson(req, res, next));
   const requests = new Map<string, {expiresAt: number; count: number}>();
@@ -110,6 +119,7 @@ export function createApp(options: AppOptions = {}) {
     if (current.count > limit) { res.set('Retry-After', String(Math.ceil((current.expiresAt - now) / 1000))); return next(new ApiFailure(429, 'RATE_LIMITED', '请求过于频繁，请稍后再试。')); }
     next();
   };
+  app.get('/api/app/version', (_req, res) => res.json(config.appRelease));
   app.get('/api/health', (_req, res) => res.json({status: 'ok', aiConfigured: Boolean(config.apiKey), provider: 'DeepSeek', menuCount: store.drinks().length}));
   app.use('/api', limiter(180, 'api'));
   app.get('/api/menu', (_req, res) => res.json({drinks: store.drinks()}));

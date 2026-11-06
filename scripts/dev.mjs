@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const processes = [
   spawn(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'watch', 'server/index.ts'], { cwd: projectRoot, stdio: 'inherit' }),
-  spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '5173', '--strictPort'], { cwd: projectRoot, stdio: 'inherit' }),
+  spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', process.env.DEV_HOST || '127.0.0.1', '--port', '5173', '--strictPort'], { cwd: projectRoot, stdio: 'inherit' }),
 ];
 let closing = false;
 function close(code = 0) {

@@ -68,6 +68,7 @@ pnpm-lock.yaml
 .env.*
 !.env.example
 !.env.sample
+!.env.app.example
 /data/
 *.sqlite
 *.sqlite-shm
@@ -76,3 +77,4 @@ pnpm-lock.yaml
 .spark_project
 playwright-report/
 test-results/
+

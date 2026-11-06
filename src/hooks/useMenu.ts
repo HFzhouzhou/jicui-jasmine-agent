@@ -1,3 +1,4 @@
+import { apiUrl } from '@/lib/platform';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import type { Drink } from '@shared/contracts';
 
@@ -15,7 +16,7 @@ export function useMenu() {
     setError(null);
     const timeout = setTimeout(() => controller.abort(), 15_000);
     try {
-      const response = await fetch('/api/menu', { signal: controller.signal, cache: 'no-store' });
+      const response = await fetch(apiUrl('/api/menu'), { signal: controller.signal, cache: 'no-store' });
       if (!response.ok) throw new Error('菜单暂时无法读取，请稍后重试。');
       const payload: unknown = await response.json();
       if (!payload || typeof payload !== 'object' || !Array.isArray((payload as { drinks?: unknown }).drinks)) {

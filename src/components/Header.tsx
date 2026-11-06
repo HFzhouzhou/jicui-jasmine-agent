@@ -4,6 +4,7 @@ import { Menu, ReceiptText, Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import JasmineMark from '@/components/brand/JasmineMark';
 import { useOrders } from '@/hooks/useActiveOrders';
+import { isAppShell } from '@/lib/platform';
 
 const NAV_ITEMS = [
   { path: '/', label: '首页' },
@@ -18,6 +19,18 @@ export default function Header() {
   const { pathname } = useLocation();
   const { active } = useOrders(30000);
   const isActive = (path: string) => path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(`${path}/`);
+
+  if (isAppShell) return (
+    <header className="glass sticky top-0 z-50 w-full border-b border-line/70">
+      <div className="flex h-14 items-center justify-between gap-3 px-4">
+        <NavLink to="/" aria-label="茉莉娘子，返回首页" className="flex items-center gap-2.5">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-jade text-cream"><JasmineMark className="size-5" petal="#fffdf7" /></span>
+          <span className="font-serif text-[18px] font-semibold tracking-[0.08em] text-ink">茉莉娘子</span>
+        </NavLink>
+        <NavLink to="/ai-recommend" className="btn-jade h-9 !px-3.5 text-[13px]"><Sparkles className="size-3.5" />随心配</NavLink>
+      </div>
+    </header>
+  );
 
   return (
     <header className="glass sticky top-0 z-50 w-full border-b border-line/70">

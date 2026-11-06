@@ -51,6 +51,13 @@ button:not(:disabled), [role="button"]:not([aria-disabled="true"]) { cursor: poi
   html { scroll-padding-top: 80px; }
   body:has(textarea:focus, input:focus, select:focus) .mobile-navigation { display: none; }
 }
+/* Native app shell (Capacitor) — also previewable in a browser with ?app=1 */
+.app-native { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+.app-native > header { padding-top: env(safe-area-inset-top, 0px); }
+.app-safe-top { height: env(safe-area-inset-top, 0px); background: var(--color-cream); position: sticky; top: 0; z-index: 50; }
+.app-native button, .app-native nav, .app-native a { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+body:has(.app-native) { overscroll-behavior-y: none; }
+body:has(.app-native textarea:focus, .app-native input:focus, .app-native select:focus) .mobile-navigation { display: none; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

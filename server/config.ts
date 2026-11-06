@@ -16,6 +16,10 @@ export interface ServerConfig {
   embedding?: {baseUrl: string; apiKey: string; model: string; timeoutMs: number};
   /** Guardrails for the store pickup queue. The app never takes payment. */
   orders: {maxAmount: number; dailyLimit: number; maxCups: number; quoteTtlMs: number};
+  /** Web origins of the native app shells (Capacitor) allowed to call the API cross-origin. */
+  appOrigins: string[];
+  /** Optional update notice for native app builds. */
+  appRelease: {latest: string | null; minimum: string | null; downloadUrl: string | null};
 }
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const number = (key: string, fallback: number, min: number, max: number) => {
@@ -53,5 +57,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
     if (!['https:', 'http:'].includes(endpoint.protocol) || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || (endpoint.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname))) throw new Error('RAG_EMBEDDING_BASE_URL 必须为 HTTPS 或本地模型地址');
     embedding = {baseUrl: embeddingBase.replace(/\/+$/, ''), model: embeddingModel, apiKey: env.RAG_EMBEDDING_API_KEY?.trim() || '', timeoutMs: number('RAG_EMBEDDING_TIMEOUT_MS', 8000, 100, 15000)};
   }
-  return { apiKey, baseUrl, model: env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash', timeoutMs: number('AI_TIMEOUT_MS', 30000, 100, 120000), adminToken, dataDir: resolve(env.DATA_DIR || 'data'), port: number('PORT', 3001, 0, 65535), host: env.HOST || '127.0.0.1', staticDir: resolve('dist/client'), rateLimit: 20, trustProxy, orders: {maxAmount: number('ORDER_MAX_AMOUNT', 300, 1, 100000), dailyLimit: number('ORDER_DAILY_LIMIT', 10, 1, 1000), maxCups: number('ORDER_MAX_CUPS', 20, 1, 200), quoteTtlMs: 10 * 60_000}, ...(embedding ? {embedding} : {}) };
+  // Capacitor serves the bundled web app from https://localhost (Android) and capacitor://localhost (iOS).
+  const appOrigins = (env.APP_ORIGINS ?? 'https://localhost,capacitor://localhost').split(',').map(value => value.trim()).filter(Boolean);
+  for (const origin of appOrigins) if (origin === '*' || !/^[a-z][a-z0-9+.-]*:\/\/[^/\s]+$/i.test(origin)) throw new Error(`APP_ORIGINS 中的来源无效：${origin}`);
+  const version = (key: string) => {
+    const value = env[key]?.trim();
+    if (value && !/^\d+\.\d+\.\d+$/.test(value)) throw new Error(`${key} 必须是形如 1.2.3 的版本号`);
+    return value || null;
+  };
+  const downloadUrl = env.APP_DOWNLOAD_URL?.trim() || null;
+  if (downloadUrl && !/^https:\/\//.test(downloadUrl)) throw new Error('APP_DOWNLOAD_URL 必须是 HTTPS 地址');
+  const appRelease = {latest: version('APP_LATEST_VERSION'), minimum: version('APP_MIN_VERSION'), downloadUrl};
+  return { apiKey, baseUrl, model: env.DEEPSEEK_MODEL?.trim() || 'deepseek-flash', timeoutMs: number('AI_TIMEOUT_MS', 30000, 100, 120000), adminToken, dataDir: resolve(env.DATA_DIR || 'data'), port: number('PORT', 3001, 0, 65535), host: env.HOST || '127.0.0.1', staticDir: resolve('dist/client'), rateLimit: 20, trustProxy, orders: {maxAmount: number('ORDER_MAX_AMOUNT', 300, 1, 100000), dailyLimit: number('ORDER_DAILY_LIMIT', 10, 1, 1000), maxCups: number('ORDER_MAX_CUPS', 20, 1, 200), quoteTtlMs: 10 * 60_000}, appOrigins, appRelease, ...(embedding ? {embedding} : {}) };
 }

@@ -4,8 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 import App from './app';
 import './index.css';
+import { restoreNativeStorage } from '@/lib/native-storage';
 
-createRoot(document.getElementById('root')!).render(
+// In the native app, restore durable storage before anything reads localStorage.
+void restoreNativeStorage().finally(() => createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <ErrorBoundary fallbackRender={({ resetErrorBoundary }) => (
@@ -19,4 +21,4 @@ createRoot(document.getElementById('root')!).render(
       </ErrorBoundary>
     </BrowserRouter>
   </StrictMode>,
-);
+));

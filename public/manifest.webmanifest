@@ -1,0 +1,15 @@
+{
+  "name": "茉莉娘子 · AI 随心配",
+  "short_name": "茉莉娘子",
+  "description": "一句话配一杯：说出口味、甜度、冰量和预算，确认后提交门店。",
+  "lang": "zh-CN",
+  "start_url": "/ai-recommend",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#123B2C",
+  "theme_color": "#fffdf7",
+  "icons": [
+    { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" }
+  ]
+}

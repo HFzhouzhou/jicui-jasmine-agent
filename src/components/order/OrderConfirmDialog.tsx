@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import DrinkArtwork from '@/components/DrinkArtwork';
 import { confirmOrder, notifyOrdersChanged, quoteOrder } from '@/lib/orders';
 import { RequestError } from '@/lib/api';
+import { Haptics, NotificationType } from '@capacitor/haptics';
+import { isNativeApp } from '@/lib/platform';
 
 type Stage = { kind: 'loading' } | { kind: 'review'; quote: OrderQuote } | { kind: 'submitting'; quote: OrderQuote } | { kind: 'done'; order: Order } | { kind: 'error'; message: string; retryable: boolean };
 
@@ -42,6 +44,7 @@ export default function OrderConfirmDialog({ items, open, onOpenChange, onSubmit
     try {
       const order = await confirmOrder(quote);
       setStage({ kind: 'done', order }); notifyOrdersChanged(); onSubmitted?.(order);
+      if (isNativeApp) void Haptics.notification({ type: NotificationType.Success }).catch(() => undefined);
     } catch (cause) {
       const changed = cause instanceof RequestError && ['QUOTE_CHANGED', 'QUOTE_EXPIRED'].includes(cause.code);
       setStage({ kind: 'error', message: cause instanceof Error ? cause.message : '提交失败，请重试', retryable: changed || !(cause instanceof RequestError && cause.code === 'ORDER_DAILY_LIMIT') });

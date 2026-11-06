@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { apiRequest, RequestError } from '@/lib/api';
+import { apiUrl } from '@/lib/platform';
 import { toast } from 'sonner';
 import type { DocumentStatus, KnowledgeDocument, KnowledgeDocumentDetail, KnowledgeOverview, KnowledgeSearchResult } from '@shared/rag';
 
@@ -181,7 +182,7 @@ function DocumentEditor({ id, token, onSaved, onDirtyChange, onBusyChange }: { i
     const controller = new AbortController(); downloadController.current = controller; setDownloading(true); setError('');
     const timeout = window.setTimeout(() => controller.abort(), 65000);
     try {
-      const response = await fetch(`/api/admin/rag/documents/${encodeURIComponent(id)}/file`, { headers: requestHeaders(token), signal: controller.signal });
+      const response = await fetch(apiUrl(`/api/admin/rag/documents/${encodeURIComponent(id)}/file`), { headers: requestHeaders(token), signal: controller.signal });
       if (!response.ok) {
         const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
         throw new Error(payload?.error?.message || '原始文件暂时无法下载，请稍后重试。');

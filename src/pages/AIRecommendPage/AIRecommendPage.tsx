@@ -13,6 +13,7 @@ import { BundleComposerDialog, MoodPickerDialog } from '@/components/chat/Featur
 import OrderCard from '@/components/order/OrderCard';
 import { apiRequest, getHealth, isTeaCard, recommend, RequestError } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { isAppShell } from '@/lib/platform';
 import { pickExtras, proposalFor } from '@/lib/chat-extras';
 import { STATUS_LABEL } from '@/lib/orders';
 import { useOrders } from '@/hooks/useActiveOrders';
@@ -235,7 +236,7 @@ export default function AIRecommendPage() {
     </div>
 
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-7">
-      <section id="tea-chat-panel" aria-label="选茶对话" className={cn('card-soft min-w-0 flex-col overflow-hidden lg:flex', mobilePane === 'chat' ? 'flex' : 'hidden', 'h-[calc(100svh-212px)] min-h-[520px] lg:h-[calc(100dvh-124px)] lg:min-h-[640px] lg:max-h-[1040px]')}>
+      <section id="tea-chat-panel" aria-label="选茶对话" className={cn('card-soft min-w-0 flex-col overflow-hidden lg:flex', mobilePane === 'chat' ? 'flex' : 'hidden', isAppShell ? 'h-[calc(100svh-164px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[460px] lg:max-h-[1040px]' : 'h-[calc(100svh-212px)] min-h-[520px] lg:h-[calc(100dvh-124px)] lg:min-h-[640px] lg:max-h-[1040px]')}>
         <header className="flex shrink-0 items-center gap-3 border-b border-line/80 px-4 py-3 sm:px-5">
           <Avatar className="size-10" />
           <div className="min-w-0 flex-1">

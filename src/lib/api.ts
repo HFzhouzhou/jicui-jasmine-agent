@@ -1,5 +1,6 @@
 import type { ApiError, HealthResponse, RecommendRequest, RecommendResponse } from '@shared/contracts';
 import { customerId } from '@/lib/customer';
+import { apiConfigured, apiUrl } from '@/lib/platform';
 
 export class RequestError extends Error {
   constructor(message: string, public code = 'REQUEST_FAILED', public requestId?: string) {
@@ -15,9 +16,10 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}, timeou
   const abort = () => controller.abort();
   init.signal?.addEventListener('abort', abort, { once: true });
   if (init.signal?.aborted) controller.abort();
+  if (!apiConfigured) throw new RequestError('App 还没有配置服务器地址（VITE_API_BASE），请重新打包。', 'NO_API_BASE');
   const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   try {
-    const response = await fetch(path, {
+    const response = await fetch(apiUrl(path), {
       ...init,
       headers: (() => {
         const headers = new Headers(init.headers);

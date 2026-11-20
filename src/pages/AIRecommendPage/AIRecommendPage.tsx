@@ -1,15 +1,14 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowUpRight, Bookmark, ChevronDown, Ellipsis, Gift, Info, LoaderCircle, ReceiptText, RotateCcw, Send, Settings2, ShieldCheck, ThumbsDown, ThumbsUp, Trash2, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, BookOpen, Brain, ChevronDown, Ellipsis, Gift, Info, ReceiptText, RotateCcw, Send, Settings2, Sparkles, ThumbsDown, ThumbsUp, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import TeaCard from '@/components/TeaCard';
-import DrinkArtwork from '@/components/DrinkArtwork';
 import TeaPetPortrait from '@/components/TeaPetPortrait';
 import TeaPetMoment from '@/components/TeaPetMoment';
 import KnowledgeSources, { isKnowledgeCitation } from '@/components/KnowledgeSources';
 import BundleCard from '@/components/chat/BundleCard';
 import BlindBoxCard from '@/components/chat/BlindBoxCard';
-import MemoryPanel, { MemoryChips } from '@/components/chat/MemoryPanel';
+import { MemoryChips } from '@/components/chat/MemoryPanel';
 import { BundleComposerDialog, MoodPickerDialog } from '@/components/chat/FeatureDialogs';
 import OrderCard from '@/components/order/OrderCard';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -48,10 +47,6 @@ function readFavorites(): CardData[] {
     return Array.isArray(value) ? value.filter(isTeaCard).slice(0, 12) : [];
   } catch { return []; }
 }
-function greeting() {
-  const hour = new Date().getHours();
-  return hour < 5 ? '夜深了' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
-}
 const EXAMPLES = ['30 块以内，两杯解腻的', '来一杯芒芒椰椰，少冰', '有没有不含奶的？'];
 const fieldStyle = 'h-11 w-full rounded-xl border border-line bg-cream px-3 text-[14px] text-ink outline-none focus:border-leaf';
 
@@ -79,10 +74,6 @@ function usePetAtRest() {
   }, []);
   return atRest;
 }
-function Panel({ title, aside, children, className }: { title: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
-  return <section className={cn('space-y-3', className)}><div className="flex min-h-10 items-center justify-between gap-3 px-1"><h2 className="font-serif text-[20px] font-semibold text-ink">{title}</h2>{aside}</div>{children}</section>;
-}
-
 export default function AIRecommendPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [saved] = useState(readConversation);
@@ -98,8 +89,6 @@ export default function AIRecommendPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [lastAttempt, setLastAttempt] = useState<{ body: RecommendRequest; mode: Mode; displayHistory: ConversationMessage[] } | null>(null);
-  const [favorites, setFavorites] = useState(readFavorites);
-  const [showFavorites, setShowFavorites] = useState(false);
   const [mobilePane, setMobilePane] = useState<'chat' | 'selection'>('chat');
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null);
   const [feedbackPending, setFeedbackPending] = useState(false);
@@ -122,7 +111,7 @@ export default function AIRecommendPage() {
     void refreshHealth(controller.signal);
     return () => { controller.abort(); activeRequest.current?.abort(); };
   }, []);
-  // Deep links from the home page: ?action=blindbox | bundle.
+  // Keep existing action links usable when opening the conversation directly.
   useEffect(() => {
     const action = searchParams.get('action');
     if (action === 'blindbox') setDialog('mood');
@@ -161,7 +150,7 @@ export default function AIRecommendPage() {
       const catalogContext = value.cards.length ? `目录记录：${JSON.stringify(value.cards.map(({ drinkId, drinkName, price }) => ({ drinkId, drinkName, price })))}` : undefined;
       const extras = pickExtras(value);
       setMessages((current) => [...current, { role: 'assistant', content, cardContext: catalogContext, ...extras, ...(value.bundle ? {} : { productCard: value.cards[0] }), ...(!preservesTeaSelection(value) ? { selectionId: value.requestId } : {}), ...(Array.isArray(value.citations) ? { citations: value.citations.filter(isKnowledgeCitation).slice(0, 6) } : {}), notices: value.notices.filter(isConversationNotice).slice(0, 6) }].slice(-20) as ConversationMessage[]);
-      if (value.cards.length > 1 && !value.bundle && window.matchMedia('(max-width: 1023px)').matches) toast.message(`另有 ${value.cards.length - 1} 款候选`, { description: '在「茶单」里可以对比和下单', action: { label: '去看看', onClick: () => setMobilePane('selection') } });
+      if (value.cards.length > 1 && !value.bundle && window.matchMedia('(max-width: 1023px)').matches) toast.message(`另有 ${value.cards.length - 1} 款候选`, { action: { label: '查看本次推荐', onClick: () => setMobilePane('selection') } });
     } catch (cause) {
       if (activeRequest.current !== controller) return;
       setError(cause instanceof Error ? cause.message : '本次推荐失败，请重试。');
@@ -191,19 +180,19 @@ export default function AIRecommendPage() {
   function clearConversation() {
     activeRequest.current?.abort(); activeRequest.current = null;
     setMessages([]); setResult(null); setSelection(null); activeResultId.current = null; setLoading(false); setError(''); setLastAttempt(null); setFeedback(null);
+    setMobilePane('chat');
     try { localStorage.removeItem(HISTORY_KEY); } catch { /* Nothing to remove if browser storage is unavailable. */ }
   }
   function saveFavorite(card: CardData) {
-    const next = [card, ...favorites.filter((item) => item.drinkId !== card.drinkId)].slice(0, 12);
-    setFavorites(next);
+    const next = [card, ...readFavorites().filter((item) => item.drinkId !== card.drinkId)].slice(0, 12);
     try {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
-      toast.success('这杯记下啦，已收藏到这个浏览器。', {
+      toast.success('已收藏，可在「我的」查看。', {
         icon: <TeaPetMoment motion="celebrate" compact className="size-7" />,
         classNames: { icon: '!size-7' },
       });
     }
-    catch { toast.info('已暂存，本浏览器无法永久保存收藏'); }
+    catch { toast.error('当前浏览器无法保存收藏'); }
   }
   function ordered(order: Order) {
     setMessages((current) => [...current, { role: 'assistant' as const, content: `已提交到门店接单台，取餐号 ${order.code}。门店接单后开始制作；付款在取餐时向门店完成，我不会经手任何付款。随时问我「订单做到哪了」。`, intent: 'order_status' as const, orders: [order], suggestions: ['订单做到哪了'] }].slice(-20));
@@ -226,6 +215,8 @@ export default function AIRecommendPage() {
   const currentSelectionIndex = selectionMessageIndex(selection, messages);
   const currentCard = selectionCard(selection);
   const selectionResult = selection?.response;
+  const hasResults = Boolean(selectionResult || result);
+  const resultsLabel = selectionResult ? '本次茶单' : '本次反馈';
   const configuredOrders = selection?.orders || {};
   const selectionCount = selectionResult?.bundle ? selectionResult.bundle.items.length : selectionResult?.cards.length || 0;
   const configureOrder = (draft: OfficialOrderDraft, card: CardData, messageIndex = currentSelectionIndex) => {
@@ -245,41 +236,25 @@ export default function AIRecommendPage() {
       : mode === 'preview' ? null
         : health?.aiConfigured ? { tone: 'ok', text: '在线 · DeepSeek' } : { tone: 'warn', text: 'AI 尚未接通' };
 
-  return <div className="mx-auto max-w-[1360px] px-3 pb-6 pt-3 sm:px-6 sm:pt-6 lg:px-8">
-    {/* Mobile switcher between the conversation and the tea list */}
-    <div className="mb-3 grid grid-cols-2 gap-1 rounded-full bg-mist p-1 lg:hidden" role="tablist" aria-label="选茶工作区">
-      <button type="button" role="tab" aria-selected={mobilePane === 'chat'} aria-controls="tea-chat-panel" onClick={() => setMobilePane('chat')} className={cn('h-11 rounded-full text-[15px] transition-colors', mobilePane === 'chat' ? 'bg-cream font-semibold text-jade shadow-sm' : 'text-stone')}>对话</button>
-      <button type="button" role="tab" aria-selected={mobilePane === 'selection'} aria-controls="tea-selection-panel" onClick={() => setMobilePane('selection')} className={cn('flex h-11 items-center justify-center gap-2 rounded-full text-[15px] transition-colors', mobilePane === 'selection' ? 'bg-cream font-semibold text-jade shadow-sm' : 'text-stone')}>茶单与记忆{selectionCount > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-jade text-[11px] text-cream">{selectionCount}</span>}</button>
-    </div>
-
-    <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-7">
-      <section id="tea-chat-panel" aria-label="选茶对话" className={cn('card-soft min-w-0 flex-col overflow-hidden lg:flex', mobilePane === 'chat' ? 'flex' : 'hidden', isAppShell ? 'h-[calc(100svh-164px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[460px] lg:max-h-[1040px]' : 'h-[calc(100svh-212px)] min-h-[520px] lg:h-[calc(100dvh-124px)] lg:min-h-[640px] lg:max-h-[1040px]')}>
+  return <div className={cn('mx-auto px-3 py-3 md:px-6 md:py-6 lg:px-8', hasResults ? 'max-w-[1360px]' : 'max-w-3xl')}>
+    <div className={cn('grid items-start gap-5 xl:gap-7', hasResults && 'lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px]')}>
+      <section id="tea-chat-panel" aria-label="选茶对话" className={cn('card-soft min-h-[24rem] min-w-0 flex-col overflow-hidden lg:flex lg:max-h-[1040px]', mobilePane === 'selection' && hasResults ? 'hidden' : 'flex', isAppShell ? 'h-[calc(100svh-88px-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))] md:h-[calc(100svh-112px-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px))]' : 'h-[calc(100svh-88px-env(safe-area-inset-bottom,0px))] md:h-[calc(100svh-112px)]')}>
         <header className="flex shrink-0 items-center gap-2 border-b border-line/80 px-3 py-3 sm:gap-3 sm:px-5">
           <TeaPetPortrait pose={loading || petAtRest ? 'quiet' : messages.length ? 'serve' : 'welcome'} className="size-9 sm:size-11" />
           <div className="min-w-0 flex-1">
-            <h1 className="font-serif text-[18px] font-semibold leading-tight text-ink">小茉 <span className="ml-1 hidden font-sans text-[12px] font-normal text-stone sm:inline">随心配茶宠</span></h1>
+            <h1 className="font-serif text-[18px] font-semibold leading-tight text-ink">随心配</h1>
             {statusLine && <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-stone"><span className={cn('size-2 shrink-0 rounded-full', statusLine.tone === 'ok' ? 'bg-leaf' : statusLine.tone === 'error' ? 'bg-[#c4562f]' : statusLine.tone === 'warn' ? 'bg-gold' : 'bg-line')} />{statusLine.text}{healthError && <button type="button" onClick={() => void refreshHealth()} className="ml-1 font-medium text-jade underline underline-offset-2">重连</button>}</p>}
           </div>
-          <div className="flex items-center rounded-full bg-paper p-0.5 text-[12.5px] ring-1 ring-line" role="radiogroup" aria-label="对话模式">
-            <button type="button" role="radio" aria-checked={mode === 'live'} disabled={loading} onClick={() => switchMode('live')} className={cn('h-8 rounded-full px-3 transition-colors', mode === 'live' ? 'bg-jade text-cream' : 'text-stone hover:text-jade')}>AI</button>
-            <button type="button" role="radio" aria-checked={mode === 'preview'} disabled={loading || !health} onClick={() => switchMode('preview')} className={cn('h-8 whitespace-nowrap rounded-full px-2 transition-colors sm:px-3', mode === 'preview' ? 'bg-gold text-cream' : 'text-stone hover:text-jade')}>规则预览 · 非 AI</button>
-          </div>
-          {(messages.length > 0 || loading) && <button type="button" onClick={clearConversation} className="flex size-10 shrink-0 items-center justify-center rounded-full text-stone transition-colors hover:bg-mist hover:text-jade" aria-label="清空对话" title="清空对话"><Trash2 className="size-4" /></button>}
+          {hasResults && <button type="button" aria-controls="tea-selection-panel" onClick={() => setMobilePane('selection')} className="chip min-h-11 shrink-0 !px-3 lg:hidden"><BookOpen aria-hidden="true" className="size-4" />{resultsLabel}{selectionCount > 0 && <span className="tabular-nums text-stone">{selectionCount}</span>}</button>}
         </header>
         {mode === 'preview' && <p className="shrink-0 border-b border-honey bg-honey/40 px-5 py-2 text-[12.5px] text-[#6b4c12]">规则预览 · 非 AI：只按菜单规则筛选<span className="hidden sm:inline">，没有调用 AI 模型，不能据此判断模型效果</span>。</p>}
         {mode === 'live' && health && !health.aiConfigured && <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-honey bg-honey/40 px-5 py-2 text-[12.5px] text-[#6b4c12]"><span>AI 尚未接通：服务器还没配置 DeepSeek 密钥。</span><button type="button" onClick={() => switchMode('preview')} className="font-medium underline underline-offset-2">先用规则预览（非 AI）体验</button></div>}
 
         <div ref={scrollRef} className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6" aria-live="polite" aria-busy={loading}>
-          {!messages.length && <div className="animate-rise-in mx-auto flex min-h-full max-w-[38rem] flex-col justify-center py-2">
-            <div className="flex items-center gap-2 sm:gap-5">
-              <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-medium text-leaf">{greeting()}，我是小茉。</p>
-                <h2 className="mt-2 font-serif text-[clamp(1.6rem,3.1vw,2.6rem)] font-semibold leading-tight text-ink">今天想喝点什么？</h2>
-                <p className="mt-3 max-w-sm text-[14px] leading-6 text-stone">告诉我口味和预算，我帮你翻翻茶单。</p>
-              </div>
-              <TeaPetMoment motion={petAtRest ? 'quiet' : 'welcome'} className="size-[clamp(5.8rem,24vw,11rem)]" />
-            </div>
-            <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="试试这样说">
+          {!messages.length && <div className="animate-rise-in mx-auto flex min-h-full max-w-[38rem] flex-col justify-center py-2 sm:px-4">
+            <h2 className="font-serif text-[clamp(1.6rem,3.1vw,2.25rem)] font-semibold leading-tight text-ink">今天想喝点什么？</h2>
+            <p className="mt-2 text-sm leading-6 text-stone">告诉小茉你的口味和预算。</p>
+            <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="试试这样说">
               {EXAMPLES.map((example) => <button key={example} type="button" onClick={() => submit(example)} disabled={loading} className="chip min-h-10">{example}</button>)}
             </div>
           </div>}
@@ -306,7 +281,7 @@ export default function AIRecommendPage() {
                 {!message.bundle && message.productCard && (index === latestProductIndex || message.blindbox) && <div className="w-full min-w-0">
                   {index !== currentSelectionIndex && !message.blindbox && <p className="mb-2 text-[12.5px] text-stone">之前的茶卡 · 下单前会重新核对价格</p>}
                   <TeaCard data={{ ...message.productCard, isMain: true }} compact={!!message.blindbox} proposal={proposalFor(message.proposal, message.productCard)} onOrdered={ordered} configuredOrder={index === currentSelectionIndex ? configuredOrders[message.productCard.drinkId] : message.orderDraft} onConfigure={(draft) => configureOrder(draft, message.productCard!, index)} onConfirm={() => saveFavorite(message.productCard!)} />
-                  {index === currentSelectionIndex && selectionCount > 1 && <button type="button" onClick={() => { if (window.matchMedia('(max-width: 1023px)').matches) setMobilePane('selection'); else document.getElementById('tea-selection-panel')?.scrollIntoView({ behavior: 'smooth' }); }} className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-jade">另有 {selectionCount - 1} 款候选，去茶单里比一比<ArrowUpRight className="size-3.5" /></button>}
+                  {index === currentSelectionIndex && selectionCount > 1 && <button type="button" onClick={() => { if (window.matchMedia('(max-width: 1023px)').matches) setMobilePane('selection'); else document.getElementById('tea-selection-panel')?.scrollIntoView({ behavior: 'smooth' }); }} className="mt-2 inline-flex items-center gap-1 text-[13px] font-medium text-jade">查看另外 {selectionCount - 1} 款推荐<ArrowUpRight aria-hidden="true" className="size-3.5" /></button>}
                 </div>}
                 {message.orders?.length ? (latest ? <OrderCard order={message.orders[0]} compact /> : <div className="flex flex-wrap gap-2">{message.orders.map((order) => <Link key={order.id} to="/orders" className="chip"><ReceiptText className="size-3.5" />取餐号 {order.code} · {STATUS_LABEL[order.status]}</Link>)}</div>) : null}
                 {message.intent === 'memory' && message.memory && <MemoryChips memory={message.memory} />}
@@ -315,7 +290,7 @@ export default function AIRecommendPage() {
                   <ul className="mt-1.5 space-y-1 rounded-2xl bg-paper px-3.5 py-2.5 leading-6">{message.notices.filter((notice) => !notice.startsWith('规则预览')).map((notice, noticeIndex) => <li key={noticeIndex} className="flex gap-2"><span className="mt-2.5 size-1 shrink-0 rounded-full bg-sage" />{notice}</li>)}</ul>
                 </details>}
                 {latest && !loading && !!message.suggestions?.length && <div className="flex flex-wrap gap-2">{message.suggestions.map((suggestion) => suggestion === '查看我的口味记忆'
-                  ? <Link key={suggestion} to="/orders#memory" className="chip !border-jade/30">{suggestion}<ArrowUpRight className="size-3.5" /></Link>
+                  ? <Link key={suggestion} to="/me#memory" className="chip !border-jade/30">{suggestion}<ArrowUpRight className="size-3.5" /></Link>
                   : <button key={suggestion} type="button" onClick={() => submit(suggestion)} className="chip !border-jade/30">{suggestion}</button>)}</div>}
               </div>
             </div>;
@@ -338,10 +313,13 @@ export default function AIRecommendPage() {
               <DropdownMenuTrigger asChild>
                 <button type="button" aria-label="更多配茶选项" className={cn('chip min-h-10 !py-1.5', showPreferences && 'border-sage bg-mist')}><Ellipsis className="size-4" />更多</button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-40 rounded-2xl bg-cream p-1.5 text-jade">
-                <DropdownMenuItem className="min-h-10 rounded-xl" onSelect={() => setShowPreferences((open) => !open)}><Settings2 />{showPreferences ? '收起口味偏好' : '设置口味偏好'}</DropdownMenuItem>
+              <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-44 rounded-2xl bg-cream p-1.5 text-jade">
+                <DropdownMenuItem className="min-h-10 rounded-xl" onSelect={() => setShowPreferences((open) => !open)}><Settings2 />{showPreferences ? '收起口味偏好' : '设置本次口味'}</DropdownMenuItem>
                 <DropdownMenuItem className="min-h-10 rounded-xl" disabled={loading} onSelect={() => act({ type: 'repeat' }, '老样子')}><RotateCcw />按老样子配茶</DropdownMenuItem>
+                <DropdownMenuItem asChild className="min-h-10 rounded-xl"><Link to="/me#memory"><Brain />口味记忆</Link></DropdownMenuItem>
                 <DropdownMenuItem className="min-h-10 rounded-xl" disabled={loading} onSelect={() => act({ type: 'orders' }, '我的订单做到哪了？')}><ReceiptText />查询订单{activeOrders.length > 0 && <span className="ml-auto rounded-full bg-mist px-1.5 text-xs">{activeOrders.length}</span>}</DropdownMenuItem>
+                <DropdownMenuItem className="min-h-10 rounded-xl" disabled={loading || (mode === 'live' && !health)} onSelect={() => switchMode(mode === 'live' ? 'preview' : 'live')}><Sparkles />{mode === 'live' ? '规则预览（非 AI）' : '切回 AI 随心配'}</DropdownMenuItem>
+                {(messages.length > 0 || loading) && <DropdownMenuItem className="min-h-10 rounded-xl" onSelect={clearConversation}><Trash2 />清空对话</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -358,41 +336,23 @@ export default function AIRecommendPage() {
             {loading ? <button type="button" onClick={() => activeRequest.current?.abort()} className="btn-ghost size-12 shrink-0 !px-0" aria-label="取消"><X className="size-5" /></button>
               : <button type="submit" disabled={!canSend || !input.trim()} className="btn-jade size-12 shrink-0 !px-0" aria-label={mode === 'preview' ? '按规则筛选' : '发送'}><Send className="size-5" /></button>}
           </form>
-          <p className="hidden items-center gap-1.5 px-2 text-[11.5px] text-stone/80 sm:flex"><ShieldCheck className="size-3.5" />对话只存在这个浏览器 · 下单需你确认复述 · 到店付款，AI 不代付</p>
           {error && <div role="alert" className="rounded-2xl bg-blush px-4 py-3 text-[13.5px] leading-6 text-[#8a4b2a]"><p>{error}</p>{lastAttempt && !loading && <button type="button" className="btn-ghost mt-2 h-9" onClick={() => void run(lastAttempt.body, lastAttempt.mode, true, lastAttempt.displayHistory)}>重试本次请求</button>}</div>}
         </div>
       </section>
 
-      <aside id="tea-selection-panel" aria-label="茶单与记忆" className={cn('min-w-0 space-y-6 lg:block', mobilePane === 'selection' ? 'block' : 'hidden')}>
-        <Panel title={<>本次茶单{selectionCount > 0 && <span className="ml-2 align-middle font-sans text-[13px] font-normal text-stone">{selectionCount} 款</span>}</>} aside={<button type="button" onClick={() => setShowFavorites(!showFavorites)} aria-expanded={showFavorites} className="inline-flex h-9 items-center gap-1.5 rounded-full px-3 text-[13px] text-stone hover:bg-mist hover:text-jade"><Bookmark className="size-3.5" />收藏 {favorites.length}</button>}>
-          {showFavorites && <div className="card-soft space-y-1 p-4">{!favorites.length ? <p className="py-2 text-[13px] text-stone">还没有收藏的茶卡。</p> : <>
-            {favorites.map((card) => <div key={card.drinkId} className="flex items-center gap-3 rounded-2xl p-2 hover:bg-paper"><DrinkArtwork category="" name={card.drinkName} className="size-12 shrink-0 rounded-xl" /><span className="min-w-0 flex-1"><span className="block truncate font-serif text-[15px] font-semibold text-ink">{card.drinkName}</span><span className="text-[12px] text-stone">收藏时 ¥{card.price}</span></span><button type="button" className="btn-ghost h-9 shrink-0 !px-3 text-[12.5px]" onClick={() => submit(`来一杯${card.drinkName}`)}>再来一杯</button></div>)}
-            <button type="button" className="px-2 pt-1 text-[12.5px] text-stone hover:text-jade" onClick={() => { setFavorites([]); try { localStorage.removeItem(FAVORITES_KEY); } catch { /* Browser storage may be unavailable. */ } }}>清空收藏</button>
-          </>}</div>}
-          {loading && !selectionResult ? <div className="rounded-[22px] border border-line bg-paper/70 p-5 text-sm text-stone" role="status"><p className="flex items-center gap-2"><LoaderCircle className="size-4 animate-spin text-leaf" aria-hidden="true" />正在核对茶单…</p></div>
-            : selectionResult ? <div className="space-y-4">
+      {hasResults && <aside id="tea-selection-panel" aria-label={resultsLabel} className={cn('min-w-0 space-y-4 lg:block', mobilePane === 'selection' ? 'block' : 'hidden')}>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-serif text-xl font-semibold text-ink">{resultsLabel}{selectionCount > 0 && <span className="ml-2 font-sans text-xs font-normal text-stone">{selectionCount} 款</span>}</h2>
+          <button type="button" onClick={() => setMobilePane('chat')} className="btn-ghost min-h-11 lg:hidden"><ArrowLeft aria-hidden="true" className="size-4" />回到对话</button>
+        </div>
+        {selectionResult && <div className="space-y-4">
               {selectionResult.mode === 'preview' && <p className="rounded-2xl bg-honey/45 px-4 py-2.5 text-[12.5px] text-[#6b4c12]">以下为规则预览结果，非 AI 生成。</p>}
               {selectionResult.bundle ? <BundleCard bundle={selectionResult.bundle} proposal={selectionResult.proposal} disabled={loading} onOrdered={ordered} />
                 : !selectionResult.cards.length ? <div className="card-soft p-6"><p className="whitespace-pre-wrap text-[14.5px] leading-7 text-stone">{selectionResult.reply}</p><Link className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-jade" to="/menu">去茶单里看看<ArrowUpRight className="size-3.5" /></Link></div>
                   : selectionResult.cards.map((card, index) => <TeaCard key={card.drinkId} data={{ ...card, isMain: index === 0 }} proposal={proposalFor(selectionResult.proposal, card)} onOrdered={ordered} configuredOrder={configuredOrders[card.drinkId]} onConfigure={(draft) => configureOrder(draft, card)} onConfirm={() => saveFavorite(card)} onRefresh={selectionResult.intent === 'blindbox' ? undefined : () => submit('在保留之前要求的前提下，换一款不同的饮品。', selectionResult.cards.map((item) => item.drinkId))} onAskMore={() => { setMobilePane('chat'); setInput(''); focusInput(); }} />)}
-            </div>
-              : <div className="rounded-[22px] border border-line bg-paper/70 p-5">
-                <p className="text-sm leading-6 text-stone">小茉推荐的茶卡会出现在这里。</p>
-                <button type="button" onClick={() => { setMobilePane('chat'); focusInput(); }} className="btn-ghost mt-3 h-10 lg:hidden">回到对话</button>
-              </div>}
-          {result && <details className="rounded-2xl bg-paper px-4 py-1 text-[13px] text-stone ring-1 ring-line/60"><summary className="flex min-h-11 cursor-pointer items-center">这次回答有帮助吗？</summary><div className="pb-4"><input value={feedbackComment} onChange={(event) => setFeedbackComment(event.target.value)} placeholder="可选：哪里需要改善？" maxLength={500} disabled={!!feedback} className="mb-3 h-11 w-full rounded-xl border border-line bg-cream px-3 text-[14px] outline-none focus:border-leaf" /><div className="flex gap-2"><button type="button" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('up')} className="btn-ghost h-10"><ThumbsUp className="size-3.5" />{feedback === 'up' ? '已记录' : '有帮助'}</button><button type="button" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('down')} className="btn-ghost h-10"><ThumbsDown className="size-3.5" />{feedback === 'down' ? '已记录' : '待改善'}</button></div></div></details>}
-        </Panel>
-
-        <MemoryPanel onAsk={(message) => submit(message)} />
-
-        {activeOrders.length > 0 && <Panel title="进行中的订单" aside={<Link to="/orders" className="text-[13px] text-stone hover:text-jade">全部订单</Link>}>
-          <div className="space-y-2">{activeOrders.slice(0, 3).map((order) => <Link key={order.id} to="/orders" className="card-soft flex items-center gap-4 p-4 transition-transform hover:-translate-y-0.5">
-            <span className="font-serif text-[26px] font-semibold tracking-wide text-ink">{order.code}</span>
-            <span className="min-w-0 flex-1 truncate text-[13px] text-stone">{order.lines.map((line) => `${line.drinkName}×${line.quantity}`).join('、')}</span>
-            <span className={cn('shrink-0 rounded-full px-3 py-1 text-[12.5px] font-medium', order.status === 'ready' ? 'bg-gold text-cream' : 'bg-mist text-jade')}>{STATUS_LABEL[order.status]}</span>
-          </Link>)}</div>
-        </Panel>}
-      </aside>
+        </div>}
+        {result && <details className="rounded-2xl bg-paper px-4 py-1 text-[13px] text-stone ring-1 ring-line/60"><summary className="flex min-h-11 cursor-pointer items-center">这次回答有帮助吗？</summary><div className="pb-4"><input value={feedbackComment} onChange={(event) => setFeedbackComment(event.target.value)} placeholder="可选：哪里需要改善？" maxLength={500} disabled={!!feedback} className="mb-3 h-11 w-full rounded-xl border border-line bg-cream px-3 text-[14px] outline-none focus:border-leaf" /><div className="flex gap-2"><button type="button" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('up')} className="btn-ghost h-10"><ThumbsUp className="size-3.5" />{feedback === 'up' ? '已记录' : '有帮助'}</button><button type="button" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('down')} className="btn-ghost h-10"><ThumbsDown className="size-3.5" />{feedback === 'down' ? '已记录' : '待改善'}</button></div></div></details>}
+      </aside>}
     </div>
 
     <MoodPickerDialog open={dialog === 'mood'} onOpenChange={(open) => setDialog(open ? 'mood' : null)} onPick={(action) => act(action, `开一个「${action.mood}」盲盒${action.weather ? `，今天${action.weather}` : ''}`)} />

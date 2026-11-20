@@ -7,17 +7,25 @@
   --pet-action-step: 3.12rem;
   --pet-action-near: calc(var(--pet-size) + .16rem);
   --pet-action-far: calc(var(--pet-action-near) + var(--pet-action-width) + .8rem);
+  --pet-edge: 1.25rem;
   position: fixed;
   z-index: 45;
-  right: max(1.25rem, env(safe-area-inset-right, 0px));
-  bottom: calc(1.15rem + env(safe-area-inset-bottom, 0px));
-  width: var(--pet-size);
+  inset: max(.75rem, env(safe-area-inset-top, 0px), var(--pet-header-clearance, 0px))
+    max(var(--pet-edge), env(safe-area-inset-right, 0px))
+    calc(1.15rem + env(safe-area-inset-bottom, 0px))
+    max(var(--pet-edge), env(safe-area-inset-left, 0px));
   pointer-events: none;
 }
 
 .floating-tea-pet__dock {
-  position: relative;
-  transform: translateY(calc(-1 * var(--composer-clearance, 0px)));
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--pet-size);
+}
+
+.floating-tea-pet[data-menu] .floating-tea-pet__dock {
+  inset: 0 auto auto 0;
 }
 
 .floating-tea-pet__launcher {
@@ -28,8 +36,15 @@
   padding: 0;
   border-radius: 38% 38% 1.2rem 1.2rem;
   pointer-events: auto;
-  touch-action: manipulation;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
+
+.floating-tea-pet .floating-tea-pet__launcher { cursor: grab; }
+.floating-tea-pet[data-dragging] .floating-tea-pet__launcher { cursor: grabbing; }
+.floating-tea-pet[data-dragging] .floating-tea-pet__figure::before { opacity: 1; }
 
 .floating-tea-pet__figure {
   position: relative;
@@ -100,11 +115,14 @@
 .floating-tea-pet__action {
   --slot-right: var(--pet-action-near);
   --slot-bottom: .48rem;
+  --slot-y: calc(var(--slot-bottom) - var(--pet-action-drop, 0px));
+  --center-x: calc(var(--slot-right) + var(--pet-action-width) * .5 - var(--pet-size) * .5);
+  --center-y: calc(var(--slot-y) + var(--pet-action-height) * .5 - var(--pet-size) * .5 - var(--pet-caption));
   --spread-delay: calc(var(--action-index, 0) * 27ms);
   --retract-delay: calc((5 - var(--action-index, 0)) * 14ms);
   position: absolute;
   right: var(--slot-right);
-  bottom: var(--slot-bottom);
+  bottom: var(--slot-y);
   display: inline-flex;
   width: var(--pet-action-width);
   min-height: var(--pet-action-height);
@@ -125,10 +143,7 @@
   opacity: 0;
   pointer-events: none;
   touch-action: manipulation;
-  transform: translate(
-    calc(var(--slot-right) + var(--pet-action-width) * .5 - var(--pet-size) * .5),
-    calc(var(--slot-bottom) + var(--pet-action-height) * .5 - var(--pet-size) * .5 - var(--pet-caption))
-  ) scale(.68);
+  transform: translate(var(--center-x), var(--center-y)) scale(.68);
   transition: opacity .17s ease-out var(--retract-delay), transform .29s cubic-bezier(.38, .04, .58, .97) var(--retract-delay),
     visibility 0s calc(.29s + var(--retract-delay)),
     background-color .18s, border-color .18s, box-shadow .18s;
@@ -159,6 +174,35 @@
   --slot-bottom: calc(1.05rem + 2 * var(--pet-action-step));
 }
 
+.floating-tea-pet[data-menu="right"] .floating-tea-pet__action {
+  left: var(--slot-right);
+  right: auto;
+  --center-x: calc(var(--pet-size) * .5 - var(--slot-right) - var(--pet-action-width) * .5);
+}
+
+.floating-tea-pet:is([data-menu="above"], [data-menu="below"]) .floating-tea-pet__action {
+  --column-offset: calc(var(--column, 0) * (var(--pet-action-width) + .4rem) + var(--pet-menu-offset, 0px));
+  --slot-y: calc(.45rem + var(--row, 0) * (var(--pet-action-height) + .4rem));
+  --center-x: calc(-1 * var(--column-offset));
+  left: calc(50% + var(--column-offset) - var(--pet-action-width) * .5);
+  right: auto;
+}
+
+.floating-tea-pet[data-menu="above"] .floating-tea-pet__action {
+  bottom: calc(100% + var(--slot-y));
+  --center-y: calc(var(--pet-size) * .5 + var(--slot-y) + var(--pet-action-height) * .5);
+}
+
+.floating-tea-pet[data-menu="below"] .floating-tea-pet__action {
+  top: calc(100% + var(--slot-y));
+  bottom: auto;
+  --center-y: calc(var(--pet-size) * .5 - var(--pet-footprint) - var(--slot-y) - var(--pet-action-height) * .5);
+}
+
+.floating-tea-pet__action:nth-child(3n + 1) { --column: -1; }
+.floating-tea-pet__action:nth-child(3n) { --column: 1; }
+.floating-tea-pet__action:nth-child(n + 4) { --row: 1; }
+
 .floating-tea-pet__action svg {
   width: .94rem;
   height: .94rem;
@@ -185,10 +229,11 @@
 
 .floating-tea-pet__line {
   position: absolute;
-  right: .15rem;
-  bottom: max(calc(var(--pet-footprint) + .5rem), 10.6rem);
+  left: calc(50% + var(--pet-line-offset, 0px));
+  bottom: calc(100% + .45rem);
+  translate: -50% 0;
   width: max-content;
-  max-width: min(14rem, calc(100vw - 1.75rem));
+  max-width: var(--pet-line-width, 14rem);
   margin: 0;
   padding: .46rem .7rem;
   border: 1px solid #d5dcc5;
@@ -202,6 +247,19 @@
   opacity: 0;
   transform: translateY(.3rem);
   transition: opacity .2s ease-out, transform .2s ease-out;
+}
+
+.floating-tea-pet[data-line-side="below"] .floating-tea-pet__line {
+  top: calc(100% + .45rem);
+  bottom: auto;
+}
+
+.floating-tea-pet[data-menu="above"]:not([data-line-side="below"]) .floating-tea-pet__line {
+  bottom: calc(100% + 2 * var(--pet-action-height) + 1.3rem);
+}
+
+.floating-tea-pet[data-menu="below"][data-line-side="below"] .floating-tea-pet__line {
+  top: calc(100% + 2 * var(--pet-action-height) + 1.3rem);
 }
 
 .floating-tea-pet[data-open] .floating-tea-pet__line {
@@ -231,13 +289,12 @@ body:has(.app-native :is(textarea, input, select):focus) .floating-tea-pet :is(.
     --pet-caption: 1.5rem;
     --pet-action-width: 4.5rem;
     --pet-action-step: 2.94rem;
-    right: max(.65rem, env(safe-area-inset-right, 0px));
+    --pet-edge: .65rem;
     bottom: calc(4.85rem + env(safe-area-inset-bottom, 0px));
   }
 
   .floating-tea-pet__action { gap: .27rem; padding-inline: .28rem; font-size: .75rem; }
   .floating-tea-pet__action svg { width: .82rem; height: .82rem; }
-  .floating-tea-pet__line { bottom: max(calc(var(--pet-footprint) + .5rem), 10.1rem); }
 
   body:has(:is(textarea, input, select):focus) .floating-tea-pet :is(.floating-tea-pet__launcher, .floating-tea-pet__action, .floating-tea-pet__line) {
     visibility: hidden;

@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
 import { ChevronDown, Cookie, CupSoda, Hand, HandHeart, Leaf, MessageCircle } from 'lucide-react';
 import TeaPetPortrait from '@/components/TeaPetPortrait';
 import TeaPetAtmosphere from './TeaPetAtmosphere';
 import { useTeaPetReactions } from './tea-pet-reactions';
+import { useFloatingTeaPetPosition } from './useFloatingTeaPetPosition';
 import './floating-tea-pet.css';
 
 const actions = [
@@ -14,80 +15,18 @@ const actions = [
   { id: 'chatter', label: '碎碎念', Icon: MessageCircle },
 ] as const;
 
-function useComposerClearance(anchorRef: RefObject<HTMLElement | null>, inChat: boolean, close: () => void) {
-  useLayoutEffect(() => {
-    const anchor = anchorRef.current;
-    if (!anchor || !inChat) return;
-    const page = anchor.closest('.app-shell')?.querySelector('main');
-    const gap = 12;
-    let frame = 0;
-    let composer: HTMLElement | null = null;
-    let active = true;
-
-    function update() {
-      if (!anchor) return;
-      const mountedComposer = document.getElementById('tea-chat-composer');
-      if (mountedComposer !== composer) {
-        if (composer) resizeObserver?.unobserve(composer);
-        composer = mountedComposer;
-        if (composer) resizeObserver?.observe(composer);
-      }
-      const target = composer?.getBoundingClientRect();
-      // The fixed anchor keeps its original geometry while only its inner
-      // dock moves. Every pass gets the same baseline, including on reload.
-      const base = anchor.getBoundingClientRect();
-      const intersects = target && target.height > 0 && target.width > 0
-        && target.right + gap > base.left && target.left - gap < base.right
-        && target.top - gap < base.bottom && target.bottom + gap > base.top;
-      const clearance = intersects ? Math.ceil(base.bottom - target.top + gap) : 0;
-      const obscured = clearance > 0 && base.top - clearance < 74;
-      anchor.style.setProperty('--composer-clearance', `${clearance}px`);
-      anchor.toggleAttribute('data-obscured', obscured);
-      if (obscured) close();
-    }
-
-    function schedule() {
-      if (!active) return;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(update);
-    }
-
-    const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
-    resizeObserver?.observe(anchor);
-    if (page) resizeObserver?.observe(page);
-    const routeObserver = page ? new MutationObserver(schedule) : null;
-    if (page) routeObserver?.observe(page, { childList: true, subtree: true });
-    void document.fonts?.ready.then(schedule);
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('resize', schedule);
-    update();
-    schedule();
-    return () => {
-      active = false;
-      resizeObserver?.disconnect();
-      routeObserver?.disconnect();
-      cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('resize', schedule);
-      anchor.style.removeProperty('--composer-clearance');
-      anchor.removeAttribute('data-obscured');
-    };
-  }, [anchorRef, inChat, close]);
-}
-
 export default function FloatingTeaPet({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
   const anchor = useRef<HTMLElement>(null);
   const launcher = useRef<HTMLButtonElement>(null);
+  const dock = useRef<HTMLDivElement>(null);
   const actionsId = useId();
   const close = useCallback(() => setOpen(false), []);
   const inChat = /^\/ai-recommend\/?$/i.test(pathname);
   const { pose, reaction, revision, line, chatter, act } = useTeaPetReactions(open);
 
   useEffect(close, [pathname, close]);
-  useComposerClearance(anchor, inChat, close);
+  const { dragEvents, suppressClick } = useFloatingTeaPetPosition(anchor, dock, inChat, close);
   useEffect(() => {
     if (!open) return;
     function dismissOutside(event: Event) {
@@ -109,7 +48,11 @@ export default function FloatingTeaPet({ pathname }: { pathname: string }) {
     };
   }, [close, open]);
 
-  function toggle() {
+  function toggle(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail > 0 && suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
     if (open) {
       close();
     } else {
@@ -119,7 +62,7 @@ export default function FloatingTeaPet({ pathname }: { pathname: string }) {
   }
 
   return <aside ref={anchor} className="floating-tea-pet" data-open={open ? '' : undefined} aria-label="互动茶宠">
-    <div className="floating-tea-pet__dock">
+    <div ref={dock} className="floating-tea-pet__dock">
       <button
         ref={launcher}
         type="button"
@@ -127,7 +70,10 @@ export default function FloatingTeaPet({ pathname }: { pathname: string }) {
         aria-label={open ? '收起茶宠小茉' : '打开茶宠小茉'}
         aria-expanded={open}
         aria-controls={actionsId}
+        title="长按拖动小茉"
         onClick={toggle}
+        onContextMenu={(event) => event.preventDefault()}
+        {...dragEvents}
       >
         <span className="floating-tea-pet__figure" aria-hidden="true">
           <TeaPetPortrait full pose={pose} motion={reaction} revision={revision} preloadReactions={open} className="size-full" />

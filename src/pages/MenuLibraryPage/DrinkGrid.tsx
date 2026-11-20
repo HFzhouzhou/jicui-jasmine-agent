@@ -1,6 +1,6 @@
 import { formatVolumeLabel } from '@shared/catalog-display';
 import type { Drink } from '@shared/contracts';
-import { Leaf, ArrowUpRight } from 'lucide-react';
+import { Leaf } from 'lucide-react';
 import DrinkArtwork from '@/components/DrinkArtwork';
 
 export default function DrinkGrid({ drinks, onDrinkClick }: { drinks: Drink[]; onDrinkClick: (drink: Drink) => void }) {
@@ -9,13 +9,10 @@ export default function DrinkGrid({ drinks, onDrinkClick }: { drinks: Drink[]; o
     <div className="relative overflow-hidden bg-mist">
       <DrinkArtwork category={drink.category} name={drink.name} className="h-[112px] w-full transition-transform duration-500 group-hover:scale-[1.04] md:h-[140px]" />
       {drink.catalogStatus !== 'legacy' && !drink.available && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11.5px] text-primary">暂不可选</span>}
-      <span className="absolute right-3 top-3 flex size-6 items-center justify-center rounded-full bg-white/60 text-primary/65 transition-colors group-hover:bg-white"><ArrowUpRight className="size-3.5" /></span>
     </div>
-    <div className="px-3.5 pb-4 pt-4 md:px-5 md:pb-5">
-      <p className="mb-2 text-[11.5px] tracking-[0.08em] text-primary/55">{drink.category}</p>
-      <h2 className="min-h-[2.8em] font-serif text-[17px] leading-[1.4] tracking-tight text-primary md:min-h-0 md:text-xl">{drink.name}</h2>
-      <p className="mt-1 truncate text-[11.5px] leading-5 text-muted-foreground/75">{drink.nameEn}</p>
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1"><span className="text-[22px] font-medium tabular-nums text-primary"><span className="mr-0.5 text-[13px]">¥</span>{drink.price}{drink.catalogEvidence?.startingPrice && drink.catalogEvidence.verifiedFields.includes('price') && <span className="ml-1 text-[11.5px] font-normal">起</span>}</span><span className="text-[11.5px] text-muted-foreground">{drink.verified || drink.catalogStatus === 'legacy' || drink.catalogEvidence?.verifiedFields.includes('volume') ? formatVolumeLabel(drink.volume) : '规格待确认'}</span></div>
+    <div className="p-3.5 md:px-5 md:py-4">
+      <h2 className="font-serif text-[17px] leading-snug tracking-tight text-primary md:text-xl">{drink.name}</h2>
+      <div className="mt-1.5 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1"><span className="text-xl font-medium tabular-nums text-primary"><span className="mr-0.5 text-[13px]">¥</span>{drink.price}{drink.catalogEvidence?.startingPrice && drink.catalogEvidence.verifiedFields.includes('price') && <span className="ml-1 text-[11.5px] font-normal">起</span>}</span><span className="text-[11.5px] text-muted-foreground">{drink.verified || drink.catalogStatus === 'legacy' || drink.catalogEvidence?.verifiedFields.includes('volume') ? formatVolumeLabel(drink.volume) : '规格待确认'}</span></div>
     </div>
   </button>)}</div>;
 }

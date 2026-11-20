@@ -432,7 +432,7 @@ export async function recommend(input: RecommendRequest, mode: 'live' | 'preview
     const directOrder = namedEligible.length > 0 && !wantsAlternatives && !resumeEmptySelection;
     if (directOrder) selected = namedEligible;
     cards = [...new Map(selected.map(drink => [drink.id, drink])).values()].slice(0, 3).map((drink, index) => card(drink, intent, index === 0));
-    reply = cards.length ? `为你筛选了 ${cards.length} 款候选。商品和标价已与当前菜单校验；糖冰及加料以门店已确认选项为准。` : '当前没有能确认满足这些条件的商品。你可以调整预算或口味；如果涉及忌口、过敏、咖啡因或糖冰要求，需要门店先补全并核准对应资料。';
+    reply = cards.length ? `我从茶单里挑了 ${cards.length} 款候选，标价也核对过了。看看哪杯合你心意？糖冰和小料以门店确认的选项为准。` : '这次没有能确认满足你要求的茶。要换个预算或口味再找找吗？涉及忌口、过敏原、咖啡因或糖冰选项时，需要门店补全并核准相关资料。';
     if (directOrder && cards.length) {
       const chosen = cards.map(item => [item.drinkName, !/^待/.test(item.sweetness) ? item.sweetness : '', !/^待/.test(item.temperature) ? item.temperature : '', item.toppings !== '未加料' ? `加${item.toppings}` : ''].filter(Boolean).join('，'));
       reply = `好的，${chosen.join('；')}。点「确认下单」我会先复述一遍，你确认后才会提交给门店。`;

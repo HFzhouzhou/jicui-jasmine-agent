@@ -20,7 +20,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 flex flex-col justify-between gap-2 border-t border-cream/10 pt-6 text-[12px] text-cream/45 sm:flex-row">
-          <p>© {new Date().getFullYear()} JICUI JASMINE · 茉莉娘子参赛项目</p>
+          <p>© {new Date().getFullYear()} JICUI JASMINE · 茶宠小茉参赛项目</p>
           <p>价格与售卖情况以门店为准 · 付款在门店完成，AI 不代付</p>
         </div>
       </div>

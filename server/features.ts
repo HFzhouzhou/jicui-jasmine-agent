@@ -6,7 +6,7 @@ import { STATUS_TEXT, bestPromotion } from './commerce.js';
 import { answerKnowledge } from './rag/answer.js';
 import { budgetDirective, card, eligible, namedDrinks, normalizeIngredient, parseCount, parseLocalIntent, TOPPING_WORDS, type Intent } from './recommend.js';
 
-export type FeatureKind = 'order_status' | 'after_sales' | 'bundle' | 'blindbox' | 'repeat' | 'memory_set' | 'memory_clear' | 'memory_view' | 'ingredient';
+export type FeatureKind = 'pet_intro' | 'order_status' | 'after_sales' | 'bundle' | 'blindbox' | 'repeat' | 'memory_set' | 'memory_clear' | 'memory_view' | 'ingredient';
 export interface FeatureContext {input: RecommendRequest; mode: 'live' | 'preview'; store: Store; config: ServerConfig; fetcher: typeof fetch; signal?: AbortSignal; customerId?: string}
 type FeatureReply = Omit<RecommendResponse, 'mode' | 'requestId'>;
 
@@ -32,6 +32,9 @@ export function detectFeature(input: RecommendRequest, drinks: Drink[] = []): Fe
   const action = input.action;
   if (action) return action.type === 'orders' ? 'order_status' : action.type;
   const text = input.message.replace(/\s+/g, '');
+  const greeting = text.replace(/[，,。.!！?？～~]/g, '');
+  if (/^(?:小茉)?(?:你好[呀啊]?|您好|在吗)(?:小茉)?$/.test(greeting)
+    || /^(?:你好|请问)?(?:小茉)?(?:你是谁|你叫什么(?:名字)?|你是小茉吗|介绍一下你自己|小茉是谁)[呀啊呢]?$/.test(greeting)) return 'pet_intro';
   if (/(?:忘(?:掉|记)|清除|删除|清空)(?:我的)?(?:口味|偏好|习惯|记忆)/.test(text)) return 'memory_clear';
   if (/^(?:你)?(?:还)?记得我(?:的)?(?:口味|习惯|偏好)?[吗吧呢？?]*$|^(?:查看|看看)?我的(?:口味|偏好)(?:记忆)?[？?。]*$/.test(text)) return 'memory_view';
   if (/(?:我的)?订单(?:到哪|做到|状态|进度|好了|怎么样|呢)|查(?:一下)?(?:我的)?订单|做到哪|做好了(?:吗|没)|取餐号|还要多久|多久(?:能)?好|到哪(?:一步|了)/.test(text)) return 'order_status';
@@ -87,7 +90,7 @@ async function aiLine(ctx: FeatureContext, instruction: string, fallback: string
   try {
     const response = await ctx.fetcher(`${ctx.config.baseUrl}/chat/completions`, {method: 'POST', signal: controller.signal, headers: {'Content-Type': 'application/json', Authorization: `Bearer ${ctx.config.apiKey}`},
       body: JSON.stringify({model: ctx.config.model, thinking: {type: 'disabled'}, temperature: 0.8, max_tokens: 200, response_format: {type: 'json_object'}, stream: false, messages: [
-        {role: 'system', content: '你是茶饮店的文案助手，只输出 JSON：{"text":"..."}。一句中文，不超过 40 字，温暖自然。不能提及健康、功效、医疗、减肥、提神、咖啡因、配料或价格，不能使用表情符号。'},
+        {role: 'system', content: '你是茶宠小茉，一只捧着白瓷杯的茉莉小仙童。给客人写一句自然、温柔、略带俏皮的短句，不超过 40 字，不必自我介绍，只输出 JSON：{"text":"..."}。不编商品或品牌故事，不承诺饮用效果。不能提及健康、功效、医疗、减肥、提神、咖啡因、配料或价格，不能使用表情符号。'},
         {role: 'user', content: instruction}]})});
     if (!response.ok) return fallback;
     const body = await response.text();
@@ -234,6 +237,9 @@ function ingredientAnswer(text: string, drinks: Drink[]): {reply: string; matche
 
 export async function handleFeature(kind: FeatureKind, ctx: FeatureContext): Promise<FeatureReply> {
   const {input, store, customerId} = ctx;
+  if (kind === 'pet_intro') {
+    return {intent: 'clarify', reply: '我是小茉，捧着白瓷杯陪你选茶的小茶宠。客人今天想喝点什么？', cards: [], notices: [], suggestions: ['来一杯清爽的', '帮我开个盲盒']};
+  }
   const memory = customerId ? store.commerce.memory(customerId) : {};
   const drinks = storeDrinks(store);
   const action = input.action as RecommendAction | undefined;

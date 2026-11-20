@@ -199,6 +199,18 @@ test('feature routing leaves knowledge questions alone', () => {
   assert.equal(detectFeature({message: '订单做到哪了'}), 'order_status');
 });
 
+test('the tea pet can introduce itself without selecting a drink or intercepting an order', async t => {
+  const {call} = await setup(t);
+  const {json} = await call('/api/recommend/preview', {body: {message: '小茉，你是谁呀？'}});
+  assert.match(json.reply, /我是小茉/);
+  assert.equal(json.intent, 'clarify');
+  assert.deepEqual(json.cards, []);
+  assert.equal(json.mode, 'preview');
+  assert.ok(json.notices.some((notice: string) => notice.includes('未调用 AI')));
+  assert.equal(detectFeature({message: '小茉你好，给我推荐一杯'}), null);
+  assert.equal(detectFeature({message: '你好，我对牛奶过敏'}), null);
+});
+
 test('priceItems enforces verified option lists when they exist', () => {
   const store = new Store(':memory:');
   try {

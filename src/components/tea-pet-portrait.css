@@ -1,0 +1,33 @@
+.tea-pet-portrait {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+
+.tea-pet-portrait__image,
+.tea-pet-portrait__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.tea-pet-portrait__canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.tea-pet-portrait[data-renderer="canvas"] .tea-pet-portrait__canvas { opacity: 1; }
+.tea-pet-portrait[data-renderer="canvas"] .tea-pet-portrait__image { opacity: 0; animation: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .tea-pet-portrait[data-motion="celebrate"] .tea-pet-portrait__image { animation: tea-pet-hop .42s ease-out 2; }
+  .tea-pet-portrait[data-renderer="canvas"] .tea-pet-portrait__image { animation: none; }
+}
+
+@keyframes tea-pet-hop {
+  48% { transform: translateY(-2.2%); }
+}

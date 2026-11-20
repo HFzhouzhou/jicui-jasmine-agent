@@ -1,16 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowUpRight, Bookmark, ChevronDown, Gift, Info, LoaderCircle, MessageSquareText, ReceiptText, RotateCcw, Send, Settings2, ShieldCheck, Sparkles, ThumbsDown, ThumbsUp, Trash2, Users, X } from 'lucide-react';
+import { ArrowUpRight, Bookmark, ChevronDown, Ellipsis, Gift, Info, LoaderCircle, ReceiptText, RotateCcw, Send, Settings2, ShieldCheck, ThumbsDown, ThumbsUp, Trash2, Users, X } from 'lucide-react';
 import { toast } from 'sonner';
 import TeaCard from '@/components/TeaCard';
 import DrinkArtwork from '@/components/DrinkArtwork';
-import JasmineMark from '@/components/brand/JasmineMark';
+import TeaPetPortrait from '@/components/TeaPetPortrait';
+import TeaPetMoment from '@/components/TeaPetMoment';
 import KnowledgeSources, { isKnowledgeCitation } from '@/components/KnowledgeSources';
 import BundleCard from '@/components/chat/BundleCard';
 import BlindBoxCard from '@/components/chat/BlindBoxCard';
 import MemoryPanel, { MemoryChips } from '@/components/chat/MemoryPanel';
 import { BundleComposerDialog, MoodPickerDialog } from '@/components/chat/FeatureDialogs';
 import OrderCard from '@/components/order/OrderCard';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { apiRequest, getHealth, isTeaCard, recommend, RequestError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { isAppShell } from '@/lib/platform';
@@ -50,7 +52,7 @@ function greeting() {
   const hour = new Date().getHours();
   return hour < 5 ? '夜深了' : hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
 }
-const EXAMPLES = ['30 块以内，两杯解腻的', '来一杯芒芒椰椰，少冰', '有没有不含奶的？', '记住我默认三分糖、少冰', '订单做到哪了'];
+const EXAMPLES = ['30 块以内，两杯解腻的', '来一杯芒芒椰椰，少冰', '有没有不含奶的？'];
 const fieldStyle = 'h-11 w-full rounded-xl border border-line bg-cream px-3 text-[14px] text-ink outline-none focus:border-leaf';
 
 function resizeMessageInput(element: HTMLTextAreaElement) {
@@ -58,16 +60,24 @@ function resizeMessageInput(element: HTMLTextAreaElement) {
   element.style.height = 'auto';
   element.style.height = `${Math.min(160, Math.max(48, element.scrollHeight))}px`;
 }
-function Avatar({ className }: { className?: string }) {
-  return <span className={cn('flex shrink-0 items-center justify-center rounded-full bg-jade text-cream shadow-[0_8px_18px_-10px_rgba(31,74,51,.9)]', className)}><JasmineMark className="size-[62%]" petal="#fffdf7" /></span>;
-}
-function FeatureTile({ icon: Icon, title, hint, tint, onClick, disabled }: { icon: typeof Gift; title: string; hint: string; tint: string; onClick: () => void; disabled?: boolean }) {
-  return <button type="button" disabled={disabled} onClick={onClick} className="group relative flex min-h-[132px] flex-col rounded-[22px] border border-line bg-paper p-4 text-left transition-all hover:-translate-y-0.5 hover:border-sage hover:bg-cream hover:shadow-[0_18px_40px_-28px_rgba(20,40,28,.5)] disabled:pointer-events-none disabled:opacity-50">
-    <span className={cn('flex size-10 items-center justify-center rounded-2xl', tint)}><Icon className="size-5" /></span>
-    <span className="mt-auto block pt-4 font-serif text-[17px] font-semibold text-ink">{title}</span>
-    <span className="mt-0.5 block text-[12.5px] leading-5 text-stone">{hint}</span>
-    <ArrowUpRight className="absolute right-4 top-4 size-4 text-stone/40 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-jade" />
-  </button>;
+function usePetAtRest() {
+  const [atRest, setAtRest] = useState(false);
+  useEffect(() => {
+    let timeout: number;
+    const onActivity = () => {
+      window.clearTimeout(timeout);
+      setAtRest(false);
+      timeout = window.setTimeout(() => setAtRest(true), 30_000);
+    };
+    const events = ['pointerdown', 'keydown', 'scroll', 'focusin'] as const;
+    onActivity();
+    for (const event of events) document.addEventListener(event, onActivity, { capture: true, passive: true });
+    return () => {
+      window.clearTimeout(timeout);
+      for (const event of events) document.removeEventListener(event, onActivity, true);
+    };
+  }, []);
+  return atRest;
 }
 function Panel({ title, aside, children, className }: { title: ReactNode; aside?: ReactNode; children: ReactNode; className?: string }) {
   return <section className={cn('space-y-3', className)}><div className="flex min-h-10 items-center justify-between gap-3 px-1"><h2 className="font-serif text-[20px] font-semibold text-ink">{title}</h2>{aside}</div>{children}</section>;
@@ -95,6 +105,7 @@ export default function AIRecommendPage() {
   const [feedbackPending, setFeedbackPending] = useState(false);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [dialog, setDialog] = useState<'mood' | 'bundle' | null>(null);
+  const petAtRest = usePetAtRest();
   const { active: activeOrders } = useOrders(20000);
   const activeRequest = useRef<AbortController | null>(null);
   const activeResultId = useRef<string | null>(null);
@@ -185,7 +196,13 @@ export default function AIRecommendPage() {
   function saveFavorite(card: CardData) {
     const next = [card, ...favorites.filter((item) => item.drinkId !== card.drinkId)].slice(0, 12);
     setFavorites(next);
-    try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(next)); toast.success('已收藏到这个浏览器'); }
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(next));
+      toast.success('这杯记下啦，已收藏到这个浏览器。', {
+        icon: <TeaPetMoment motion="celebrate" compact className="size-7" />,
+        classNames: { icon: '!size-7' },
+      });
+    }
     catch { toast.info('已暂存，本浏览器无法永久保存收藏'); }
   }
   function ordered(order: Order) {
@@ -225,7 +242,7 @@ export default function AIRecommendPage() {
   };
   const statusLine = !health && !healthError ? { tone: 'idle', text: '正在连接…' }
     : healthError ? { tone: 'error', text: healthError }
-      : mode === 'preview' ? { tone: 'warn', text: '规则预览 · 非 AI' }
+      : mode === 'preview' ? null
         : health?.aiConfigured ? { tone: 'ok', text: '在线 · DeepSeek' } : { tone: 'warn', text: 'AI 尚未接通' };
 
   return <div className="mx-auto max-w-[1360px] px-3 pb-6 pt-3 sm:px-6 sm:pt-6 lg:px-8">
@@ -237,34 +254,34 @@ export default function AIRecommendPage() {
 
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] xl:gap-7">
       <section id="tea-chat-panel" aria-label="选茶对话" className={cn('card-soft min-w-0 flex-col overflow-hidden lg:flex', mobilePane === 'chat' ? 'flex' : 'hidden', isAppShell ? 'h-[calc(100svh-164px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[460px] lg:max-h-[1040px]' : 'h-[calc(100svh-212px)] min-h-[520px] lg:h-[calc(100dvh-124px)] lg:min-h-[640px] lg:max-h-[1040px]')}>
-        <header className="flex shrink-0 items-center gap-3 border-b border-line/80 px-4 py-3 sm:px-5">
-          <Avatar className="size-10" />
+        <header className="flex shrink-0 items-center gap-2 border-b border-line/80 px-3 py-3 sm:gap-3 sm:px-5">
+          <TeaPetPortrait pose={loading || petAtRest ? 'quiet' : messages.length ? 'serve' : 'welcome'} className="size-9 sm:size-11" />
           <div className="min-w-0 flex-1">
-            <h1 className="font-serif text-[18px] font-semibold leading-tight text-ink">茉莉娘子 <span className="ml-1 hidden font-sans text-[12px] font-normal text-stone sm:inline">AI 随心配</span></h1>
-            <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-stone"><span className={cn('size-2 rounded-full', statusLine.tone === 'ok' ? 'bg-leaf shadow-[0_0_0_3px_rgba(111,154,88,.2)]' : statusLine.tone === 'error' ? 'bg-[#c4562f]' : statusLine.tone === 'warn' ? 'bg-gold' : 'bg-line')} />{statusLine.text}{healthError && <button type="button" onClick={() => void refreshHealth()} className="ml-1 font-medium text-jade underline underline-offset-2">重连</button>}</p>
+            <h1 className="font-serif text-[18px] font-semibold leading-tight text-ink">小茉 <span className="ml-1 hidden font-sans text-[12px] font-normal text-stone sm:inline">随心配茶宠</span></h1>
+            {statusLine && <p className="mt-0.5 flex items-center gap-1.5 text-[12.5px] text-stone"><span className={cn('size-2 shrink-0 rounded-full', statusLine.tone === 'ok' ? 'bg-leaf' : statusLine.tone === 'error' ? 'bg-[#c4562f]' : statusLine.tone === 'warn' ? 'bg-gold' : 'bg-line')} />{statusLine.text}{healthError && <button type="button" onClick={() => void refreshHealth()} className="ml-1 font-medium text-jade underline underline-offset-2">重连</button>}</p>}
           </div>
           <div className="flex items-center rounded-full bg-paper p-0.5 text-[12.5px] ring-1 ring-line" role="radiogroup" aria-label="对话模式">
             <button type="button" role="radio" aria-checked={mode === 'live'} disabled={loading} onClick={() => switchMode('live')} className={cn('h-8 rounded-full px-3 transition-colors', mode === 'live' ? 'bg-jade text-cream' : 'text-stone hover:text-jade')}>AI</button>
-            <button type="button" role="radio" aria-checked={mode === 'preview'} disabled={loading || !health} onClick={() => switchMode('preview')} className={cn('h-8 rounded-full px-3 transition-colors', mode === 'preview' ? 'bg-gold text-cream' : 'text-stone hover:text-jade')}>规则预览<span className="hidden sm:inline">（非AI）</span></button>
+            <button type="button" role="radio" aria-checked={mode === 'preview'} disabled={loading || !health} onClick={() => switchMode('preview')} className={cn('h-8 whitespace-nowrap rounded-full px-2 transition-colors sm:px-3', mode === 'preview' ? 'bg-gold text-cream' : 'text-stone hover:text-jade')}>规则预览 · 非 AI</button>
           </div>
-          <button type="button" onClick={clearConversation} disabled={!messages.length && !loading} className="flex size-10 items-center justify-center rounded-full text-stone transition-colors hover:bg-mist hover:text-jade disabled:opacity-30" aria-label="清空对话" title="清空对话"><Trash2 className="size-4" /></button>
+          {(messages.length > 0 || loading) && <button type="button" onClick={clearConversation} className="flex size-10 shrink-0 items-center justify-center rounded-full text-stone transition-colors hover:bg-mist hover:text-jade" aria-label="清空对话" title="清空对话"><Trash2 className="size-4" /></button>}
         </header>
         {mode === 'preview' && <p className="shrink-0 border-b border-honey bg-honey/40 px-5 py-2 text-[12.5px] text-[#6b4c12]">规则预览 · 非 AI：只按菜单规则筛选<span className="hidden sm:inline">，没有调用 AI 模型，不能据此判断模型效果</span>。</p>}
         {mode === 'live' && health && !health.aiConfigured && <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-honey bg-honey/40 px-5 py-2 text-[12.5px] text-[#6b4c12]"><span>AI 尚未接通：服务器还没配置 DeepSeek 密钥。</span><button type="button" onClick={() => switchMode('preview')} className="font-medium underline underline-offset-2">先用规则预览（非 AI）体验</button></div>}
 
         <div ref={scrollRef} className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6" aria-live="polite" aria-busy={loading}>
-          {!messages.length && <div className="animate-rise-in flex min-h-full flex-col justify-center py-2">
-            <p className="eyebrow">{greeting()} · 茉莉娘子在这儿</p>
-            <h2 className="mt-3 font-serif text-[32px] font-semibold leading-[1.2] text-ink sm:text-[42px]">一句话，<span className="text-leaf">配一杯</span>。</h2>
-            <p className="mt-3 max-w-lg text-[15px] leading-7 text-stone">说出口味、甜度、冰量和预算，我来核对门店茶单，生成能直接下单的茶卡。<span className="text-ink">先复述、你确认，才提交。</span></p>
-            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-              <FeatureTile icon={MessageSquareText} title="一句话配单" hint="“冰的、三分糖、不要珍珠”" tint="bg-mist text-jade" onClick={() => { setInput('来杯冰的、三分糖、不要珍珠，15 元以内'); focusInput(); }} />
-              <FeatureTile icon={Gift} title="情绪盲盒" hint="不知道喝什么？按心情抽" tint="bg-[#f7e3dc] text-[#9a4a33]" onClick={() => setDialog('mood')} />
-              <FeatureTile icon={Users} title="套餐随心配" hint="2–3 人，按预算一次配齐" tint="bg-honey/70 text-[#6b4c12]" onClick={() => setDialog('bundle')} />
-              <FeatureTile icon={RotateCcw} title="老样子" hint="按上次的做法再来一杯" tint="bg-[#e4e9f1] text-[#3f5576]" onClick={() => act({ type: 'repeat' }, '老样子')} disabled={loading} />
+          {!messages.length && <div className="animate-rise-in mx-auto flex min-h-full max-w-[38rem] flex-col justify-center py-2">
+            <div className="flex items-center gap-2 sm:gap-5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-medium text-leaf">{greeting()}，我是小茉。</p>
+                <h2 className="mt-2 font-serif text-[clamp(1.6rem,3.1vw,2.6rem)] font-semibold leading-tight text-ink">今天想喝点什么？</h2>
+                <p className="mt-3 max-w-sm text-[14px] leading-6 text-stone">告诉我口味和预算，我帮你翻翻茶单。</p>
+              </div>
+              <TeaPetMoment motion={petAtRest ? 'quiet' : 'welcome'} className="size-[clamp(5.8rem,24vw,11rem)]" />
             </div>
-            <p className="mt-7 text-[13px] text-stone">也可以直接说</p>
-            <div className="mt-2 flex flex-wrap gap-2">{EXAMPLES.map((example) => <button key={example} type="button" onClick={() => submit(example)} disabled={loading} className="chip">{example}</button>)}</div>
+            <div className="mt-5 flex flex-wrap gap-2" role="group" aria-label="试试这样说">
+              {EXAMPLES.map((example) => <button key={example} type="button" onClick={() => submit(example)} disabled={loading} className="chip min-h-10">{example}</button>)}
+            </div>
           </div>}
 
           {messages.map((message, index) => {
@@ -272,12 +289,16 @@ export default function AIRecommendPage() {
             const isPreview = message.content.startsWith(PREVIEW_PREFIX);
             const text = isPreview ? message.content.slice(PREVIEW_PREFIX.length) : message.content;
             const latest = index === latestAssistantIndex;
+            const hasNewTea = latest && !loading && result && message.selectionId === result.requestId && (message.productCard || message.bundle);
             return <div key={index} className="flex gap-2.5 sm:gap-3">
-              <Avatar className="mt-0.5 size-8" />
+              <TeaPetPortrait pose={message.blindbox ? 'playful' : 'serve'} className="mt-0.5 size-8" />
               <div className="min-w-0 flex-1 space-y-3">
-                <div className="w-fit max-w-full rounded-[22px] rounded-tl-md bg-paper px-4 py-3 ring-1 ring-line/70">
-                  {isPreview && <span className="mb-1.5 inline-flex rounded-full bg-honey/70 px-2 py-0.5 text-[11.5px] font-medium text-[#6b4c12]">规则预览 · 非 AI</span>}
-                  <p className="whitespace-pre-wrap text-[15px] leading-7 text-ink/90 [overflow-wrap:anywhere]">{text}</p>
+                <div className="flex w-fit max-w-full items-center gap-3 rounded-[22px] rounded-tl-md bg-paper px-4 py-3 ring-1 ring-line/70">
+                  <div className="min-w-0">
+                    {isPreview && <span className="mb-1.5 inline-flex rounded-full bg-honey/70 px-2 py-0.5 text-[11.5px] font-medium text-[#6b4c12]">规则预览 · 非 AI</span>}
+                    <p className="whitespace-pre-wrap text-[15px] leading-7 text-ink/90 [overflow-wrap:anywhere]">{text}</p>
+                  </div>
+                  {hasNewTea && <TeaPetMoment key={result.requestId} motion={message.blindbox ? 'celebrate' : 'offer'} className="size-[3.5rem] sm:size-20" />}
                 </div>
                 {message.citations && <KnowledgeSources citations={message.citations} />}
                 {message.bundle && <BundleCard bundle={message.bundle} proposal={message.proposal} disabled={loading} onOrdered={ordered} onShuffle={latest ? () => shuffleBundle(message) : undefined} />}
@@ -300,16 +321,29 @@ export default function AIRecommendPage() {
             </div>;
           })}
           {currentSelectionIndex < 0 && currentCard && !selectionResult?.bundle && messages.length > 0 && <div className="w-full min-w-0 pl-10 sm:pl-11"><p className="mb-2 text-[12.5px] text-stone">为你保留的茶卡</p><TeaCard data={{ ...currentCard, isMain: true }} proposal={proposalFor(selectionResult?.proposal, currentCard)} onOrdered={ordered} configuredOrder={configuredOrders[currentCard.drinkId]} onConfigure={(draft) => configureOrder(draft, currentCard)} onConfirm={() => saveFavorite(currentCard)} /></div>}
-          {loading && <div className="flex gap-2.5 sm:gap-3"><Avatar className="size-8" /><div className="flex items-center gap-3 rounded-[22px] rounded-tl-md bg-paper px-4 py-3 ring-1 ring-line/70"><span className="flex gap-1">{[0, 1, 2].map((dot) => <span key={dot} className="typing-dot size-1.5 rounded-full bg-leaf" />)}</span><span className="text-[13.5px] text-stone">{mode === 'preview' ? '正在核对菜单…' : '正在核对菜单、为你配茶…'}</span></div></div>}
+          {loading && <div className="flex items-center gap-2.5 sm:gap-3">
+            <TeaPetMoment motion="think" className="size-14 sm:size-16" />
+            <div className="flex items-center gap-3 rounded-[22px] rounded-tl-md bg-paper px-4 py-3 ring-1 ring-line/70">
+              <span className="flex gap-1" aria-hidden="true">{[0, 1, 2].map((dot) => <span key={dot} className="typing-dot size-1.5 rounded-full bg-leaf" />)}</span>
+              <span className="text-[13.5px] text-stone">{mode === 'preview' ? '正在按菜单规则筛选…' : '小茉正在核对资料…'}</span>
+            </div>
+          </div>}
         </div>
 
-        <div className="shrink-0 space-y-2 border-t border-line/80 bg-cream/60 px-3 pb-3 pt-2.5 sm:px-4">
-          <div className="scrollbar-none -mx-1 flex gap-1.5 overflow-x-auto px-1">
-            <button type="button" disabled={loading} onClick={() => setDialog('mood')} className="chip shrink-0 !py-1.5"><Gift className="size-3.5" />情绪盲盒</button>
-            <button type="button" disabled={loading} onClick={() => setDialog('bundle')} className="chip shrink-0 !py-1.5"><Users className="size-3.5" />套餐</button>
-            <button type="button" disabled={loading} onClick={() => act({ type: 'repeat' }, '老样子')} className="chip shrink-0 !py-1.5"><RotateCcw className="size-3.5" />老样子</button>
-            <button type="button" disabled={loading} onClick={() => act({ type: 'orders' }, '我的订单做到哪了？')} className="chip shrink-0 !py-1.5"><ReceiptText className="size-3.5" />订单{activeOrders.length > 0 && <span className="flex size-[18px] items-center justify-center rounded-full bg-gold text-[10.5px] font-semibold text-cream">{activeOrders.length}</span>}</button>
-            <button type="button" onClick={() => setShowPreferences(!showPreferences)} aria-expanded={showPreferences} className={cn('chip shrink-0 !py-1.5', showPreferences && '!border-jade !bg-mist')}><Settings2 className="size-3.5" />偏好</button>
+        <div id="tea-chat-composer" className="shrink-0 space-y-2 border-t border-line/80 bg-cream/60 px-3 pb-3 pt-2.5 sm:px-4">
+          <div className="flex flex-wrap gap-1.5">
+            <button type="button" disabled={loading} onClick={() => setDialog('mood')} className="chip min-h-10 !py-1.5"><Gift className="size-3.5" />情绪盲盒</button>
+            <button type="button" disabled={loading} onClick={() => setDialog('bundle')} className="chip min-h-10 !py-1.5"><Users className="size-3.5" />套餐</button>
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button type="button" aria-label="更多配茶选项" className={cn('chip min-h-10 !py-1.5', showPreferences && 'border-sage bg-mist')}><Ellipsis className="size-4" />更多</button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-40 rounded-2xl bg-cream p-1.5 text-jade">
+                <DropdownMenuItem className="min-h-10 rounded-xl" onSelect={() => setShowPreferences((open) => !open)}><Settings2 />{showPreferences ? '收起口味偏好' : '设置口味偏好'}</DropdownMenuItem>
+                <DropdownMenuItem className="min-h-10 rounded-xl" disabled={loading} onSelect={() => act({ type: 'repeat' }, '老样子')}><RotateCcw />按老样子配茶</DropdownMenuItem>
+                <DropdownMenuItem className="min-h-10 rounded-xl" disabled={loading} onSelect={() => act({ type: 'orders' }, '我的订单做到哪了？')}><ReceiptText />查询订单{activeOrders.length > 0 && <span className="ml-auto rounded-full bg-mist px-1.5 text-xs">{activeOrders.length}</span>}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           {showPreferences && <div className="animate-rise-in grid grid-cols-2 gap-2.5 rounded-[20px] bg-paper p-3.5">
             <label className="space-y-1 text-[12.5px] text-stone">每杯预算<select className={fieldStyle} value={profile.budget || ''} onChange={(event) => setProfile({ ...profile, budget: event.target.value })}><option value="">不指定</option>{['10元以内', '15元以内', '20元以内'].map((option) => <option key={option}>{option}</option>)}</select></label>
@@ -320,7 +354,7 @@ export default function AIRecommendPage() {
           </div>}
           <form onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex items-end gap-2 rounded-[24px] bg-paper p-1.5 ring-1 ring-line transition-shadow focus-within:ring-2 focus-within:ring-leaf/40">
             <label className="sr-only" htmlFor="tea-demand">你的选茶需求</label>
-            <textarea ref={inputRef} id="tea-demand" value={input} onChange={(event) => setInput(event.target.value)} maxLength={2000} rows={1} placeholder="比如：来杯冰的、三分糖、加椰果，20 块以内" className="min-h-12 max-h-40 flex-1 resize-none bg-transparent px-3 py-3 text-base leading-6 text-ink outline-none placeholder:text-stone/60 focus-visible:outline-none sm:text-[15px]" onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); } }} />
+            <textarea ref={inputRef} id="tea-demand" value={input} onChange={(event) => setInput(event.target.value)} maxLength={2000} rows={1} placeholder="说说口味、甜度或预算" className="min-h-12 max-h-40 flex-1 resize-none bg-transparent px-3 py-3 text-base leading-6 text-ink outline-none placeholder:text-stone/60 focus-visible:outline-none sm:text-[15px]" onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); } }} />
             {loading ? <button type="button" onClick={() => activeRequest.current?.abort()} className="btn-ghost size-12 shrink-0 !px-0" aria-label="取消"><X className="size-5" /></button>
               : <button type="submit" disabled={!canSend || !input.trim()} className="btn-jade size-12 shrink-0 !px-0" aria-label={mode === 'preview' ? '按规则筛选' : '发送'}><Send className="size-5" /></button>}
           </form>
@@ -335,19 +369,16 @@ export default function AIRecommendPage() {
             {favorites.map((card) => <div key={card.drinkId} className="flex items-center gap-3 rounded-2xl p-2 hover:bg-paper"><DrinkArtwork category="" name={card.drinkName} className="size-12 shrink-0 rounded-xl" /><span className="min-w-0 flex-1"><span className="block truncate font-serif text-[15px] font-semibold text-ink">{card.drinkName}</span><span className="text-[12px] text-stone">收藏时 ¥{card.price}</span></span><button type="button" className="btn-ghost h-9 shrink-0 !px-3 text-[12.5px]" onClick={() => submit(`来一杯${card.drinkName}`)}>再来一杯</button></div>)}
             <button type="button" className="px-2 pt-1 text-[12.5px] text-stone hover:text-jade" onClick={() => { setFavorites([]); try { localStorage.removeItem(FAVORITES_KEY); } catch { /* Browser storage may be unavailable. */ } }}>清空收藏</button>
           </>}</div>}
-          {loading && !selectionResult ? <div className="card-soft flex min-h-[320px] flex-col items-center justify-center gap-4 text-stone"><LoaderCircle className="size-8 animate-spin text-leaf" strokeWidth={1.5} /><p className="font-serif text-[20px] text-ink">好茶，值得等一会。</p></div>
+          {loading && !selectionResult ? <div className="rounded-[22px] border border-line bg-paper/70 p-5 text-sm text-stone" role="status"><p className="flex items-center gap-2"><LoaderCircle className="size-4 animate-spin text-leaf" aria-hidden="true" />正在核对茶单…</p></div>
             : selectionResult ? <div className="space-y-4">
               {selectionResult.mode === 'preview' && <p className="rounded-2xl bg-honey/45 px-4 py-2.5 text-[12.5px] text-[#6b4c12]">以下为规则预览结果，非 AI 生成。</p>}
               {selectionResult.bundle ? <BundleCard bundle={selectionResult.bundle} proposal={selectionResult.proposal} disabled={loading} onOrdered={ordered} />
                 : !selectionResult.cards.length ? <div className="card-soft p-6"><p className="whitespace-pre-wrap text-[14.5px] leading-7 text-stone">{selectionResult.reply}</p><Link className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-jade" to="/menu">去茶单里看看<ArrowUpRight className="size-3.5" /></Link></div>
                   : selectionResult.cards.map((card, index) => <TeaCard key={card.drinkId} data={{ ...card, isMain: index === 0 }} proposal={proposalFor(selectionResult.proposal, card)} onOrdered={ordered} configuredOrder={configuredOrders[card.drinkId]} onConfigure={(draft) => configureOrder(draft, card)} onConfirm={() => saveFavorite(card)} onRefresh={selectionResult.intent === 'blindbox' ? undefined : () => submit('在保留之前要求的前提下，换一款不同的饮品。', selectionResult.cards.map((item) => item.drinkId))} onAskMore={() => { setMobilePane('chat'); setInput(''); focusInput(); }} />)}
             </div>
-              : <div className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(160deg,#e6efdc_0%,#f3f0e2_60%,#f8f5ec_100%)] p-6 ring-1 ring-line/70">
-                <DrinkArtwork category="纯茶原叶" name="茉莉" className="pointer-events-none absolute -right-10 -top-4 h-[230px] w-[250px] rotate-[-6deg] !bg-transparent opacity-90" />
-                <p className="eyebrow relative">YOUR TEA TABLE</p>
-                <h3 className="relative mt-3 max-w-[200px] font-serif text-[26px] font-semibold leading-snug text-ink">茶卡会出现在这里</h3>
-                <ol className="relative mt-16 space-y-3">{[['说一句话', '口味、甜度、冰量、预算都可以'], ['核对复述', '价格和规格由门店菜单实时核算'], ['提交到门店', '拿取餐号，到店付款']].map(([title, hint], index) => <li key={title} className="flex items-start gap-3 rounded-2xl bg-cream/80 p-3 backdrop-blur"><span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-jade font-serif text-[13px] text-cream">{index + 1}</span><span><span className="block text-[14px] font-medium text-ink">{title}</span><span className="block text-[12.5px] text-stone">{hint}</span></span></li>)}</ol>
-                <button type="button" onClick={() => { setMobilePane('chat'); focusInput(); }} className="btn-jade relative mt-5 h-11 lg:hidden"><Sparkles className="size-4" />开始聊聊</button>
+              : <div className="rounded-[22px] border border-line bg-paper/70 p-5">
+                <p className="text-sm leading-6 text-stone">小茉推荐的茶卡会出现在这里。</p>
+                <button type="button" onClick={() => { setMobilePane('chat'); focusInput(); }} className="btn-ghost mt-3 h-10 lg:hidden">回到对话</button>
               </div>}
           {result && <details className="rounded-2xl bg-paper px-4 py-1 text-[13px] text-stone ring-1 ring-line/60"><summary className="flex min-h-11 cursor-pointer items-center">这次回答有帮助吗？</summary><div className="pb-4"><input value={feedbackComment} onChange={(event) => setFeedbackComment(event.target.value)} placeholder="可选：哪里需要改善？" maxLength={500} disabled={!!feedback} className="mb-3 h-11 w-full rounded-xl border border-line bg-cream px-3 text-[14px] outline-none focus:border-leaf" /><div className="flex gap-2"><button type="button" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('up')} className="btn-ghost h-10"><ThumbsUp className="size-3.5" />{feedback === 'up' ? '已记录' : '有帮助'}</button><button type="button" disabled={feedbackPending || !!feedback} onClick={() => void sendFeedback('down')} className="btn-ghost h-10"><ThumbsDown className="size-3.5" />{feedback === 'down' ? '已记录' : '待改善'}</button></div></div></details>}
         </Panel>

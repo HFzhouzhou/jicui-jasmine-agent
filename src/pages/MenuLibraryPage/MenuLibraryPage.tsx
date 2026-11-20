@@ -37,10 +37,10 @@ export default function MenuLibraryPage() {
         <div>
           <p className="mb-3 hidden text-[12.5px] font-medium tracking-[0.2em] md:block text-primary/65 md:mb-5 md:text-[11.5px] md:tracking-[0.28em]">THE JASMINE COLLECTION · {isBrand ? '茉莉好物' : '茉莉茶谱'}</p>
           <h1 className="font-serif text-[29px] leading-tight tracking-tight text-primary md:text-[54px]"><span className="md:hidden">{isBrand ? '把茉莉，带回日常。' : '翻开茉莉茶谱。'}</span><span className="hidden md:inline">{isBrand ? '把一缕茉莉，带回日常。' : '翻开茶谱，遇见这一杯。'}</span></h1>
-          <p className="mt-5 hidden max-w-xl text-sm leading-7 text-muted-foreground md:block">{isBrand ? '从一份东方茶礼，到一缕花语香氛。慢慢挑选，让茉莉陪伴生活。' : '从一缕花香，到一口清爽。慢慢挑选，也可以把今天的心情交给茉莉娘子。'}</p>
+          <p className="mt-5 hidden max-w-xl text-sm leading-7 text-muted-foreground md:block">{isBrand ? '从一份东方茶礼，到一缕花语香氛。慢慢挑选，让茉莉陪伴生活。' : '从一缕花香，到一口清爽。慢慢挑选，也可以把今天的心情交给小茉。'}</p>
           <div className="mt-1 flex items-center justify-between gap-3 md:hidden"><p className="text-xs text-muted-foreground">{isBrand ? '茶礼与花语，慢慢挑选。' : '一缕花香，一杯心意。'}</p>{isBrand ? <button type="button" onClick={() => changeCatalog('store')} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs text-primary">逛茶饮<ArrowUpRight className="size-3.5" /></button> : <Link to="/ai-recommend" className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-xs text-primary">帮我选<ArrowUpRight className="size-3.5" /></Link>}</div>
         </div>
-        {!isBrand && <Link to="/ai-recommend" className="group hidden w-fit items-center gap-7 rounded-full md:flex bg-mist px-6 py-3.5 text-sm text-primary transition-colors hover:bg-[#d1dea9]">让茉莉娘子帮我选<ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></Link>}
+        {!isBrand && <Link to="/ai-recommend" className="group hidden w-fit items-center gap-7 rounded-full md:flex bg-mist px-6 py-3.5 text-sm text-primary transition-colors hover:bg-[#d1dea9]">让小茉帮我选<ArrowUpRight className="size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></Link>}
       </div>
     </section>
     <section className="mx-auto max-w-7xl px-5 md:px-10">

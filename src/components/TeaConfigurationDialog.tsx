@@ -91,7 +91,7 @@ export default function TeaConfigurationDialog({ open, onOpenChange, data, categ
       <div className="shrink-0 border-b border-[#e8ebdf] px-6 pt-5 pb-4 sm:px-7">
         <p className="mb-2 text-[12.5px] tracking-[0.2em] text-[#93a27c]">MAKE IT YOURS</p>
         <DialogTitle className="font-serif text-xl font-normal text-[#263f2c]">把这杯，调成你的喜欢</DialogTitle>
-        <DialogDescription className="mt-2 text-xs text-[#889379]">选好口味，茉莉娘子为你留好这份配置。</DialogDescription>
+        <DialogDescription className="mt-2 text-xs text-[#889379]">选好口味，小茉为你留好这份配置。</DialogDescription>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="grid sm:grid-cols-[240px_minmax(0,1fr)]">

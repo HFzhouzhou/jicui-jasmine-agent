@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ArrowRight, CheckCircle2, Clock3, LoaderCircle, ReceiptText, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowRight, Clock3, LoaderCircle, ReceiptText, ShieldCheck, Sparkles } from 'lucide-react';
 import type { Order, OrderItemInput, OrderQuote } from '@shared/contracts';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import DrinkArtwork from '@/components/DrinkArtwork';
+import TeaPetMoment from '@/components/TeaPetMoment';
 import { confirmOrder, notifyOrdersChanged, quoteOrder } from '@/lib/orders';
 import { RequestError } from '@/lib/api';
 import { Haptics, NotificationType } from '@capacitor/haptics';
@@ -53,10 +54,10 @@ export default function OrderConfirmDialog({ items, open, onOpenChange, onSubmit
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="!bottom-0 !top-auto flex max-h-[94dvh] !max-w-full !translate-y-0 flex-col gap-0 overflow-hidden rounded-t-[32px] rounded-b-none border-0 bg-paper p-0 sm:!bottom-auto sm:!top-1/2 sm:!max-w-[560px] sm:!-translate-y-1/2 sm:rounded-[32px]">
-      {stage.kind === 'done' ? <div className="flex flex-col items-center px-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-10 text-center">
-        <span className="flex size-16 items-center justify-center rounded-full bg-mist text-jade"><CheckCircle2 className="size-9" strokeWidth={1.6} /></span>
+      {stage.kind === 'done' ? <div className="min-h-0 overflow-y-auto px-7 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-8 text-center">
+        <TeaPetMoment motion="celebrate" className="mx-auto size-28 sm:size-32" />
         <DialogTitle className="mt-5 font-serif text-2xl font-semibold text-ink">已提交到门店接单台</DialogTitle>
-        <DialogDescription className="mt-2 text-[14px] leading-6 text-stone">门店接单后会开始制作，你可以随时问我「订单做到哪了」。</DialogDescription>
+        <DialogDescription className="mt-2 text-[14px] leading-6 text-stone">门店接单后会开始制作，你可以随时问小茉「订单做到哪了」。</DialogDescription>
         <div className="mt-6 w-full rounded-[24px] bg-jade p-6 text-cream">
           <p className="text-[12px] tracking-[0.2em] text-sage">取餐号</p>
           <p className="mt-1 font-serif text-5xl font-semibold tracking-wider">{stage.order.code}</p>
@@ -70,10 +71,10 @@ export default function OrderConfirmDialog({ items, open, onOpenChange, onSubmit
           <DialogDescription className="mt-1 text-[13px] text-stone">价格由门店菜单实时核算，确认后才会提交。</DialogDescription>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 sm:px-7">
-          {stage.kind === 'loading' && <div className="flex flex-col items-center gap-3 py-14 text-stone" role="status"><LoaderCircle className="size-7 animate-spin text-leaf" />正在核对价格和规格…</div>}
+          {stage.kind === 'loading' && <div className="flex flex-col items-center gap-3 py-10 text-stone" role="status"><TeaPetMoment motion="think" className="size-24" />正在核对价格和规格…</div>}
           {stage.kind === 'error' && <div role="alert" className="rounded-[22px] bg-blush p-5 text-[14px] leading-7 text-[#8a4b2a]"><p className="flex items-start gap-2"><AlertCircle className="mt-1 size-4 shrink-0" />{stage.message}</p>{stage.retryable ? <button type="button" onClick={() => setAttempt((value) => value + 1)} className="btn-ghost mt-4 h-10">重新核对</button> : <p className="mt-2 text-[13px] text-[#8a4b2a]/80">可以回到对话里调整，比如换个小料或减少杯数。</p>}</div>}
           {quote && <div className="space-y-4">
-            <div className="rounded-[22px] border border-sage/40 bg-mist/70 p-4 text-[14px] leading-7 text-jade"><p className="mb-1 flex items-center gap-1.5 text-[12px] font-medium tracking-wider text-leaf"><Sparkles className="size-3.5" />茉莉娘子复述</p>{quote.summary}</div>
+            <div className="rounded-[22px] border border-sage/40 bg-mist/70 p-4 text-[14px] leading-7 text-jade"><p className="mb-1 flex items-center gap-1.5 text-[12px] font-medium tracking-wider text-leaf"><Sparkles className="size-3.5" />小茉复述</p>{quote.summary}</div>
             <ul className="divide-y divide-line rounded-[22px] bg-cream px-4">
               {quote.lines.map((line, index) => <li key={`${line.drinkId}-${index}`} className="flex gap-3 py-4">
                 <DrinkArtwork category="" name={line.drinkName} className="size-16 shrink-0 rounded-2xl" />

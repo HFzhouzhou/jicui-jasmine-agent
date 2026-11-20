@@ -32,7 +32,7 @@ export default function OrdersPage() {
           : !orders.length ? <div className="card-soft relative overflow-hidden px-6 py-12 text-center sm:px-10">
             <span className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-mist text-jade"><ReceiptText className="size-8" strokeWidth={1.5} /></span>
             <h2 className="mt-5 font-serif text-[24px] font-semibold text-ink">还没有订单</h2>
-            <p className="mx-auto mt-2 max-w-sm text-[14.5px] leading-7 text-stone">和茉莉娘子说一句想喝什么，确认复述后就能提交到门店，拿到取餐号。</p>
+            <p className="mx-auto mt-2 max-w-sm text-[14.5px] leading-7 text-stone">和小茉说一句想喝什么，确认复述后就能提交到门店，拿到取餐号。</p>
             <Link to="/ai-recommend" className="btn-jade mx-auto mt-6 h-12 w-fit px-6"><Sparkles className="size-4" />开始随心配<ArrowUpRight className="size-4" /></Link>
           </div>
             : <>

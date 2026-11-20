@@ -14,8 +14,8 @@ export default function ProjectPage() {
         <div className="relative z-10">
           <p className="mb-8 text-[11.5px] tracking-[0.28em] text-sage/80">ABOUT JICUI · 一杯茶的相遇</p>
           <h1 className="max-w-3xl font-serif text-[36px] leading-[1.45] tracking-tight md:text-[54px]">让茉莉的清香，<br /><span className="text-sage">多懂你一点。</span></h1>
-          <p className="mt-6 max-w-[490px] text-sm leading-8 text-cream/65">从“今天喝什么”，到有依据的一杯茶。茉莉娘子把你的口味与菜单连接起来，也把需要确认的细节，认真告诉你。</p>
-          <Link to="/ai-recommend" className="mt-9 inline-flex items-center gap-8 rounded-full bg-mist px-6 py-3.5 text-sm text-ink transition-colors hover:bg-[#edf3d5]">和茉莉娘子聊聊<ArrowUpRight className="size-4" /></Link>
+          <p className="mt-6 max-w-[490px] text-sm leading-8 text-cream/65">发髻上别着茉莉花、手里捧着白瓷杯的，就是茶宠小茉。告诉小茉你想喝什么，它会陪你翻茶单，也会告诉你哪些配料还需要向门店确认。</p>
+          <Link to="/ai-recommend" className="mt-9 inline-flex items-center gap-8 rounded-full bg-mist px-6 py-3.5 text-sm text-ink transition-colors hover:bg-[#edf3d5]">和小茉聊聊<ArrowUpRight className="size-4" /></Link>
         </div>
       </div>
     </section>

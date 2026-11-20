@@ -10,7 +10,7 @@ const GUIDE_STEPS = [
   {
     icon: Sparkles,
     title: '这是什么？',
-    desc: '我是茉莉娘子。告诉我口味、预算和饮用限制，我会根据当前菜单帮你选茶。',
+    desc: '我是小茉。告诉我口味、预算和饮用限制，我会根据当前菜单帮你选茶。',
   },
   {
     icon: ChevronRight,

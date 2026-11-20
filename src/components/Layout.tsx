@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileNavigation from '@/components/MobileNavigation';
 import NativeBridge from '@/components/app/NativeBridge';
+import FloatingTeaPet from '@/components/tea-pet/FloatingTeaPet';
 import { cn } from '@/lib/utils';
 import { isAppShell } from '@/lib/platform';
 
@@ -20,6 +21,7 @@ export function Layout() {
       </main>
       {!isAppShell && <Footer />}
       <MobileNavigation />
+      {!/^\/admin(?:\/|$)/i.test(pathname) && <FloatingTeaPet pathname={pathname} />}
       <NativeBridge />
     </div>
   );
